@@ -21,31 +21,8 @@ export interface RouteObstacle {
   descriptionEn: string;
 }
 
-// Active dynamic obstacles in hospital (live simulation)
-export const ACTIVE_HOSPITAL_OBSTACLES: RouteObstacle[] = [
-  {
-    id: 'obs_clean_a1',
-    name: 'Vệ sinh sàn ướt hành lang Tầng 1',
-    nameEn: 'Wet floor cleaning 1F corridor',
-    type: 'cleaning',
-    fromNodeId: 'node_a_1_lobby',
-    toNodeId: 'node_a_1_cashier',
-    penaltyCost: 15,
-    descriptionVi: 'Khu vực đang lau sàn trơn trượt, nên đi vòng qua giao lộ trung tâm',
-    descriptionEn: 'Wet floor area, detour recommended'
-  },
-  {
-    id: 'obs_elev1_maint',
-    name: 'Bảo trì Thang máy Trục 1 Tòa A',
-    nameEn: 'Elevator 1 Tower A Maintenance',
-    type: 'elevator_maintenance',
-    fromNodeId: 'node_a_1_elev1',
-    toNodeId: 'node_a_2_elev1',
-    penaltyCost: 9999, // blocked
-    descriptionVi: 'Thang máy 1 đang tạm dừng kỹ thuật, hệ thống tự động chuyển sang Thang máy 2',
-    descriptionEn: 'Elevator 1 under maintenance, redirected to Elevator 2'
-  }
-];
+// Active dynamic obstacles in hospital (empty by default to avoid blocking verified routes)
+export const ACTIVE_HOSPITAL_OBSTACLES: RouteObstacle[] = [];
 
 interface GraphNode {
   node: MapNode;

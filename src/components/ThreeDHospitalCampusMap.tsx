@@ -139,163 +139,121 @@ export const ThreeDHospitalCampusMap: React.FC<ThreeDHospitalCampusMapProps> = (
 
   // 3D Buildings Layout
   const buildingsData: CampusBuilding3DDef[] = useMemo(() => {
-    const isBachMai = currentCampus.id === 'bach_mai' || currentCampus.id === 'default';
-    if (isBachMai) {
-      return [
-        {
-          id: 'building-A',
-          code: 'A',
-          name: 'Tòa K1: Khám Bệnh Đa Khoa & Theo Yêu Cầu',
-          nameEn: 'Building K1: Outpatient & Specialty Clinic Center',
-          floors: 6,
-          departments: ['Cổng 1 (78 Giải Phóng)', 'Tiếp đón BHYT & Kiosk K1-101', 'Khám Tim Mạch & Nội Khoa', 'Khám Nhi, Sản, TMH, Mắt', 'Nhà thuốc BV Bạch Mai Số 1'],
-          crowdLevel: 'high',
-          avgWaitMins: 15,
-          x: -45,
-          z: 25,
-          width: 52,
-          depth: 42,
-          height: 38,
-          color: 0xf1f5f9,
-          roofColor: 0x0284c7,
-          accentColor: 0x38bdf8
-        },
-        {
-          id: 'building-B',
-          code: 'B',
-          name: 'Tòa A1: Trung Tâm Cấp Cứu A9 & Đột Quỵ & Chống Độc',
-          nameEn: 'Building A1: A9 Emergency, Stroke & Poison Center',
-          floors: 5,
-          departments: ['Cổng 2 (Làn A9)', 'Cấp Cứu A9 24/7 (A1-101)', 'Đơn vị Đột Quỵ Giờ Vàng', 'Trung tâm Chống Độc QG', 'Hồi sức tích cực ICU'],
-          crowdLevel: 'medium',
-          avgWaitMins: 0,
-          x: 45,
-          z: 25,
-          width: 50,
-          depth: 44,
-          height: 34,
-          color: 0xf8fafc,
-          roofColor: 0xdc2626,
-          accentColor: 0xef4444,
-          isEmergency: true,
-          hasHelipad: true
-        },
-        {
-          id: 'building-C',
-          code: 'C',
-          name: 'Tòa C: Chẩn Đoán Hình Ảnh & Xét Nghiệm Kỹ Thuật Cao',
-          nameEn: 'Building C: Diagnostic Imaging & High-Tech Lab',
-          floors: 4,
-          departments: ['Cổng 3 (Phương Mai)', 'Lấy Máu Tự Động (C-102)', 'Chụp X-Quang DR (C-106)', 'CT 512 dãy & MRI 3.0T', 'Nội soi Tiêu hóa Việt - Nhật'],
-          crowdLevel: 'high',
-          avgWaitMins: 20,
-          x: -45,
-          z: -45,
-          width: 48,
-          depth: 44,
-          height: 28,
-          color: 0xf8fafc,
-          roofColor: 0x7c3aed,
-          accentColor: 0xa855f7
-        },
-        {
-          id: 'building-E',
-          code: 'A',
-          name: 'Khu Dược & Quầy Thu Ngân Bệnh Viện Bạch Mai',
-          nameEn: 'Central Pharmacy & Financial Center',
-          floors: 2,
-          departments: ['Nhà thuốc Bệnh viện Số 1', 'Quầy Thu ngân Viện phí', 'CSKH & Hỗ trợ Xe lăn'],
-          crowdLevel: 'medium',
-          avgWaitMins: 8,
-          x: 45,
-          z: -45,
-          width: 44,
-          depth: 38,
-          height: 14,
-          color: 0xf8fafc,
-          roofColor: 0x059669,
-          accentColor: 0x10b981
-        }
-      ];
-    }
-
     return [
       {
-        id: 'building-A',
-        code: 'A',
-        name: 'Tòa A: Trung Tâm Khám Bệnh & Cấp Cứu',
-        nameEn: 'Building A: Outpatient & Emergency Center',
+        id: 'building-K1',
+        code: 'K1',
+        name: 'Tòa K1: Khám Bệnh Đa Khoa & Theo Yêu Cầu',
+        nameEn: 'Building K1: Outpatient & Specialty Clinic Center',
         floors: 6,
-        departments: ['Sảnh đón tiếp & Đăng ký', 'Khám Tim Mạch & Nội Khoa', 'Khám Ngoại Tổng Hợp', 'Phòng Hội Chẩn'],
+        departments: ['Cổng 4 (Giải Phóng - Vào K1, K2)', 'Tiếp đón BHYT & Kiosk K1-101', 'Khám Tim Mạch & Nội Khoa', 'Khám Nhi, Sản, TMH, Mắt', 'Nhà thuốc BV Bạch Mai Số 1'],
         crowdLevel: 'high',
-        avgWaitMins: 20,
+        avgWaitMins: 15,
         x: -45,
         z: 25,
-        width: 50,
-        depth: 40,
+        width: 52,
+        depth: 42,
         height: 38,
         color: 0xf1f5f9,
         roofColor: 0x0284c7,
         accentColor: 0x38bdf8
       },
       {
-        id: 'building-B',
-        code: 'B',
-        name: 'Tòa B: Khối Ngoại Khoa & Hồi Sức Tích Cực (ICU)',
-        nameEn: 'Building B: Inpatient & ICU Center',
+        id: 'building-A9',
+        code: 'A9',
+        name: 'Tòa A9: Trung Tâm Cấp Cứu A9 (24/7)',
+        nameEn: 'Building A9: A9 Emergency Center (24/7)',
         floors: 5,
-        departments: ['Cấp Cứu 24/7', 'Hồi Sức Cấp Cứu ICU', 'Khoa Đột Quỵ', 'Sân Đỗ Trực Thăng Cứu Hộ'],
+        departments: ['Cổng 1 (78 Giải Phóng - Vào A9)', 'Cấp Cứu A9 24/7 (A9-100)', 'Phân loại bệnh nhân Triage', 'Hồi sức cấp cứu ICU'],
         crowdLevel: 'medium',
-        avgWaitMins: 5,
+        avgWaitMins: 0,
         x: 45,
-        z: 25,
-        width: 48,
-        depth: 42,
-        height: 32,
+        z: 35,
+        width: 45,
+        depth: 30,
+        height: 34,
         color: 0xf8fafc,
-        roofColor: 0xe11d48,
-        accentColor: 0xf43f5e,
+        roofColor: 0xdc2626,
+        accentColor: 0xef4444,
         isEmergency: true,
         hasHelipad: true
       },
       {
-        id: 'building-C',
-        code: 'C',
-        name: 'Tòa C: Trung Tâm Chẩn Đoán Hình Ảnh & Xét Nghiệm',
-        nameEn: 'Building C: Diagnostic Imaging & Laboratory',
+        id: 'building-A10',
+        code: 'A10',
+        name: 'Tòa A10: Trung Tâm Đột Quỵ',
+        nameEn: 'Building A10: Stroke Center',
         floors: 4,
-        departments: ['Chụp MRI 3.0 Tesla & CT 128 dãy', 'Xét nghiệm Sinh Hóa - Di Truyền', 'Nội soi Tiêu hóa', 'Thăm dò Chức năng'],
-        crowdLevel: 'high',
-        avgWaitMins: 25,
-        x: -45,
-        z: -45,
-        width: 46,
-        depth: 42,
-        height: 26,
+        departments: ['Cạnh Tòa A9 (Cổng 1)', 'Cấp cứu đột quỵ giờ vàng', 'Tiêu sợi huyết', 'Can thiệp mạch não'],
+        crowdLevel: 'medium',
+        avgWaitMins: 0,
+        x: 45,
+        z: 5,
+        width: 35,
+        depth: 25,
+        height: 28,
         color: 0xf8fafc,
-        roofColor: 0x059669,
-        accentColor: 0x10b981
+        roofColor: 0xb91c1c,
+        accentColor: 0xdc2626,
+        isEmergency: true
       },
       {
-        id: 'building-E',
-        code: 'A', // Link to Pharmacy
-        name: 'Khu E: Nhà Thuốc Bệnh Viện & Thu Ngân Viện Phí',
-        nameEn: 'Block E: Central Pharmacy & Cashier',
-        floors: 2,
-        departments: ['Nhà thuốc Bệnh viện Số 1', 'Quầy Thu Ngân', 'Chăm sóc Khách hàng'],
+        id: 'building-K3',
+        code: 'K3',
+        name: 'Tòa K3: TT Chống Độc & Da Liễu / Bỏng',
+        nameEn: 'Building K3: Poison Control & Dermatology',
+        floors: 4,
+        departments: ['Gần Cổng 1 Giải Phóng', 'Trung tâm Chống độc Quốc gia', 'Khoa Da liễu', 'Đơn vị Bỏng'],
         crowdLevel: 'medium',
-        avgWaitMins: 10,
+        avgWaitMins: 5,
+        x: 10,
+        z: 40,
+        width: 30,
+        depth: 25,
+        height: 26,
+        color: 0xf8fafc,
+        roofColor: 0xe11d48,
+        accentColor: 0xf43f5e,
+        isEmergency: true
+      },
+      {
+        id: 'building-VTM',
+        code: 'VTM',
+        name: 'Viện Tim Mạch Việt Nam (Khối nhà bên trái)',
+        nameEn: 'Vietnam National Heart Institute (Building C)',
+        floors: 4,
+        departments: ['Khối nhà lớn bên trái', 'Khám Tim Mạch Chuyên Gia', 'Điện Sinh Lý Tim', 'Can thiệp Cathlab & Phẫu thuật tim'],
+        crowdLevel: 'high',
+        avgWaitMins: 20,
+        x: -45,
+        z: -45,
+        width: 48,
+        depth: 44,
+        height: 28,
+        color: 0xf8fafc,
+        roofColor: 0x7c3aed,
+        accentColor: 0xa855f7
+      },
+      {
+        id: 'building-Q',
+        code: 'Q',
+        name: 'Tòa Q: Trung Tâm Ung Bướu & YHHN (21 Tầng)',
+        nameEn: 'Building Q: Oncology & Nuclear Medicine Center',
+        floors: 21,
+        departments: ['Máy xạ trị gia tốc TrueBeam', 'PET/CT & SPECT', 'Hóa trị ban ngày', 'Y học hạt nhân Nhi khoa'],
+        crowdLevel: 'medium',
+        avgWaitMins: 8,
         x: 45,
         z: -45,
         width: 44,
         depth: 38,
-        height: 14,
+        height: 54,
         color: 0xf8fafc,
-        roofColor: 0xd97706,
-        accentColor: 0xf59e0b
+        roofColor: 0x059669,
+        accentColor: 0x10b981
       }
     ];
-  }, [currentCampus.id]);
+  }, []);
 
   // Helper: Convert any MapNode into 3D Vector Coordinate
   const getNode3DPosition = useCallback((node: MapNode): THREE.Vector3 => {
@@ -1089,8 +1047,8 @@ export const ThreeDHospitalCampusMap: React.FC<ThreeDHospitalCampusMapProps> = (
         <div className="flex items-center gap-2 pointer-events-auto">
           <div className="bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-200 shadow-lg flex items-center gap-2.5 text-xs text-slate-800">
             <Box className="w-4 h-4 text-cyan-600" />
-            <span className="font-bold">Bản Đồ 3D Đa Tầng</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-bold">Mô hình 3D Khuôn Viên</span>
+            <span className="px-1.5 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold rounded">Mô phỏng</span>
             <span className="text-[11px] text-slate-500 hidden sm:inline">{currentCampus.name}</span>
           </div>
 

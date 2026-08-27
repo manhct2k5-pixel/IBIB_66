@@ -3,6 +3,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { AITriageRequest, AITriageResponse, AITriageData } from "./src/types";
 
 dotenv.config();
 
@@ -32,93 +33,178 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// AI Medical Hospital Triage & Navigation Assistant Endpoint
+// Verified list of departments in Bach Mai Hospital
+const VERIFIED_BACH_MAI_DEPARTMENTS: Record<string, { name: string; buildingId: string; floorId: string; roomCode: string }> = {
+  "dept_a9_emergency": { name: "Trung Tâm Cấp Cứu A9 (24/7)", buildingId: "A9", floorId: "1", roomCode: "A9-100" },
+  "dept_stroke_a10": { name: "Trung Tâm Đột Quỵ (Tòa A10)", buildingId: "A10", floorId: "1", roomCode: "A10-101" },
+  "dept_poison_k3": { name: "Trung Tâm Chống Độc Quốc Gia (Tòa K3)", buildingId: "K3", floorId: "1", roomCode: "K3-101" },
+  "dept_derma_k3": { name: "Khoa Da Liễu & Bỏng (Tòa K3)", buildingId: "K3", floorId: "1", roomCode: "K3-102" },
+  "dept_reception_k1": { name: "Sảnh Tiếp Đón & Đăng Ký Khám (Tòa K1)", buildingId: "K1", floorId: "1", roomCode: "K1-101" },
+  "dept_internal_k1": { name: "Phòng Khám Nội Tổng Quát (Tòa K1)", buildingId: "K1", floorId: "2", roomCode: "K1-201" },
+  "dept_gastro_k1": { name: "Phòng Khám Tiêu Hóa - Gan Mật (Tòa K1)", buildingId: "K1", floorId: "2", roomCode: "K1-202" },
+  "dept_cardiology_vtm": { name: "Viện Tim Mạch Quốc Gia (Khối nhà bên trái)", buildingId: "VTM", floorId: "1", roomCode: "VTM-101" },
+  "dept_onco_h": { name: "Viện Y Học Hạt Nhân & Ung Bướu (Tòa H)", buildingId: "H", floorId: "1", roomCode: "H-101" },
+  "dept_tropical_f": { name: "Viện Y Học Nhiệt Đới & Phòng Tiêm Chủng (Tòa F)", buildingId: "F", floorId: "1", roomCode: "F-101" },
+  "dept_eye_dental_f": { name: "Khoa Mắt & Răng Hàm Mặt (Tòa F)", buildingId: "F", floorId: "1", roomCode: "F-102" },
+  "dept_neuro_t1": { name: "Viện Thần Kinh (Cụm T1-T3)", buildingId: "T1", floorId: "1", roomCode: "T1-101" },
+  "dept_mental_t4": { name: "Viện Sức Khỏe Tâm Thần (Cụm T4-T6)", buildingId: "T4", floorId: "1", roomCode: "T4-101" },
+  "dept_trad_d2": { name: "Khoa Y Học Cổ Truyền (Tòa D2)", buildingId: "D2", floorId: "1", roomCode: "D2-101" },
+  "dept_rehab_d4": { name: "Viện Phục Hồi Chức Năng (Tòa D4)", buildingId: "D4", floorId: "1", roomCode: "D4-101" },
+  "dept_allergy_d6": { name: "Trung Tâm Dị Ứng - Miễn Dịch Lâm Sàng (Tòa D6)", buildingId: "D6", floorId: "1", roomCode: "D6-101" },
+  "dept_pharmacy_k1": { name: "Nhà Thuốc Bệnh Viện (Tòa K1)", buildingId: "K1", floorId: "1", roomCode: "K1-103" },
+  "dept_cashier_k1": { name: "Quầy Thu Viện Phí (Tòa K1)", buildingId: "K1", floorId: "1", roomCode: "K1-102" }
+};
+
+function checkEmergencyKeywords(text: string): boolean {
+  const lower = text.toLowerCase();
+  return (
+    lower.includes("đau ngực dữ dội") ||
+    lower.includes("khó thở") ||
+    lower.includes("hôn mê") ||
+    lower.includes("co giật") ||
+    lower.includes("chảy máu nhiều") ||
+    lower.includes("mất máu") ||
+    lower.includes("ngất") ||
+    lower.includes("cấp cứu") ||
+    lower.includes("ngộ độc") ||
+    lower.includes("đột quỵ") ||
+    lower.includes("méo miệng") ||
+    lower.includes("liệt nửa người")
+  );
+}
+
+// AI Hospital Triage & Navigation Assistant Endpoint
 app.post("/api/triage", async (req, res) => {
-  const { query, currentFloor, currentBuilding, language = "vi" } = req.body;
+  const reqBody: AITriageRequest = req.body;
+  const { query, currentLocation, language = "vi" } = reqBody;
 
   if (!query || typeof query !== "string") {
     return res.status(400).json({ error: "Missing or invalid query" });
   }
 
+  const isEmergency = checkEmergencyKeywords(query);
+
+  // Fallback response builder when Gemini API key is missing or on error
+  const createFallbackResponse = (): AITriageResponse => {
+    if (isEmergency) {
+      return {
+        reply: "CẢNH BÁO: Triệu chứng có dấu hiệu khẩn cấp. Hãy gọi 115 hoặc di chuyển ngay tới Trung tâm Cấp cứu A9 (gần Cổng 1 đường Giải Phóng). Hotline A9: 086 958 7707.",
+        triage: {
+          suggestedDepartmentId: "dept_a9_emergency",
+          departmentName: "Trung Tâm Cấp Cứu A9 (24/7)",
+          buildingId: "A9",
+          floorId: "1",
+          roomCode: "A9-100",
+          urgency: "emergency",
+          instructions: [
+            "Gọi 115 hoặc Hotline Cấp cứu A9: 086 958 7707",
+            "Ưu tiên theo hướng dẫn của nhân viên y tế",
+            "Không tự đi vòng quanh bệnh viện để tìm tòa nhà"
+          ]
+        }
+      };
+    }
+
+    return {
+      reply: `Đối với triệu chứng hoặc câu hỏi "${query}", bạn vui lòng đến Sảnh Tiếp Đón & Đăng Ký Khám tại Tòa K1 (thuận tiện vào từ Cổng 4 đường Giải Phóng) để được nhân viên y tế phân luồng vào chuyên khoa phù hợp. Lưu ý: Gợi ý của AI không thay thế chẩn đoán của bác sĩ.`,
+      triage: {
+        suggestedDepartmentId: "dept_reception_k1",
+        departmentName: "Sảnh Tiếp Đón & Đăng Ký Khám (Tòa K1)",
+        buildingId: "K1",
+        floorId: "1",
+        roomCode: "K1-101",
+        urgency: "normal",
+        instructions: [
+          "Vào từ Cổng 4 (đường Giải Phóng) để tới Tòa K1 thuận tiện nhất",
+          "Lấy số thứ tự tại quầy tiếp đón sảnh Tầng 1",
+          "Xuất trình thẻ BHYT hoặc CCCD để đăng ký phòng khám chuyên khoa"
+        ]
+      }
+    };
+  };
+
   const ai = getGeminiClient();
 
-  // If Gemini API is not available, provide structured intelligent fallback
   if (!ai) {
-    return res.json({
-      reply: `Dựa trên triệu chứng "${query}", bạn nên đến Quầy Tiếp Đón & Phân Loại Bệnh (Tòa A, Tầng 1) hoặc liên hệ nhân viên y tế để được thăm khám chính xác.`,
-      suggestedDepartmentId: "dept_reception",
-      departmentName: "Quầy Tiếp Đón & Đăng Ký Khám",
-      building: "Tòa A",
-      floor: "Tầng 1",
-      roomCode: "A-101",
-      urgency: "normal",
-      instructions: [
-        "Đến quầy số 1 lấy số thứ tự",
-        "Xuất trình thẻ BHYT hoặc CCCD gắn chip",
-        "Nhận phiếu chỉ định vào phòng khám chuyên khoa"
-      ]
-    });
+    return res.json(createFallbackResponse());
   }
 
   try {
-    const prompt = `Bạn là Trợ lý AI Hướng Dẫn Chỉ Đường Bệnh Viện Đa Khoa MedNav (MedNav Hospital Assistant).
-Nhiệm vụ của bạn:
-1. Tiếp nhận câu hỏi hoặc mô tả triệu chứng của bệnh nhân.
-2. Xác định khoa khám/phòng chuyên môn phù hợp nhất trong danh sách cơ sở vật chất bệnh viện dưới đây.
-3. Cung cấp câu trả lời ngắn gọn, thân thiện, ân cần (dưới 100 từ) và trả về JSON có cấu trúc để hệ thống kích hoạt chỉ đường tự động.
+    const prompt = `Bạn là Trợ lý AI Hướng Dẫn Định Hướng & Phân Luồng Khám Bệnh cho Bệnh viện Bạch Mai (Hà Nội).
+Yêu cầu an toàn y tế bắt buộc:
+1. Gợi ý của AI CHỈ mang tính định hướng di chuyển trong bệnh viện, KHÔNG thay thế chẩn đoán y khoa của bác sĩ.
+2. Với các triệu chứng nguy kịch (đau ngực dữ dội, khó thở, hôn mê, co giật, chảy máu nhiều, méo miệng/yếu liệt nửa người, ngộ độc cấp): BẮT BUỘC chọn khoa cấp cứu "dept_a9_emergency" (Tòa A9) hoặc "dept_stroke_a10" (Tòa A10), urgency="emergency", và nhắc gọi 115 / Hotline A9 086 958 7707.
+3. BẠN CHỈ ĐƯỢC CHỌN suggestedDepartmentId NẰM TRONG DANH SÁCH ĐÃ XÁC MINH CỦA BỆNH VIỆN BẠCH MAI DƯỚI ĐÂY:
+- "dept_a9_emergency": Trung Tâm Cấp Cứu A9 (Tòa A9, Tầng 1, Mã A9-100) - Cấp cứu 24/7, đau ngực dữ dội, khó thở, ngất xỉu, tai nạn
+- "dept_stroke_a10": Trung Tâm Đột Quỵ (Tòa A10, Tầng 1, Mã A10-101) - Méo miệng, liệt nửa người, nói ngọng, tai biến
+- "dept_poison_k3": Trung Tâm Chống Độc Quốc Gia (Tòa K3, Tầng 1, Mã K3-101) - Ngộ độc hóa chất, rắn cắn, nấm độc, uống nhầm thuốc
+- "dept_derma_k3": Khoa Da Liễu & Bỏng (Tòa K3, Tầng 1, Mã K3-102) - Bỏng, dị ứng da, ngứa, vảy nến
+- "dept_reception_k1": Sảnh Tiếp Đón & Đăng Ký Khám (Tòa K1, Tầng 1, Mã K1-101) - Đăng ký khám BHYT, lấy số khám, hỏi thông tin chung (Thuận tiện từ Cổng 4)
+- "dept_internal_k1": Phòng Khám Nội Tổng Quát (Tòa K1, Tầng 2, Mã K1-201) - Sốt, mệt mỏi, sút cân, khám sức khỏe tổng quát
+- "dept_gastro_k1": Phòng Khám Tiêu Hóa - Gan Mật (Tòa K1, Tầng 2, Mã K1-202) - Đau dạ dày, ợ chua, viêm gan, đại tràng
+- "dept_cardiology_vtm": Viện Tim Mạch Quốc Gia (Tòa VTM Khối nhà bên trái, Tầng 1, Mã VTM-101) - Tăng huyết áp, đau thắt ngực, suy tim, hồi hộp
+- "dept_onco_h": Viện Y Học Hạt Nhân & Ung Bướu (Tòa H, Tầng 1, Mã H-101) - Tầm soát ung thư, u hạch, xạ trị, hóa trị
+- "dept_tropical_f": Viện Y Học Nhiệt Đới & Phòng Tiêm Chủng (Tòa F, Tầng 1, Mã F-101) - Sốt xuất huyết, tiêm phòng vaccine, bệnh truyền nhiễm
+- "dept_eye_dental_f": Khoa Mắt & Răng Hàm Mặt (Tòa F, Tầng 1, Mã F-102) - Mờ mắt, đau răng, nhổ răng khôn, sâu răng
+- "dept_neuro_t1": Viện Thần Kinh (Cụm T1-T3, Tầng 1, Mã T1-101) - Đau đầu mạn tính, rối loạn tiền đình, mất ngủ, Parkinson (Gần Cổng 3)
+- "dept_mental_t4": Viện Sức Khỏe Tâm Thần (Cụm T4-T6, Tầng 1, Mã T4-101) - Lo âu, trầm cảm, stress, rối loạn giấc ngủ (Gần Cổng 3)
+- "dept_trad_d2": Khoa Y Học Cổ Truyền (Tòa D2, Tầng 1, Mã D2-101) - Đông y, châm cứu, bấm huyệt
+- "dept_rehab_d4": Viện Phục Hồi Chức Năng (Tòa D4, Tầng 1, Mã D4-101) - Phục hồi chức năng, tập vật lý trị liệu
+- "dept_allergy_d6": Trung Tâm Dị Ứng - Miễn Dịch Lâm Sàng (Tòa D6, Tầng 1, Mã D6-101) - Dị ứng thuốc, mày đay, lupus
+- "dept_pharmacy_k1": Nhà Thuốc Bệnh Viện (Tòa K1, Tầng 1, Mã K1-103) - Lấy thuốc, mua thuốc theo đơn
+- "dept_cashier_k1": Quầy Thu Viện Phí (Tòa K1, Tầng 1, Mã K1-102) - Nộp viện phí, thanh toán BHYT
 
-Danh mục khoa & phòng khám của Bệnh viện MedNav:
-- Cấp Cứu 24/7 (Emergency): id="dept_emergency", Tòa A, Tầng 1, Phòng A-100 (Triệu chứng: Đau ngực dữ dội, khó thở cấp, ngất xỉu, co giật, chấn thương chảy máu nhiều, sốt co giật ở trẻ em, ngộ độc)
-- Quầy Tiếp đón & Viện phí (Reception): id="dept_reception", Tòa A, Tầng 1, Phòng A-101 (Đăng ký khám, bảo hiểm y tế, đóng tiền)
-- Nhà thuốc Bệnh viện (Pharmacy): id="dept_pharmacy_a", Tòa A, Tầng 1, Phòng A-108 (Lấy thuốc, mua thuốc)
-- Khoa Nội Tổng Quát (Internal Medicine): id="dept_internal", Tòa A, Tầng 2, Phòng A-201 (Sốt, mệt mỏi, sụt cân, khám sức khỏe tổng quát)
-- Khoa Tim Mạch (Cardiology): id="dept_cardiology", Tòa A, Tầng 2, Phòng A-204 (Hồi hộp, đánh trống ngực, tăng huyết áp, đau thắt ngực nhẹ, suy tim)
-- Khoa Tiêu Hóa - Gan Mật (Gastroenterology): id="dept_gastro", Tòa A, Tầng 2, Phòng A-208 (Đau dạ dày, ợ chua, viêm gan, đại tràng, trĩ)
-- Khoa Cơ Xương Khớp & Chấn thương chỉnh hình (Orthopedics): id="dept_ortho", Tòa A, Tầng 2, Phòng A-212 (Đau khớp, đau lưng, thoái hóa cột sống, bong gân, gãy xương)
-- Khoa Nhi & Tiêm Chủng (Pediatrics): id="dept_pediatrics", Tòa A, Tầng 3, Phòng A-301 (Bệnh lý trẻ em dưới 16 tuổi, tiêm phòng vaccine)
-- Khoa Phụ Sản (Obstetrics & Gynecology): id="dept_obgyn", Tòa A, Tầng 3, Phòng A-306 (Khám thai, phụ khoa, hiếm muộn, kế hoạch hóa)
-- Khoa Tai Mũi Họng (ENT): id="dept_ent", Tòa A, Tầng 3, Phòng A-310 (Viêm xoang, đau họng, ù tai, khàn tiếng)
-- Khoa Mắt (Ophthalmology): id="dept_eye", Tòa A, Tầng 4, Phòng A-401 (Mờ mắt, đau mắt đỏ, đo thị lực, đục thủy tinh thể)
-- Khoa Răng Hàm Mặt (Dental): id="dept_dental", Tòa A, Tầng 4, Phòng A-405 (Đau răng, sâu răng, nhổ răng khôn, niềng răng)
-- Khoa Da Liễu & Thẩm Mỹ (Dermatology): id="dept_derma", Tòa A, Tầng 4, Phòng A-410 (Mụn, dị ứng, viêm da, vảy nến, nấm da)
-- Khoa Thần Kinh (Neurology): id="dept_neuro", Tòa A, Tầng 5, Phòng A-501 (Đau đầu kinh niên, chóng mặt, mất ngủ, rối loạn tiền đình, tê bì chân tay)
-- Khoa Ung Bướu & Hóa Trị (Oncology): id="dept_onco", Tòa A, Tầng 5, Phòng A-508 (Tầm soát ung thư, u hạch, hóa trị)
-- Khu Lấy Máu & Xét Nghiệm (Laboratory): id="dept_lab", Tòa C, Tầng 1, Phòng C-102 (Xét nghiệm máu, nước tiểu, sinh hóa)
-- Chụp X-Quang Kỹ Thuật Số (X-Ray): id="dept_xray", Tòa C, Tầng 1, Phòng C-106 (Chụp X-quang phổi, xương khớp)
-- Chụp Cắt Lớp Vi Tính CT & Chụp MRI: id="dept_mri_ct", Tòa C, Tầng 2, Phòng C-202 (Chụp CT, MRI sọ não, cột sống)
-- Nội Soi Tiêu Hóa & Siêu Âm 4D: id="dept_endoscopy_us", Tòa C, Tầng 3, Phòng C-301 (Nội soi dạ dày, đại tràng, siêu âm màu)
-- Căn Tin & Tiện Ích: id="dept_canteen", Tòa A, Tầng B1, Phòng A-B101 (Ăn uống, nghỉ ngơi, ATM)
+4. Nếu không rõ triệu chứng hoặc không có khoa chuyên sâu tương ứng, chọn "dept_reception_k1".
+5. Trả về đúng JSON theo cấu trúc:
+{
+  "reply": "Lời khuyên ngắn gọn, lịch sự, ân cần kèm câu nhắc 'Gợi ý của AI không thay thế chẩn đoán của bác sĩ.'",
+  "triage": {
+    "suggestedDepartmentId": "id_khoa_trong_danh_sach_tren",
+    "departmentName": "Tên khoa",
+    "buildingId": "Mã tòa",
+    "floorId": "Tầng",
+    "roomCode": "Mã phòng",
+    "urgency": "emergency" | "urgent" | "normal",
+    "instructions": ["hướng dẫn 1", "hướng dẫn 2"]
+  }
+}
 
-Câu hỏi người bệnh: "${query}"
-Vị trí hiện tại của bệnh nhân: ${currentBuilding || "Tòa A"}, ${currentFloor || "Tầng 1"}
+Câu hỏi/triệu chứng của bệnh nhân: "${query}"
+Vị trí hiện tại: Tòa ${currentLocation?.buildingId || "Chưa xác định"}, Tầng ${currentLocation?.floorId || "1"}
 Ngôn ngữ phản hồi: ${language === "en" ? "English" : "Tiếng Việt"}`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.7-flash",
+      model: "gemini-2.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
-        systemInstruction: "Bạn là hệ thống AI phân luồng y tế & chỉ đường thông minh cho bệnh viện. Phản hồi hoàn toàn bằng định dạng JSON chuẩn theo schema: { reply: string, suggestedDepartmentId: string, departmentName: string, building: string, floor: string, roomCode: string, urgency: 'emergency'|'urgent'|'normal', instructions: string[] }."
+        systemInstruction: "Bạn là hệ thống AI phân luồng y tế & chỉ đường định hướng Bệnh viện Bạch Mai. Phản hồi hoàn toàn bằng JSON theo đúng schema quy định."
       }
     });
 
-    const parsed = JSON.parse(response.text || "{}");
+    const parsed: AITriageResponse = JSON.parse(response.text || "{}");
+
+    // Validate that the returned suggestedDepartmentId exists in our verified list
+    if (!parsed.triage || !parsed.triage.suggestedDepartmentId || !VERIFIED_BACH_MAI_DEPARTMENTS[parsed.triage.suggestedDepartmentId]) {
+      const fallback = createFallbackResponse();
+      parsed.triage = fallback.triage;
+    } else {
+      // Ensure buildingId, floorId, roomCode, departmentName match verified source of truth
+      const verifiedDept = VERIFIED_BACH_MAI_DEPARTMENTS[parsed.triage.suggestedDepartmentId];
+      parsed.triage.departmentName = verifiedDept.name;
+      parsed.triage.buildingId = verifiedDept.buildingId;
+      parsed.triage.floorId = verifiedDept.floorId;
+      parsed.triage.roomCode = verifiedDept.roomCode;
+    }
+
+    if (!parsed.reply) {
+      parsed.reply = `Gợi ý đến ${parsed.triage.departmentName}. Gợi ý của AI không thay thế chẩn đoán của bác sĩ.`;
+    }
+
     return res.json(parsed);
   } catch (error: any) {
     console.error("Gemini triage error:", error);
-    return res.json({
-      reply: `Chúng tôi gợi ý bạn đến Quầy Tiếp Đón (Tòa A, Tầng 1) để được hướng dẫn chi tiết cho triệu chứng: "${query}".`,
-      suggestedDepartmentId: "dept_reception",
-      departmentName: "Quầy Tiếp Đón & Đăng Ký Khám",
-      building: "Tòa A",
-      floor: "Tầng 1",
-      roomCode: "A-101",
-      urgency: "normal",
-      instructions: [
-        "Đến sảnh chính Tòa A Tầng 1",
-        "Nhận tư vấn trực tiếp từ điều dưỡng tiếp đón"
-      ]
-    });
+    return res.json(createFallbackResponse());
   }
 });
 
@@ -138,7 +224,7 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`MedNav Hospital server running at http://0.0.0.0:${PORT}`);
+    console.log(`MedNav Bach Mai Hospital server running at http://0.0.0.0:${PORT}`);
   });
 }
 

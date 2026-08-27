@@ -1,6 +1,30 @@
-export type BuildingId = 'A' | 'B' | 'C';
+export type BuildingId = 
+  | 'K1' 
+  | 'K2' 
+  | 'K3' 
+  | 'A9' 
+  | 'A10' 
+  | 'A11' 
+  | 'P' 
+  | 'Q' 
+  | 'H' 
+  | 'F' 
+  | 'E' 
+  | 'T1' 
+  | 'T2' 
+  | 'T3' 
+  | 'T4' 
+  | 'T5' 
+  | 'T6' 
+  | 'D2' 
+  | 'D4' 
+  | 'D5' 
+  | 'D6' 
+  | 'B2' 
+  | 'VTM'
+  | 'OUTDOOR';
 
-export type FloorId = 'B1' | '1' | '2' | '3' | '4' | '5';
+export type FloorId = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | 'G' | 'B1' | 'UNKNOWN';
 
 export type NodeType = 
   | 'room' 
@@ -10,6 +34,7 @@ export type NodeType =
   | 'escalator' 
   | 'entrance' 
   | 'exit' 
+  | 'gate'
   | 'reception' 
   | 'pharmacy' 
   | 'cashier' 
@@ -32,11 +57,13 @@ export type DepartmentCategory =
   | 'inpatient'
   | 'administration';
 
+export type VerificationStatus = 'verified' | 'campus_verified' | 'unverified' | 'estimated';
+
 export interface RoomDetails {
   id: string;
   name: string;
   nameEn: string;
-  code: string; // e.g. "A-101"
+  code: string; // e.g. "K1-101" hoặc "Chưa có dữ liệu xác minh"
   category: DepartmentCategory;
   buildingId: BuildingId;
   floorId: FloorId;
@@ -44,10 +71,12 @@ export interface RoomDetails {
   descriptionEn: string;
   specialty?: string;
   doctorInCharge?: string;
-  operatingHours: string;
+  operatingHours?: string;
   phoneExtension?: string;
   commonSymptoms?: string[];
   color?: string;
+  verificationStatus: VerificationStatus;
+  sourceUrl?: string;
 }
 
 export interface MapNode {
@@ -61,21 +90,22 @@ export interface MapNode {
   type: NodeType;
   roomId?: string; // Link to RoomDetails if it's a room
   isAccessible: boolean; // Wheelchair accessible
-  kioskCode?: string; // For QR scan simulation
+  kioskCode?: string; // For demo QR simulation
+  verificationStatus?: VerificationStatus;
 }
 
 export interface MapEdge {
   fromNodeId: string;
   toNodeId: string;
-  distance: number; // in meters
+  distance: number; // in meters (estimated/surveyed)
   type: 'walk' | 'elevator' | 'stairs' | 'escalator' | 'skybridge';
   isAccessible: boolean; // Wheelchair accessible (no steps/stairs, wide passage)
   hasSteps?: boolean; // Has steps/stairs or curbs
   widthMeters?: number; // Corridor width (e.g. 2.4m, wheelchair clearance)
   slopeDegree?: number; // Slope in degrees
-  audioLandmarkVi?: string; // Acoustic/olfactory/tactile landmark in Vietnamese ("Nghe tiếng quầy tiếp đón phía tay trái", "Có gờ dẫn hướng xúc giác sàn")
-  audioLandmarkEn?: string; // English audio landmark description
-  consecutiveTurns?: number; // Turn complexity indicator
+  audioLandmarkVi?: string;
+  audioLandmarkEn?: string;
+  verificationStatus?: VerificationStatus;
 }
 
 export interface PDRSensorReading {
@@ -83,11 +113,11 @@ export interface PDRSensorReading {
   accelX: number;
   accelY: number;
   accelZ: number;
-  accelMagnitude: number;
-  gyroZ: number; // Angular velocity (rad/s or deg/s)
-  headingDeg: number; // Estimated azimuth heading 0-360
+  gyroZ: number;
   stepDetected: boolean;
   stepLengthMeters: number;
+  headingDegrees: number;
+  floorBarometerChange?: number;
 }
 
 export interface PDRPositionState {
@@ -99,7 +129,7 @@ export interface PDRPositionState {
   currentBuildingId: BuildingId;
   nearestEdge: MapEdge | null;
   nearestNodeId: string | null;
-  confidence: number; // 0.0 to 1.0
+  confidence: number;
   driftMeters: number;
   stepCount: number;
   lastQrCheckpointId: string | null;
@@ -122,8 +152,12 @@ export interface Building {
   id: BuildingId;
   name: string;
   nameEn: string;
+  code: string;
   floors: Floor[];
   description: string;
+  hasVerifiedIndoorMap: boolean;
+  verificationStatus: VerificationStatus;
+  sourceUrl?: string;
 }
 
 export interface Floor {
@@ -134,6 +168,7 @@ export interface Floor {
   level: number; // -1 for B1, 1 for 1, etc.
   description: string;
   nodes: MapNode[];
+  hasVerifiedFloorplan?: boolean;
 }
 
 export type RoutingProfile = 'fastest' | 'accessible' | 'visually_impaired' | 'emergency';
@@ -164,45 +199,44 @@ export interface NavigationStep {
 
 export interface NavigationRoute {
   pathNodes: MapNode[];
-  totalDistance: number; // in meters
+  totalDistance: number; // in meters (ước lượng)
   estimatedDurationSeconds: number; // seconds
   steps: NavigationStep[];
   profile: RoutingProfile;
   buildingsInvolved: BuildingId[];
   floorsInvolved: { buildingId: BuildingId; floorId: FloorId }[];
-}
-
-export interface WorkflowStop {
-  id: string;
-  room: RoomDetails;
-  node: MapNode;
-  title: string;
-  description: string;
-  isCompleted: boolean;
-  order: number;
-}
-
-export interface ClinicalWorkflowPreset {
-  id: string;
-  titleVi: string;
-  titleEn: string;
-  descriptionVi: string;
-  descriptionEn: string;
-  category: string;
-  estimatedTimeMin: number;
-  stopRoomIds: string[];
+  isVerifiedRoute?: boolean;
 }
 
 export interface HospitalCampusBuildingMarker {
   id: string;
   name: string;
   nameEn: string;
-  position: { lat: number; lng: number };
   buildingId?: BuildingId;
-  type: 'emergency' | 'outpatient' | 'inpatient' | 'diagnostic' | 'gate' | 'parking' | 'helipad';
+  type: 'emergency' | 'outpatient' | 'inpatient' | 'diagnostic' | 'gate' | 'parking' | 'helipad' | 'admin' | 'clinical' | 'education' | 'service' | 'neighbor';
   description: string;
   floorsCount: number;
   highlightColor?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+}
+
+export interface GateInfo {
+  id: string;
+  gateNumber: 1 | 2 | 3 | 4;
+  name: string;
+  nameEn: string;
+  street: 'Giải Phóng' | 'Phương Mai';
+  nodeId: string;
+  descriptionVi: string;
+  descriptionEn: string;
+  operatingHours: string;
+  bestForBuildings: BuildingId[];
+  vehicleRules: string;
+  verificationStatus: VerificationStatus;
+  sourceUrl: string;
 }
 
 export interface HospitalCampus {
@@ -213,10 +247,37 @@ export interface HospitalCampus {
   address: string;
   phone: string;
   emergencyPhone: string;
-  center: { lat: number; lng: number };
-  zoom: number;
   description: string;
   hasIndoorMap: boolean;
   buildings: HospitalCampusBuildingMarker[];
-  googlePlaceId?: string;
+  gates: GateInfo[];
+  verificationNotice: string;
+}
+
+// AI Triage API Contract (Shared between Frontend & Backend)
+export interface AITriageLocation {
+  buildingId?: string;
+  floorId?: string;
+  nodeId?: string;
+}
+
+export interface AITriageRequest {
+  query: string;
+  currentLocation?: AITriageLocation;
+  language?: 'vi' | 'en';
+}
+
+export interface AITriageData {
+  suggestedDepartmentId: string;
+  departmentName: string;
+  buildingId: string;
+  floorId: string;
+  roomCode: string;
+  urgency: 'emergency' | 'urgent' | 'normal';
+  instructions: string[];
+}
+
+export interface AITriageResponse {
+  reply: string;
+  triage: AITriageData;
 }

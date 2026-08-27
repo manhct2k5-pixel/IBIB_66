@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapNode } from '../types';
+import { MapNode, AITriageRequest, AITriageResponse, AITriageData } from '../types';
 import { MAP_NODES_DATA } from '../data/hospitalData';
 import { 
   Sparkles, 
@@ -9,7 +9,9 @@ import {
   ArrowRight, 
   X, 
   MapPin, 
-  Loader2
+  Loader2,
+  AlertTriangle,
+  PhoneCall
 } from 'lucide-react';
 
 interface AIAssistantModalProps {
@@ -21,42 +23,32 @@ interface AIAssistantModalProps {
   language: 'vi' | 'en';
 }
 
-interface TriageResult {
-  reply: string;
-  suggestedDepartmentId?: string;
-  departmentName?: string;
-  building?: string;
-  floor?: string;
-  roomCode?: string;
-  urgency?: 'emergency' | 'urgent' | 'normal';
-  instructions?: string[];
-}
-
 export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
   isOpen,
   onClose,
   onSelectDestinationNode,
   currentBuilding,
   currentFloor,
+  language
 }) => {
   const [query, setQuery] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string; triage?: TriageResult }[]>([
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string; triage?: AITriageData }[]>([
     {
       role: 'assistant',
-      text: 'Xin chào! Tôi là Trợ Lý AI Hướng Dẫn Bệnh Viện MedNav. Bạn đang gặp phải triệu chứng gì hoặc cần tìm khoa/dịch vụ nào, hãy mô tả tôi sẽ chỉ đường chính xác nhất cho bạn!'
+      text: 'Xin chào! Tôi là Trợ lý AI Hướng Dẫn Định Hướng Bệnh Viện Bạch Mai. Hãy nhập triệu chứng hoặc khoa bạn cần tìm, tôi sẽ gợi ý phòng khám đã xác minh và hướng dẫn di chuyển phù hợp.\n\n*Lưu ý: Gợi ý của AI không thay thế chẩn đoán của bác sĩ.*'
     }
   ]);
 
   if (!isOpen) return null;
 
   const quickQuestions = [
-    'Tôi bị đau tức ngực trái và hồi hộp',
-    'Tôi cần làm xét nghiệm máu và nước tiểu',
-    'Bé nhà tôi 3 tuổi bị sốt và ho khan',
-    'Tôi muốn nhổ răng khôn số 8',
-    'Tôi bị đau nhức khớp gối và cột sống',
-    'Căn tin và cây ATM ở đâu?'
+    'Tôi bị đau tức ngực dữ dội và khó thở',
+    'Tôi muốn đăng ký khám bệnh ngoại trú theo yêu cầu',
+    'Tôi bị ngộ độc thực phẩm / rắn cắn',
+    'Tôi cần khám chuyên khoa tim mạch',
+    'Tôi bị đau đầu kéo dài và rối loạn tiền đình',
+    'Tôi cần tư vấn tiêm chủng vắc-xin'
   ];
 
   const handleSend = async (textToSend?: string) => {
@@ -68,25 +60,31 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
     setLoading(true);
 
     try {
+      const payload: AITriageRequest = {
+        query: promptText,
+        currentLocation: {
+          buildingId: currentBuilding,
+          floorId: currentFloor
+        },
+        language
+      };
+
       const response = await fetch('/api/triage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: promptText,
-          currentLocation: { building: currentBuilding, floor: currentFloor }
-        })
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
         throw new Error('AI service error');
       }
 
-      const data = await response.json();
+      const data: AITriageResponse = await response.json();
       setMessages(prev => [
         ...prev,
         {
           role: 'assistant',
-          text: data.reply || 'Dưới đây là phòng khám phù hợp với nhu cầu của bạn:',
+          text: data.reply || 'Dưới đây là thông tin phân luồng định hướng:',
           triage: data.triage
         }
       ]);
@@ -95,7 +93,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
         ...prev,
         {
           role: 'assistant',
-          text: 'Xin lỗi, không thể kết nối tới máy chủ AI lúc này. Bạn có thể sử dụng thanh tìm kiếm trực tiếp để tra cứu phòng khám.'
+          text: 'Hiện không thể kết nối tới máy chủ AI. Vui lòng đến Sảnh Tiếp Đón Tòa K1 (Cổng 4) hoặc Trung tâm Cấp cứu A9 (Cổng 1) nếu có trường hợp khẩn cấp.'
         }
       ]);
     } finally {
@@ -105,10 +103,18 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
 
   const handleNavigateToDepartment = (departmentId?: string) => {
     if (!departmentId) return;
+    // Find node matching roomId or nodeId
     const node = MAP_NODES_DATA.find(n => n.roomId === departmentId || n.id === departmentId);
     if (node) {
       onSelectDestinationNode(node);
       onClose();
+    } else {
+      // Fallback to K1 entrance or reception
+      const defaultNode = MAP_NODES_DATA.find(n => n.id === 'node_k1_reception') || MAP_NODES_DATA[0];
+      if (defaultNode) {
+        onSelectDestinationNode(defaultNode);
+        onClose();
+      }
     }
   };
 
@@ -123,13 +129,13 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <span>Trợ Lý AI Phân Luồng & Chỉ Đường</span>
-                <span className="px-2 py-0.5 bg-cyan-100 text-cyan-800 text-[10px] font-bold rounded-full border border-cyan-200">
-                  Gemini 3.7
+                <span>Trợ Lý AI Phân Luồng & Định Hướng</span>
+                <span className="px-2 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-bold rounded-full">
+                  Bạch Mai Prototype
                 </span>
               </h2>
               <p className="text-xs text-slate-500">
-                Tự động gợi ý phòng khám chính xác theo triệu chứng & chỉ đường tức thì
+                Định hướng chuyên khoa khám & chỉ đường tới tòa nhà/phòng khám đã xác minh
               </p>
             </div>
           </div>
@@ -141,6 +147,14 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* Medical Safety Banner */}
+        <div className="px-4 py-2 bg-amber-50 border-b border-amber-200 text-[11px] text-amber-900 flex items-center gap-2">
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+          <span>
+            <strong>Lưu ý y tế:</strong> Gợi ý của AI không thay thế chẩn đoán của bác sĩ. Trường hợp nguy kịch vui lòng gọi <strong>115</strong> hoặc tới thẳng <strong>Cấp cứu A9</strong>.
+          </span>
         </div>
 
         {/* Quick Suggestion Chips */}
@@ -181,8 +195,12 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
 
                 {/* Structured Triage Card */}
                 {msg.triage && (
-                  <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5 text-xs">
-                    <div className="flex items-center justify-between">
+                  <div className={`mt-3 p-3 rounded-xl border space-y-2.5 text-xs ${
+                    msg.triage.urgency === 'emergency' 
+                      ? 'bg-rose-50 border-rose-200 text-rose-950' 
+                      : 'bg-slate-50 border-slate-200 text-slate-800'
+                  }`}>
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div className="flex items-center gap-2">
                         {msg.triage.roomCode && (
                           <span className="px-2 py-0.5 bg-cyan-100 text-cyan-800 font-bold rounded-md border border-cyan-200">
@@ -195,7 +213,8 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
                       </div>
 
                       {msg.triage.urgency === 'emergency' && (
-                        <span className="px-2 py-0.5 bg-rose-100 text-rose-700 font-bold rounded text-[10px] animate-pulse">
+                        <span className="px-2 py-0.5 bg-rose-600 text-white font-bold rounded text-[10px] animate-pulse flex items-center gap-1">
+                          <PhoneCall className="w-3 h-3" />
                           CẤP CỨU KHẨN CẤP
                         </span>
                       )}
@@ -204,13 +223,13 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
                     <div className="flex items-center gap-3 text-slate-600 text-[11px]">
                       <span className="flex items-center gap-1 text-cyan-700 font-semibold">
                         <MapPin className="w-3.5 h-3.5" />
-                        {msg.triage.building} - {msg.triage.floor}
+                        Tòa {msg.triage.buildingId} - Tầng {msg.triage.floorId}
                       </span>
                     </div>
 
                     {msg.triage.instructions && msg.triage.instructions.length > 0 && (
                       <div className="bg-white p-2.5 rounded-lg space-y-1 text-[11px] text-slate-600 border border-slate-200">
-                        <span className="font-bold text-slate-800 block">Lưu ý & Hướng dẫn:</span>
+                        <span className="font-bold text-slate-800 block">Hướng dẫn & Lưu ý:</span>
                         {msg.triage.instructions.map((ins, iIdx) => (
                           <div key={iIdx} className="flex items-start gap-1.5">
                             <span className="text-cyan-600">•</span>
@@ -224,10 +243,14 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
                     <button
                       id={`btn-navigate-triage-${msg.triage.suggestedDepartmentId}`}
                       onClick={() => handleNavigateToDepartment(msg.triage?.suggestedDepartmentId)}
-                      className="w-full py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-xs cursor-pointer"
+                      className={`w-full py-2.5 font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-xs cursor-pointer ${
+                        msg.triage.urgency === 'emergency'
+                          ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                          : 'bg-cyan-600 hover:bg-cyan-700 text-white'
+                      }`}
                     >
                       <ArrowRight className="w-4 h-4" />
-                      <span>CHỈ ĐƯỜNG NGAY ĐẾN ĐÂY</span>
+                      <span>CHỈ ĐƯỜNG TỚI ĐÂY</span>
                     </button>
                   </div>
                 )}
@@ -248,7 +271,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
               </div>
               <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-none p-3 text-xs text-slate-500 flex items-center gap-2 shadow-xs">
                 <Loader2 className="w-4 h-4 animate-spin text-cyan-600" />
-                <span>AI đang phân tích triệu chứng & tìm phòng khám...</span>
+                <span>AI đang phân tích triệu chứng & tìm khoa khám phù hợp...</span>
               </div>
             </div>
           )}
@@ -268,7 +291,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Nhập triệu chứng hoặc phòng khám bạn cần đến..."
+              placeholder="Nhập triệu chứng hoặc chuyên khoa cần tìm..."
               className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-cyan-600 focus:bg-white transition"
             />
 
@@ -279,7 +302,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
               className="px-5 py-3 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-40 text-white font-bold rounded-2xl transition shadow-xs flex items-center gap-1.5 text-xs sm:text-sm cursor-pointer"
             >
               <Send className="w-4 h-4" />
-              <span className="hidden sm:inline">Hỏi AI</span>
+              <span className="hidden sm:inline">Gửi</span>
             </button>
           </form>
         </div>

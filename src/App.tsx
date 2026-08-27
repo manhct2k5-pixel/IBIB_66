@@ -85,9 +85,9 @@ export default function App() {
     setSimulatedStepIndex(0);
   };
 
-  // Emergency Action
+  // Emergency Action: strictly target A9 Emergency Entrance
   const handleEmergencyRoute = () => {
-    const erNode = MAP_NODES_DATA.find(n => n.type === 'emergency') || MAP_NODES_DATA[14];
+    const erNode = MAP_NODES_DATA.find(n => n.id === 'node_a9_emergency_entrance') || MAP_NODES_DATA.find(n => n.buildingId === 'A9') || MAP_NODES_DATA[0];
     setDestinationNode(erNode);
     setRoutingProfile('emergency');
     if (erNode) {

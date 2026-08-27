@@ -77,7 +77,7 @@ const MASTER_CAMPUS_BLOCKS: CampusBlock[] = [
     name: 'Khu Nhà P (Tòa Nhà Việt - Nhật)',
     nameEn: 'Building P (Vietnam - Japan Center)',
     category: 'clinical',
-    buildingId: 'A',
+    buildingId: 'P',
     description: 'Trung tâm khám chữa bệnh kỹ thuật cao hợp tác Việt - Nhật. Gồm phòng khám đa khoa, nội soi, chẩn đoán hình ảnh và các khoa lâm sàng chuyên sâu.',
     highlights: ['Khám Giáo Sư/Chuyên Gia', 'Trung tâm Nội Soi Tiêu Hóa', 'Xét nghiệm tự động', 'Nhà thuốc số 1'],
     x: 440,
@@ -98,7 +98,7 @@ const MASTER_CAMPUS_BLOCKS: CampusBlock[] = [
     name: 'Tòa Nhà Q (TT Ung Bướu & YHHN Trẻ Em)',
     nameEn: 'Building Q (Oncology & Pediatric Nuclear Med)',
     category: 'clinical',
-    buildingId: 'A',
+    buildingId: 'Q',
     description: 'Trung tâm điều trị ung bướu, xạ trị kỹ thuật cao và y học hạt nhân cho người lớn & trẻ em.',
     highlights: ['Máy xạ trị gia tốc TrueBeam', 'Khu hóa trị ban ngày', 'Y học hạt nhân Nhi khoa'],
     x: 520,
@@ -131,7 +131,7 @@ const MASTER_CAMPUS_BLOCKS: CampusBlock[] = [
     name: 'Khu Nhà Khám Bệnh (Đa Khoa Ngoại Trú)',
     nameEn: 'General Outpatient Clinic Building',
     category: 'clinical',
-    buildingId: 'A',
+    buildingId: 'K1',
     description: 'Khu tiếp đón, đăng ký khám bảo hiểm y tế và khám theo yêu cầu các chuyên khoa tổng quát.',
     highlights: ['Đăng ký khám BHYT', 'Khám Nội, Ngoại, Sản, Nhi', 'Thu viện phí trung tâm'],
     x: 535,
@@ -150,6 +150,7 @@ const MASTER_CAMPUS_BLOCKS: CampusBlock[] = [
     name: 'Trung Tâm Y Học Hạt Nhân & Ung Bướu',
     nameEn: 'Center for Nuclear Medicine & Oncology',
     category: 'clinical',
+    buildingId: 'H',
     description: 'Kỹ thuật chẩn đoán PET/CT, SPECT, điều trị I-131 và y học hạt nhân hiện đại hàng đầu cả nước.',
     highlights: ['Chụp PET/CT độ phân giải cao', 'Điều trị I-131 bệnh lý tuyến giáp'],
     x: 590,
@@ -158,25 +159,63 @@ const MASTER_CAMPUS_BLOCKS: CampusBlock[] = [
     height: 95,
     colorType: 'yellow'
   },
-  // 22: TÒA NHÀ A9 (MÀU ĐỎ RỰC 🔴) - KHOA CẤP CỨU & TT CHỐNG ĐỘC
+  // A9: TÒA NHÀ A9 (TRUNG TÂM CẤP CỨU A9 24/7)
   {
     num: 22,
     id: 'block_22_a9_er',
-    name: 'Tòa Nhà A9 (Khoa Cấp Cứu & TT Chống Độc)',
-    nameEn: 'Building A9 (Emergency Dept & Poison Control)',
+    name: 'Tòa A9 (Trung Tâm Cấp Cứu A9 24/7)',
+    nameEn: 'Building A9 (A9 Emergency Center 24/7)',
     category: 'emergency',
-    buildingId: 'B',
-    description: 'Trung tâm Cấp Cứu A9 hoạt động 24/7, Đơn vị Đột quỵ não cấp giờ vàng và Trung tâm Chống độc Quốc gia.',
-    highlights: ['Tiếp nhận cấp cứu 24/7', 'Can thiệp đột quỵ não khẩn cấp', 'Trung tâm Chống độc Quốc gia', 'Hồi sức tích cực ICU'],
+    buildingId: 'A9',
+    description: 'Trung tâm Cấp Cứu A9 hoạt động 24/7 tiếp nhận mọi trường hợp cấp cứu khẩn cấp, nguy kịch. Hotline: 086 958 7707 và 115.',
+    highlights: ['Tiếp nhận cấp cứu 24/7', 'Phân loại bệnh nhân Triage', 'Hồi sức cấp cứu ICU'],
     x: 375,
     y: 485,
     width: 25,
-    height: 165,
+    height: 110,
     colorType: 'red',
     emergencyIcon: true,
     entranceX: 387,
-    entranceY: 650,
+    entranceY: 595,
     pharmacyIcon: true
+  },
+  // A10: TÒA NHÀ A10 (TRUNG TÂM ĐỘT QUỴ)
+  {
+    num: 'A10',
+    id: 'block_a10_stroke',
+    name: 'Tòa A10 (Trung Tâm Đột Quỵ)',
+    nameEn: 'Building A10 (Stroke Center)',
+    category: 'emergency',
+    buildingId: 'A10',
+    description: 'Trung tâm Đột quỵ Bệnh viện Bạch Mai, cấp cứu tiêu sợi huyết và can thiệp mạch não giờ vàng.',
+    highlights: ['Can thiệp đột quỵ não khẩn cấp', 'Tiêu sợi huyết giờ vàng'],
+    x: 375,
+    y: 600,
+    width: 25,
+    height: 50,
+    colorType: 'red',
+    emergencyIcon: true,
+    entranceX: 387,
+    entranceY: 650
+  },
+  // K3: TÒA NHÀ K3 (TRUNG TÂM CHỐNG ĐỘC & DA LIỄU / BỎNG)
+  {
+    num: 'K3',
+    id: 'block_k3_poison',
+    name: 'Tòa K3 (Trung Tâm Chống Độc & Khoa Da Liễu / Bỏng)',
+    nameEn: 'Building K3 (Poison Control & Dermatology / Burn)',
+    category: 'emergency',
+    buildingId: 'K3',
+    description: 'Trung tâm Chống độc Quốc gia, Khoa Da liễu và Đơn vị Bỏng (ngay cạnh Cổng 1 đường Giải Phóng).',
+    highlights: ['Trung tâm Chống độc Quốc gia', 'Khoa Da liễu', 'Đơn vị Bỏng'],
+    x: 440,
+    y: 650,
+    width: 30,
+    height: 60,
+    colorType: 'red',
+    emergencyIcon: true,
+    entranceX: 455,
+    entranceY: 710
   },
   // 19: VIỆN TIM MẠCH VIỆT NAM - NHÀ KHU C (Khối nhà chữ E màu vàng lớn)
   {
@@ -185,7 +224,7 @@ const MASTER_CAMPUS_BLOCKS: CampusBlock[] = [
     name: 'Viện Tim Mạch Việt Nam (Nhà Khu C)',
     nameEn: 'Vietnam National Heart Institute (Block C)',
     category: 'clinical',
-    buildingId: 'C',
+    buildingId: 'VTM',
     description: 'Viện chuyên khoa đầu ngành về tim mạch học, can thiệp tim mạch, phẫu thuật lồng ngực và hồi sức tim mạch.',
     highlights: ['Phòng can thiệp tim mạch Cathlab', 'Phẫu thuật tim hở', 'Điện sinh lý tim', 'Khám tim mạch chuyên gia'],
     x: 100,
@@ -235,7 +274,6 @@ const MASTER_CAMPUS_BLOCKS: CampusBlock[] = [
     name: 'Khu Nhà A (Khoa Điều Trị)',
     nameEn: 'Building A Treatment Wing',
     category: 'clinical',
-    buildingId: 'A',
     description: 'Các khoa điều trị nội trú, ngoại tổng hợp và chuyên khoa lẻ.',
     highlights: ['Điều trị nội trú', 'Thăm khám bệnh nhân'],
     x: 260,
@@ -796,28 +834,49 @@ export const Hospital2DCampusMap: React.FC<Hospital2DCampusMapProps> = ({
               </g>
             </g>
 
-            {/* 4. Gate 1 - Cổng Số 1 (Lối Vào Chính 78 Giải Phóng) */}
-            <g id="gate-1-main-entry" transform="translate(480, 725)" className="cursor-pointer">
+            {/* 4. Gate 1 - Cổng Số 1 (Lối Vào Chính 78 Giải Phóng - Ô tô vào A9) */}
+            <g id="gate-1-main-entry" transform="translate(480, 725)" className="cursor-pointer" onClick={() => {
+              const node = MAP_NODES_DATA.find(n => n.id === 'node_gate_1');
+              if (node) onSelectStartNode?.(node);
+            }}>
               {/* Blue Curved Arrow entering */}
               <path d="M 10 38 Q 10 18 -10 10" fill="none" stroke="#0284c7" strokeWidth="4" />
               <polygon points="-16,10 -8,5 -8,15" fill="#0284c7" />
 
-              <rect x="-46" y="-12" width="92" height="34" rx="8" fill="#ffffff" stroke="#0284c7" strokeWidth="2" filter="url(#campus-shadow)" />
-              <text y="-2" textAnchor="middle" fill="#0284c7" fontSize="7.5" fontWeight="bold">LỐI VÀO CHÍNH</text>
+              <rect x="-48" y="-12" width="96" height="34" rx="8" fill="#ffffff" stroke="#0284c7" strokeWidth="2" filter="url(#campus-shadow)" />
+              <text y="-2" textAnchor="middle" fill="#0284c7" fontSize="7.5" fontWeight="bold">LỐI VÀO CHÍNH (A9)</text>
               <text y="9" textAnchor="middle" fill="#0369a1" fontSize="10" fontWeight="black">CỔNG SỐ 1</text>
-              <text y="18" textAnchor="middle" fill="#64748b" fontSize="6.5">Main Entrance</text>
+              <text y="18" textAnchor="middle" fill="#64748b" fontSize="6.5">78 Giải Phóng</text>
             </g>
 
-            {/* 5. Gate 2 - Cổng Số 2 (Lối Ra & Làn Cấp Cứu) */}
-            <g id="gate-2-exit-entry" transform="translate(210, 725)" className="cursor-pointer">
+            {/* 5. Gate 2 - Cổng Số 2 (Lối Ra Ô Tô Trong Giờ Hành Chính - Giải Phóng) */}
+            <g id="gate-2-exit-entry" transform="translate(210, 725)" className="cursor-pointer" onClick={() => {
+              const node = MAP_NODES_DATA.find(n => n.id === 'node_gate_2');
+              if (node) onSelectStartNode?.(node);
+            }}>
               {/* Blue Curved Arrow exiting */}
               <path d="M 5 5 Q 5 25 18 36" fill="none" stroke="#0284c7" strokeWidth="4" />
               <polygon points="22,40 12,35 20,27" fill="#0284c7" />
 
-              <rect x="-38" y="-12" width="76" height="34" rx="8" fill="#ffffff" stroke="#dc2626" strokeWidth="2" filter="url(#campus-shadow)" />
-              <text y="-2" textAnchor="middle" fill="#dc2626" fontSize="7.5" fontWeight="bold">LỐI RA</text>
-              <text y="9" textAnchor="middle" fill="#991b1b" fontSize="10" fontWeight="black">CỔNG SỐ 2</text>
-              <text y="18" textAnchor="middle" fill="#64748b" fontSize="6.5">Exit</text>
+              <rect x="-44" y="-12" width="88" height="34" rx="8" fill="#ffffff" stroke="#64748b" strokeWidth="1.5" filter="url(#campus-shadow)" />
+              <text y="-2" textAnchor="middle" fill="#475569" fontSize="7" fontWeight="bold">LỐI RA Ô TÔ (HÀNH CHÍNH)</text>
+              <text y="9" textAnchor="middle" fill="#1e293b" fontSize="9.5" fontWeight="black">CỔNG SỐ 2</text>
+              <text y="18" textAnchor="middle" fill="#64748b" fontSize="6.5">Giải Phóng (Exit)</text>
+            </g>
+
+            {/* 6. Gate 4 - Cổng Số 4 (Lối Vào K1 & K2 - Giải Phóng) */}
+            <g id="gate-4-k1-entry" transform="translate(680, 725)" className="cursor-pointer" onClick={() => {
+              const node = MAP_NODES_DATA.find(n => n.id === 'node_gate_4');
+              if (node) onSelectStartNode?.(node);
+            }}>
+              {/* Blue Curved Arrow entering */}
+              <path d="M 10 38 Q 10 18 -10 10" fill="none" stroke="#0284c7" strokeWidth="4" />
+              <polygon points="-16,10 -8,5 -8,15" fill="#0284c7" />
+
+              <rect x="-48" y="-12" width="96" height="34" rx="8" fill="#ffffff" stroke="#0284c7" strokeWidth="2" filter="url(#campus-shadow)" />
+              <text y="-2" textAnchor="middle" fill="#0284c7" fontSize="7.5" fontWeight="bold">LỐI VÀO K1 - K2</text>
+              <text y="9" textAnchor="middle" fill="#0369a1" fontSize="10" fontWeight="black">CỔNG SỐ 4</text>
+              <text y="18" textAnchor="middle" fill="#64748b" fontSize="6.5">Giải Phóng (K1/K2)</text>
             </g>
 
             {/* ================= BLUE PARKING LOTS & WATER FEATURES ================= */}
@@ -1146,7 +1205,7 @@ export const Hospital2DCampusMap: React.FC<Hospital2DCampusMapProps> = ({
                   className="w-full py-2 sm:py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer min-h-[38px]"
                 >
                   <Layers className="w-4 h-4" />
-                  <span>Xem sơ đồ từng tầng (Tòa {selectedBlock.buildingId === 'A' ? 'K1' : selectedBlock.buildingId === 'B' ? 'A1' : 'C'})</span>
+                  <span>Xem sơ đồ từng tầng (Tòa {selectedBlock.buildingId})</span>
                 </button>
               )}
 
@@ -1154,7 +1213,7 @@ export const Hospital2DCampusMap: React.FC<Hospital2DCampusMapProps> = ({
                 <button
                   id="btn-set-campus-start"
                   onClick={() => {
-                    const matchNode = MAP_NODES_DATA.find(n => n.buildingId === selectedBlock.buildingId) || MAP_NODES_DATA[9];
+                    const matchNode = (selectedBlock.buildingId && MAP_NODES_DATA.find(n => n.buildingId === selectedBlock.buildingId)) || MAP_NODES_DATA[0];
                     onSelectStartNode(matchNode);
                     setSelectedBlock(null);
                   }}
@@ -1167,7 +1226,7 @@ export const Hospital2DCampusMap: React.FC<Hospital2DCampusMapProps> = ({
                 <button
                   id="btn-set-campus-dest"
                   onClick={() => {
-                    const matchNode = MAP_NODES_DATA.find(n => n.buildingId === selectedBlock.buildingId) || MAP_NODES_DATA[10];
+                    const matchNode = (selectedBlock.buildingId && MAP_NODES_DATA.find(n => n.buildingId === selectedBlock.buildingId)) || MAP_NODES_DATA[1];
                     onSelectDestinationNode(matchNode);
                     setSelectedBlock(null);
                   }}
