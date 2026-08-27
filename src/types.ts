@@ -63,7 +63,7 @@ export interface RoomDetails {
   id: string;
   name: string;
   nameEn: string;
-  code: string; // e.g. "K1-101" hoặc "Chưa có dữ liệu xác minh"
+  code?: string; // Mã phòng nếu có nguồn xác minh; để trống nếu chưa có dữ liệu xác minh
   category: DepartmentCategory;
   buildingId: BuildingId;
   floorId: FloorId;
@@ -272,7 +272,7 @@ export interface AITriageData {
   departmentName: string;
   buildingId: string;
   floorId: string;
-  roomCode: string;
+  roomCode?: string;
   urgency: 'emergency' | 'urgent' | 'normal';
   instructions: string[];
 }

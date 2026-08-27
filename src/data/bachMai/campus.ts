@@ -9,11 +9,11 @@ export const BACH_MAI_GATES: GateInfo[] = [
     nameEn: 'Gate 1 (78 Giai Phong St)',
     street: 'Giải Phóng',
     nodeId: 'node_gate_1',
-    descriptionVi: 'Nằm phía đường Giải Phóng, gần trục đi vào K3 (Trung tâm Chống độc / Da liễu), A9 (Cấp cứu) và A10 (Đột quỵ). Ô tô được đón/trả khách theo phân luồng.',
-    descriptionEn: 'Located on Giai Phong Street, near K3 (Poison/Dermatology), A9 (Emergency) and A10 (Stroke). Cars can drop-off/pick-up following traffic routing.',
+    descriptionVi: 'Nằm phía đường Giải Phóng, phù hợp cho ô tô đến Tòa A9 (Trung tâm Cấp cứu), A10 (Trung tâm Đột quỵ) và K3 (Trung tâm Chống độc / Da liễu). Ô tô được đón/trả khách theo phân luồng.',
+    descriptionEn: 'Located on Giai Phong Street, suitable for cars accessing Building A9 (Emergency Center), A10 (Stroke Center) and K3 (Poison Control / Dermatology).',
     operatingHours: '24/7 (Ô tô ban đêm sau 22:00 sử dụng Cổng 1)',
-    bestForBuildings: ['K3', 'A9', 'A10', 'A11', 'P'],
-    vehicleRules: 'Người đi bộ, xe máy, ô tô đón/trả khách theo phân luồng.',
+    bestForBuildings: ['A9', 'A10', 'K3', 'A11', 'P'],
+    vehicleRules: 'Cổng 1 ưu tiên ô tô ra/vào và đón/trả người bệnh theo phân luồng. Người đi bộ và xe máy sử dụng các lối được bệnh viện hướng dẫn tại chỗ; không mặc định điều hướng xe máy qua Cổng 1.',
     verificationStatus: 'verified',
     sourceUrl: BACH_MAI_OFFICIAL_SOURCES[1].url
   },
@@ -24,11 +24,11 @@ export const BACH_MAI_GATES: GateInfo[] = [
     nameEn: 'Gate 2 (Giai Phong St)',
     street: 'Giải Phóng',
     nodeId: 'node_gate_2',
-    descriptionVi: 'Nằm phía đường Giải Phóng. Chủ yếu dành cho ô tô đi ra trong giờ hành chính theo phân luồng giao thông bệnh viện.',
+    descriptionVi: 'Nằm phía đường Giải Phóng. Chủ yếu là lối ô tô đi ra trong giờ hành chính theo phân luồng giao thông bệnh viện.',
     descriptionEn: 'Located on Giai Phong Street. Primarily designated as vehicle exit for cars during business hours.',
-    operatingHours: 'Giờ hành chính (Chủ yếu làn xe ra)',
+    operatingHours: 'Giờ hành chính (Chủ yếu làn ô tô đi ra)',
     bestForBuildings: ['K1', 'K2'],
-    vehicleRules: 'Chủ yếu làn ô tô đi ra; không phải cổng đón tiếp chính cho người đi bộ.',
+    vehicleRules: 'Lối ra dành cho ô tô trong giờ hành chính.',
     verificationStatus: 'verified',
     sourceUrl: BACH_MAI_OFFICIAL_SOURCES[1].url
   },
@@ -39,11 +39,11 @@ export const BACH_MAI_GATES: GateInfo[] = [
     nameEn: 'Gate 3 (Phuong Mai St)',
     street: 'Phương Mai',
     nodeId: 'node_gate_3',
-    descriptionVi: 'Nằm trên đường Phương Mai, thuận tiện để đến cụm Viện Thần kinh (T1-T3), Viện Sức khỏe tâm thần (T4-T6), Viện Y học nhiệt đới (F), Tòa 21 tầng (Q), Ung bướu (H) và khu gửi xe. Mở cửa từ 05:30 đến 22:00. Sau 22:00 chỉ mở lối phụ cho người đi bộ và xe máy; ô tô sau 22:00 vui lòng sử dụng Cổng 1 (đường Giải Phóng).',
-    descriptionEn: 'Located on Phuong Mai Street, convenient for T1-T6, F, Q, H buildings and parking. Open 05:30 - 22:00. After 22:00 pedestrian/motorbike sub-entrance only; cars after 22:00 must use Gate 1.',
-    operatingHours: '05:30 - 22:00 (Sau 22:00 chỉ mở lối phụ đi bộ/xe máy, ô tô qua Cổng 1)',
+    descriptionVi: 'Nằm trên đường Phương Mai, thuận tiện để đến cụm Viện Thần kinh (T1-T3), Viện Sức khỏe tâm thần (T4-T6), Viện Y học nhiệt đới (F), Tòa 21 tầng (Q), Ung bướu (H) và khu gửi xe. Mở cửa từ 05:30 đến 22:00 hằng ngày. Sau 22:00 chỉ sử dụng cổng phụ cho người đi bộ và xe máy; ô tô sau 22:00 đi qua Cổng 1 (đường Giải Phóng).',
+    descriptionEn: 'Located on Phuong Mai Street, convenient for T1-T6, F, Q, H buildings and parking. Open daily 05:30 - 22:00. After 22:00 only pedestrian/motorbike sub-gate open; cars after 22:00 must use Gate 1.',
+    operatingHours: '05:30 - 22:00 hằng ngày (Sau 22:00 chỉ mở cổng phụ đi bộ/xe máy; ô tô đi qua Cổng 1)',
     bestForBuildings: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'F', 'Q', 'H'],
-    vehicleRules: 'Xe máy gửi tại bãi xe cổng Phương Mai; ô tô di chuyển theo giờ quy định.',
+    vehicleRules: 'Mở từ 05:30 đến 22:00 hằng ngày. Sau 22:00 chỉ sử dụng cổng phụ cho người đi bộ và xe máy. Ô tô sau 22:00 đi qua Cổng 1.',
     verificationStatus: 'verified',
     sourceUrl: BACH_MAI_OFFICIAL_SOURCES[1].url
   },
@@ -56,11 +56,11 @@ export const BACH_MAI_GATES: GateInfo[] = [
     nodeId: 'node_gate_4',
     descriptionVi: 'Nằm phía đường Giải Phóng, là cổng thuận tiện nhất để tiếp cận Tòa nhà K1 và K2 (Trung tâm Khám bệnh và Điều trị trong ngày).',
     descriptionEn: 'Located on Giai Phong Street, the most convenient gate to access Building K1 and K2 (Outpatient & Day Treatment Center).',
-    operatingHours: '05:30 - 18:00 (Phục vụ tiếp đón khám bệnh ngoại trú)',
+    operatingHours: 'Chưa có dữ liệu xác minh',
     bestForBuildings: ['K1', 'K2'],
-    vehicleRules: 'Ưu tiên người đi bộ đến đăng ký khám ngoại trú tại K1/K2.',
-    verificationStatus: 'verified',
-    sourceUrl: BACH_MAI_OFFICIAL_SOURCES[1].url
+    vehicleRules: 'Thuận tiện tiếp cận cho người bệnh đến khám ngoại trú tại Tòa K1 và K2.',
+    verificationStatus: 'campus_verified',
+    sourceUrl: BACH_MAI_OFFICIAL_SOURCES[0].url
   }
 ];
 

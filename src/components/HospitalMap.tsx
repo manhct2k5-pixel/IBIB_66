@@ -97,7 +97,7 @@ export const HospitalMap: React.FC<HospitalMapProps> = ({
         n.name.toLowerCase().includes(q) || 
         n.nameEn.toLowerCase().includes(q) ||
         (n.roomId && n.roomId.toLowerCase().includes(q)) ||
-        (n.roomId && getRoomById(n.roomId)?.code.toLowerCase().includes(q)) ||
+        (n.roomId && getRoomById(n.roomId)?.code?.toLowerCase().includes(q)) ||
         (n.roomId && getRoomById(n.roomId)?.commonSymptoms?.some(s => s.toLowerCase().includes(q)))
       );
     }
