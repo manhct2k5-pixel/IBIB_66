@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+
+@keyframes routeLaser {
+  from {
+    stroke-dashoffset: 64;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes spinRotor {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes sirenFlash {
+  0%, 100% {
+    fill: #ef4444;
+    filter: drop-shadow(0 0 8px #ef4444);
+  }
+  50% {
+    fill: #3b82f6;
+    filter: drop-shadow(0 0 8px #3b82f6);
+  }
+}
+
+@keyframes beaconRadar {
+  0% {
+    r: 6px;
+    opacity: 1;
+  }
+  100% {
+    r: 28px;
+    opacity: 0;
+  }
+}
+
+.animate-dash {
+  animation: dash 1.5s linear infinite;
+}
+
+.animate-route-laser {
+  animation: routeLaser 1.2s linear infinite;
+}
+
+.animate-spin-fast {
+  animation: spinRotor 0.25s linear infinite;
+  transform-origin: center;
+}
+
+.animate-siren-strobe {
+  animation: sirenFlash 0.6s ease-in-out infinite;
+}
+
+.animate-radar-ring {
+  animation: beaconRadar 1.8s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+/* Custom smooth light scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.8);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.9);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 1);
+}

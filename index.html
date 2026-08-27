@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      // Shim window.fetch with both getter and setter to support sandbox environments
+      (function() {
+        try {
+          var nativeFetch = window.fetch;
+          var fetchFn = nativeFetch ? nativeFetch.bind(window) : undefined;
+          Object.defineProperty(window, 'fetch', {
+            get: function() {
+              return fetchFn;
+            },
+            set: function(fn) {
+              fetchFn = fn;
+            },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {
+          try {
+            if (typeof Window !== 'undefined' && Window.prototype) {
+              var desc = Object.getOwnPropertyDescriptor(Window.prototype, 'fetch');
+              var pFetch = desc && desc.get ? desc.get.call(window) : window.fetch;
+              var cur = pFetch;
+              Object.defineProperty(Window.prototype, 'fetch', {
+                get: function() { return cur; },
+                set: function(fn) { cur = fn; },
+                configurable: true,
+                enumerable: true
+              });
+            }
+          } catch (e2) {}
+        }
+      })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MedNav - Bản Đồ Chỉ Đường Bệnh Viện</title>
+    <meta name="description" content="Ứng dụng bản đồ số và chỉ đường thông minh trong bệnh viện" />
+    <meta property="og:title" content="MedNav - Bản Đồ Chỉ Đường Bệnh Viện" />
+    <meta property="og:description" content="Ứng dụng bản đồ số và chỉ đường thông minh trong bệnh viện" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
