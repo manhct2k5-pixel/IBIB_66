@@ -42,6 +42,7 @@ interface Official108MapProps {
   onChangeDestination: () => void;
   onOpenHelp: () => void;
   onOpenEmergency: () => void;
+  onStartAssistedNavigation?: () => void;
 }
 
 export function Official108Map({ 
@@ -54,7 +55,8 @@ export function Official108Map({
   onChangeStart,
   onChangeDestination,
   onOpenHelp,
-  onOpenEmergency
+  onOpenEmergency,
+  onStartAssistedNavigation
 }: Official108MapProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -329,16 +331,30 @@ export function Official108Map({
               )}
             </div>
 
-            <button 
-              type="button"
-              aria-expanded={false}
-              aria-controls="routing-sheet-content"
-              onClick={() => setIsSheetExpanded(true)}
-              className="min-w-[48px] min-h-[48px] h-12 flex items-center gap-1.5 text-teal-900 font-black text-sm sm:text-base bg-teal-50 hover:bg-teal-100 active:bg-teal-200 px-4 py-2 rounded-xl border border-teal-200 shadow-sm shrink-0 transition-colors"
-            >
-              <span>Xem hỗ trợ</span>
-              <ChevronUp className="w-5 h-5 text-teal-800" />
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              {onStartAssistedNavigation && (
+                <button
+                  type="button"
+                  onClick={onStartAssistedNavigation}
+                  className="min-h-[48px] h-12 px-3.5 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 text-slate-950 rounded-xl font-extrabold text-sm sm:text-base flex items-center gap-1.5 shadow-sm border border-amber-500/50"
+                  title="Chỉ đường từng bước từng mốc"
+                >
+                  <Navigation className="w-5 h-5 shrink-0 stroke-[2.5]" />
+                  <span>Chỉ đường MedNav</span>
+                </button>
+              )}
+
+              <button 
+                type="button"
+                aria-expanded={false}
+                aria-controls="routing-sheet-content"
+                onClick={() => setIsSheetExpanded(true)}
+                className="min-w-[48px] min-h-[48px] h-12 flex items-center gap-1.5 text-teal-900 font-black text-sm sm:text-base bg-teal-50 hover:bg-teal-100 active:bg-teal-200 px-4 py-2 rounded-xl border border-teal-200 shadow-sm shrink-0 transition-colors"
+              >
+                <span>Xem hỗ trợ</span>
+                <ChevronUp className="w-5 h-5 text-teal-800" />
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -21,6 +21,7 @@ interface RoutePreviewProps {
   startLocation: Hospital108StartLocation;
   destination: Hospital108Destination;
   onStartNavigation: (routeResult: RouteLaunchResult) => void;
+  onStartAssistedNavigation?: () => void;
   onChangeStart: () => void;
   onChangeDestination: () => void;
 }
@@ -29,6 +30,7 @@ export function RoutePreview({
   startLocation,
   destination,
   onStartNavigation,
+  onStartAssistedNavigation,
   onChangeStart,
   onChangeDestination
 }: RoutePreviewProps) {
@@ -195,18 +197,32 @@ export function RoutePreview({
 
       {/* Nút hành động chính */}
       <div className="pt-6 pb-4 space-y-3">
+        {onStartAssistedNavigation && (
+          <button
+            onClick={onStartAssistedNavigation}
+            className="w-full min-h-[56px] h-16 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 text-slate-950 rounded-2xl font-black text-lg sm:text-xl shadow-lg shadow-amber-950/20 transition-all flex items-center justify-center gap-3 px-4 text-center border-2 border-amber-500/50"
+          >
+            <Navigation className="w-7 h-7 shrink-0 stroke-[2.5]" />
+            <span>Bắt đầu chỉ đường từng bước (MedNav)</span>
+          </button>
+        )}
+
         <button
           onClick={() => onStartNavigation(routeLaunchResult)}
-          className="w-full min-h-[56px] h-16 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white rounded-2xl font-black text-lg sm:text-xl shadow-lg transition-all flex items-center justify-center gap-3 px-4 text-center"
+          className={`w-full min-h-[52px] h-14 ${
+            onStartAssistedNavigation 
+              ? 'bg-teal-800 hover:bg-teal-900 text-white' 
+              : 'bg-teal-700 hover:bg-teal-800 text-white'
+          } rounded-2xl font-black text-base sm:text-lg shadow-md transition-all flex items-center justify-center gap-2.5 px-4 text-center`}
         >
           {isDeepLink ? (
             <>
-              <Navigation className="w-7 h-7 shrink-0" />
-              <span>Bắt đầu chỉ đường</span>
+              <Map className="w-6 h-6 shrink-0" />
+              <span>Xem trên Bản đồ InMapz chính thức</span>
             </>
           ) : (
             <>
-              <Map className="w-7 h-7 shrink-0" />
+              <Map className="w-6 h-6 shrink-0" />
               <span>Mở chức năng Chỉ đường trên InMapz</span>
             </>
           )}

@@ -11,10 +11,13 @@ import {
 } from '../data/hospital108';
 
 describe('Navigation Flow & Architectural Constraints Verification', () => {
-  it('QR Checkpoint feature is strictly disabled and list is empty', () => {
-    expect(QR_CHECKPOINT_FEATURE_ENABLED).toBe(false);
-    expect(HOSPITAL_108_CHECKPOINTS).toEqual([]);
-    expect(lookupCheckpointByCode('CP-01')).toBeNull();
+  it('QR Checkpoint feature is enabled with verified field landmarks', () => {
+    expect(QR_CHECKPOINT_FEATURE_ENABLED).toBe(true);
+    expect(HOSPITAL_108_CHECKPOINTS.length).toBeGreaterThan(0);
+    const sample = HOSPITAL_108_CHECKPOINTS[0];
+    if (sample.qrCode) {
+      expect(lookupCheckpointByCode(sample.qrCode)).not.toBeNull();
+    }
   });
 
   it('All start locations are verified landmarks or official map views', () => {

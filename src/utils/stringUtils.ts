@@ -7,3 +7,6 @@ export function normalizeVietnamese(value: string): string {
     .toLowerCase()
     .trim();
 }
+
+export const removeVietnameseTones = normalizeVietnamese;
+

@@ -10,6 +10,7 @@ import { EmergencyModal } from './components/EmergencyModal';
 import { MoreMenuDrawer } from './components/MoreMenuDrawer';
 import { VoiceSearchModal } from './components/VoiceSearchModal';
 import { HelpGuideModal } from './components/HelpGuideModal';
+import { NavigationView, ArrivalView } from './components/navigation';
 import { 
   HOSPITAL_108_OFFICIAL_MAP_LINKS, 
   HOSPITAL_108_DESTINATIONS,
@@ -19,9 +20,18 @@ import type {
   AppView, 
   Hospital108Destination, 
   Hospital108StartLocation,
-  RouteLaunchResult
+  RouteLaunchResult,
+  NavigationSession,
+  CalculatedRoute,
+  RouteNode
 } from './types';
 import { createInMapzRouteLaunch } from './services/inmapzRouting';
+import { 
+  buildCalculatedRoute, 
+  createNavigationSession,
+  getRouteNodeIdForDestination,
+  getRouteNodeIdForStartLocation
+} from './services/pathfinding';
 import { addRecentDestinationId } from './utils/history';
 import { stopSpeaking } from './utils/speech';
 
@@ -39,6 +49,10 @@ export default function App() {
   const [activeMapLinkId, setActiveMapLinkId] = useState<string | null>(null);
   const [activeRouteLaunchResult, setActiveRouteLaunchResult] = useState<RouteLaunchResult | null>(null);
   
+  // Trạng thái điều hướng từng bước (Assisted Checkpoint Navigation)
+  const [activeNavigationSession, setActiveNavigationSession] = useState<NavigationSession | null>(null);
+  const [activeCalculatedRoute, setActiveCalculatedRoute] = useState<CalculatedRoute | null>(null);
+
   // Trạng thái các modal
   const [isEmergencyOpen, setIsEmergencyOpen] = useState<boolean>(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState<boolean>(false);
@@ -54,16 +68,44 @@ export default function App() {
     }
   }, []);
 
-  // Đồng bộ với History API (nút Back của trình duyệt / Android)
+  // Đồng bộ với History API và phục hồi phiên
   useEffect(() => {
     const initialState = window.history.state as HistoryState | null;
+    
+    // Kiểm tra xem có phiên điều hướng đang chạy trong localStorage không
+    let savedSession: NavigationSession | null = null;
+    try {
+      const raw = localStorage.getItem('mednav_108_active_session');
+      if (raw) {
+        savedSession = JSON.parse(raw);
+      }
+    } catch {
+      // Bỏ qua lỗi parse
+    }
+
     if (!initialState || !initialState.view) {
-      window.history.replaceState({ 
-        view: 'home',
-        destinationId: null,
-        startLocationId: null,
-        mapLinkId: null
-      } as HistoryState, '');
+      if (savedSession && savedSession.status === 'active' && savedSession.route) {
+        const dest = HOSPITAL_108_DESTINATIONS.find(d => d.id === savedSession?.destinationId) || HOSPITAL_108_DESTINATIONS[0];
+        const start = HOSPITAL_108_START_LOCATIONS.find(s => s.id === savedSession?.startLocationId) || HOSPITAL_108_START_LOCATIONS[0];
+        setSelectedDestination(dest);
+        setSelectedStartLocation(start);
+        setActiveCalculatedRoute(savedSession.route);
+        setActiveNavigationSession(savedSession);
+        setCurrentView('navigating');
+        window.history.replaceState({
+          view: 'navigating',
+          destinationId: dest.id,
+          startLocationId: start.id,
+          mapLinkId: null
+        } as HistoryState, '');
+      } else {
+        window.history.replaceState({ 
+          view: 'home',
+          destinationId: null,
+          startLocationId: null,
+          mapLinkId: null
+        } as HistoryState, '');
+      }
     } else {
       // Phục hồi trạng thái nếu tải lại trang hoặc có state sẵn
       const restoredDest = initialState.destinationId 
@@ -72,6 +114,26 @@ export default function App() {
       const restoredStart = initialState.startLocationId 
         ? HOSPITAL_108_START_LOCATIONS.find(s => s.id === initialState.startLocationId) || null 
         : null;
+
+      if (initialState.view === 'navigating' && restoredDest) {
+        const defaultStart = restoredStart || HOSPITAL_108_START_LOCATIONS[0];
+        const startNodeId = getRouteNodeIdForStartLocation(defaultStart.id);
+        const destNodeId = getRouteNodeIdForDestination(restoredDest.id);
+        const route = buildCalculatedRoute(startNodeId, destNodeId, restoredDest.id, 'shortest_walk');
+        
+        if (route) {
+          const session = savedSession && savedSession.destinationId === restoredDest.id
+            ? savedSession
+            : createNavigationSession(route, restoredDest, defaultStart);
+          
+          setSelectedDestination(restoredDest);
+          setSelectedStartLocation(defaultStart);
+          setActiveCalculatedRoute(route);
+          setActiveNavigationSession(session);
+          setCurrentView('navigating');
+          return;
+        }
+      }
 
       // Nếu trạng thái bản đồ không có destination hợp lệ và không phải campus -> fallback về home
       if (initialState.view === 'official_map' && !restoredDest && initialState.mapLinkId !== 'campus') {
@@ -172,10 +234,17 @@ export default function App() {
   // Quay về trang chủ
   const handleBackToHome = useCallback(() => {
     stopSpeaking();
+    try {
+      localStorage.removeItem('mednav_108_active_session');
+    } catch {
+      // Ignore
+    }
     setSelectedDestination(null);
     setSelectedStartLocation(null);
     setActiveMapLinkId(null);
     setActiveRouteLaunchResult(null);
+    setActiveNavigationSession(null);
+    setActiveCalculatedRoute(null);
     commitHistoryState({
       view: 'home',
       destinationId: null,
@@ -194,6 +263,94 @@ export default function App() {
       handleBackToHome();
     }
   }, [handleBackToHome]);
+
+  // Bắt đầu chỉ đường từng bước với A* (MedNav Checkpoint Navigation)
+  const handleStartAssistedNavigation = useCallback((
+    customStart?: Hospital108StartLocation | null,
+    customDest?: Hospital108Destination | null
+  ) => {
+    stopSpeaking();
+    const dest = customDest || selectedDestination || HOSPITAL_108_DESTINATIONS[0];
+    const start = customStart || selectedStartLocation || HOSPITAL_108_START_LOCATIONS[0];
+
+    const startNodeId = getRouteNodeIdForStartLocation(start.id);
+    const destNodeId = getRouteNodeIdForDestination(dest.id);
+
+    const calculatedRoute = buildCalculatedRoute(
+      startNodeId,
+      destNodeId,
+      dest.id,
+      'shortest_walk'
+    );
+
+    if (calculatedRoute) {
+      const session = createNavigationSession(calculatedRoute, dest, start);
+      setSelectedDestination(dest);
+      setSelectedStartLocation(start);
+      setActiveCalculatedRoute(calculatedRoute);
+      setActiveNavigationSession(session);
+
+      try {
+        localStorage.setItem('mednav_108_active_session', JSON.stringify(session));
+      } catch {
+        // Ignore
+      }
+
+      commitHistoryState({
+        view: 'navigating',
+        destinationId: dest.id,
+        startLocationId: start.id,
+        mapLinkId: null
+      }, 'push');
+      setCurrentView('navigating');
+    }
+  }, [selectedDestination, selectedStartLocation, commitHistoryState]);
+
+  // Tính lại đường khi người dùng đi lệch hoặc chọn mốc mới
+  const handleRecalculateRoute = useCallback((newNode: RouteNode) => {
+    if (!selectedDestination) return;
+
+    const destNodeId = getRouteNodeIdForDestination(selectedDestination.id);
+    const newRoute = buildCalculatedRoute(
+      newNode.id,
+      destNodeId,
+      selectedDestination.id,
+      'shortest_walk'
+    );
+
+    if (newRoute && activeNavigationSession) {
+      const updatedSession: NavigationSession = {
+        ...activeNavigationSession,
+        route: newRoute,
+        currentStepIndex: 0,
+        updatedAt: Date.now()
+      };
+      setActiveCalculatedRoute(newRoute);
+      setActiveNavigationSession(updatedSession);
+      try {
+        localStorage.setItem('mednav_108_active_session', JSON.stringify(updatedSession));
+      } catch {
+        // Ignore
+      }
+    }
+  }, [selectedDestination, activeNavigationSession]);
+
+  // Đến đích thành công
+  const handleArrival = useCallback(() => {
+    stopSpeaking();
+    try {
+      localStorage.removeItem('mednav_108_active_session');
+    } catch {
+      // Ignore
+    }
+    commitHistoryState({
+      view: 'arrived',
+      destinationId: selectedDestination ? selectedDestination.id : null,
+      startLocationId: selectedStartLocation ? selectedStartLocation.id : null,
+      mapLinkId: null
+    }, 'push');
+    setCurrentView('arrived');
+  }, [selectedDestination, selectedStartLocation, commitHistoryState]);
 
   // LUỒNG MỚI: Chọn điểm đến -> Mở ngay bản đồ nhúng trong MedNav (home -> official_map)
   const handleSelectDestination = (dest: Hospital108Destination) => {
@@ -301,8 +458,8 @@ export default function App() {
 
   return (
     <div className="relative min-h-[100dvh] bg-slate-50 flex flex-col font-sans overflow-hidden">
-      {/* Header chỉ hiển thị khi không ở màn hình Bản đồ (Bản đồ có header riêng) */}
-      {currentView !== 'official_map' && (
+      {/* Header chỉ hiển thị khi không ở màn hình Bản đồ / Điều hướng toàn màn hình */}
+      {currentView !== 'official_map' && currentView !== 'navigating' && currentView !== 'arrived' && (
         <SimpleHeader 
           onHome={handleBackToHome}
           onOpenEmergency={() => setIsEmergencyOpen(true)}
@@ -350,6 +507,7 @@ export default function App() {
             startLocation={selectedStartLocation}
             destination={selectedDestination}
             onStartNavigation={handleStartNavigationFromPreview}
+            onStartAssistedNavigation={() => handleStartAssistedNavigation(selectedStartLocation, selectedDestination)}
             onChangeStart={handleBackStep}
             onChangeDestination={handleBackToHome}
           />
@@ -367,6 +525,41 @@ export default function App() {
             onChangeDestination={handleBackToHome}
             onOpenHelp={() => setIsHelpModalOpen(true)}
             onOpenEmergency={() => setIsEmergencyOpen(true)}
+            onStartAssistedNavigation={() => handleStartAssistedNavigation(selectedStartLocation, selectedDestination)}
+          />
+        )}
+
+        {/* Chế độ Điều hướng từng bước (Assisted Checkpoint Navigation) */}
+        {currentView === 'navigating' && activeNavigationSession && activeCalculatedRoute && selectedDestination && (
+          <NavigationView
+            session={activeNavigationSession}
+            route={activeCalculatedRoute}
+            destination={selectedDestination}
+            startLocation={selectedStartLocation || HOSPITAL_108_START_LOCATIONS[0]}
+            onArrive={handleArrival}
+            onExit={handleBackToHome}
+            onRecalculateRoute={handleRecalculateRoute}
+            onOpenOfficialMap={() => {
+              if (selectedDestination) {
+                setActiveMapLinkId(selectedDestination.mapLinkId);
+                setCurrentView('official_map');
+              }
+            }}
+          />
+        )}
+
+        {/* Chế độ Đã đến đích */}
+        {currentView === 'arrived' && selectedDestination && (
+          <ArrivalView
+            destination={selectedDestination}
+            onGoHome={handleBackToHome}
+            onReviewRoute={() => {
+              if (activeCalculatedRoute && activeNavigationSession) {
+                setCurrentView('navigating');
+              } else {
+                handleBackToHome();
+              }
+            }}
           />
         )}
       </main>
