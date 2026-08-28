@@ -702,8 +702,8 @@ function generateEnhancedTurnByTurnSteps(
 
   steps.push({
     stepIndex: stepIndex++,
-    instructionVi: `Bạn đã đến nơi: ${target.name}${roomCodeInfo} (${getFloorDisplayName(target.floorId, target.buildingId)})`,
-    instructionEn: `You have arrived at your destination: ${target.nameEn}${roomCodeInfo} (Building ${target.buildingId}, Floor ${target.floorId})`,
+    instructionVi: `Bạn đã đến nơi: ${target.name}${roomCodeInfo} (Tòa ${target.buildingId})`,
+    instructionEn: `You have arrived at your destination: ${target.nameEn}${roomCodeInfo} (Building ${target.buildingId})`,
     distance: 0,
     maneuver: 'arrive',
     fromNode: secondLast || target,

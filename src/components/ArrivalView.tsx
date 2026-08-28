@@ -35,22 +35,22 @@ export const ArrivalView: React.FC<ArrivalViewProps> = ({
 
       {/* Main Arrival Title */}
       <div className="space-y-2">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 leading-tight">
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
           Bạn đã đến {destinationNode.name}
         </h1>
         <p className="text-base sm:text-lg font-bold text-cyan-800">
-          Vị trí sảnh đón / Lối vào tầng 1
+          Điểm đến: Cửa / Sảnh tòa nhà
         </p>
       </div>
 
       {/* Hospital Scope Limit Notice Card */}
-      <div className="p-4 sm:p-5 bg-slate-50 border-2 border-slate-200 rounded-3xl text-left space-y-2 shadow-2xs">
+      <div className="w-full p-4 sm:p-5 bg-slate-50 border-2 border-slate-200 rounded-3xl text-left space-y-2 shadow-2xs">
         <div className="flex items-center gap-2 text-slate-800 font-bold text-base">
           <Info className="w-5 h-5 text-cyan-700 shrink-0" />
-          <span>Lưu ý tiếp đón:</span>
+          <span>Lưu ý quan trọng:</span>
         </div>
         <p className="text-base text-slate-700 font-medium leading-relaxed">
-          MedNav hiện chỉ hướng dẫn đến cửa hoặc sảnh tòa nhà. Vui lòng xem biển chỉ dẫn hoặc liên hệ quầy tiếp đón để đến đúng phòng khám.
+          MedNav chỉ hướng dẫn đến cửa hoặc sảnh tòa nhà. Chưa có dữ liệu xác minh đường đi bên trong từng tòa.
         </p>
       </div>
 

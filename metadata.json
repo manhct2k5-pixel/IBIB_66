@@ -3,7 +3,8 @@
   "description": "Ứng dụng bản đồ số và chỉ đường từng bước thông minh trong bệnh viện, hỗ trợ đa tầng, đa tòa nhà, chế độ xe lăn, tìm khoa theo triệu chứng và dẫn đường giọng nói.",
   "requestFramePermissions": [
     "microphone",
-    "geolocation"
+    "geolocation",
+    "camera"
   ],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

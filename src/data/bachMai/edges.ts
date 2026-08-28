@@ -95,7 +95,7 @@ export const BACH_MAI_EDGES: MapEdge[] = [
     type: 'elevator',
     isAccessible: true,
     hasSteps: false,
-    audioLandmarkVi: 'Thang máy di chuyển giữa Tầng 1 và Tầng 2'
+    audioLandmarkVi: 'Thang máy di chuyển trong Tòa K1'
   },
   {
     fromNodeId: 'node_k1_stairs_1',
@@ -104,7 +104,7 @@ export const BACH_MAI_EDGES: MapEdge[] = [
     type: 'stairs',
     isAccessible: false,
     hasSteps: true,
-    audioLandmarkVi: 'Cầu thang bộ lên Tầng 2 Tòa K1'
+    audioLandmarkVi: 'Cầu thang bộ trong Tòa K1'
   },
   {
     fromNodeId: 'node_k1_elev_2',

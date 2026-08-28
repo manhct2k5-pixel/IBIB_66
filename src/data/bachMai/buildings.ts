@@ -103,10 +103,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'A10',
-        name: 'Tầng 1 - Sảnh Tiếp Nhận Đột Quỵ A10',
-        nameEn: '1st Floor - Stroke Admission Lobby',
+        name: 'Sảnh Tiếp Nhận Đột Quỵ A10',
+        nameEn: 'Stroke Admission Lobby',
         level: 1,
-        description: 'Sảnh tiếp nhận bệnh nhân đột quỵ não (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Sảnh tiếp nhận bệnh nhân đột quỵ não (Chưa có dữ liệu xác minh đường đi bên trong).',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -125,10 +125,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'A11',
-        name: 'Tầng 1 - Sảnh A11',
-        nameEn: '1st Floor - Lobby A11',
+        name: 'Sảnh Tòa A11',
+        nameEn: 'Lobby A11',
         level: 1,
-        description: 'Hội trường và trạm hiến máu (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Hội trường và trạm hiến máu (Chưa có dữ liệu xác minh đường đi bên trong).',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -147,10 +147,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'VTM',
-        name: 'Tầng 1 - Sảnh Đón Tiếp Viện Tim Mạch',
-        nameEn: '1st Floor - Heart Institute Lobby',
+        name: 'Sảnh Đón Tiếp Viện Tim Mạch',
+        nameEn: 'Heart Institute Lobby',
         level: 1,
-        description: 'Sảnh tiếp nhận và phòng khám chuyên khoa tim mạch (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Sảnh tiếp nhận và phòng khám chuyên khoa tim mạch (Chưa có dữ liệu xác minh đường đi bên trong).',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -169,10 +169,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'P',
-        name: 'Tầng 1 - Sảnh Nhà P',
-        nameEn: '1st Floor - Building P Lobby',
+        name: 'Sảnh Nhà P (Việt - Nhật)',
+        nameEn: 'Building P Lobby',
         level: 1,
-        description: 'Sảnh chính Tòa nhà Việt - Nhật (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Sảnh chính Tòa nhà Việt - Nhật (Chưa có dữ liệu xác minh đường đi bên trong).',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -192,10 +192,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'Q',
-        name: 'Tầng 1 - Sảnh Tòa Q (21 Tầng)',
-        nameEn: '1st Floor - Building Q Lobby',
+        name: 'Sảnh Tòa Q (21 Tầng)',
+        nameEn: 'Building Q Lobby',
         level: 1,
-        description: 'Sảnh chính Tòa nhà 21 tầng (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Sảnh chính Tòa nhà 21 tầng (Chưa có dữ liệu xác minh đường đi bên trong).',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -214,10 +214,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'H',
-        name: 'Tầng 1 - Sảnh Tòa H',
-        nameEn: '1st Floor - Building H Lobby',
+        name: 'Sảnh Tòa H',
+        nameEn: 'Building H Lobby',
         level: 1,
-        description: 'Sảnh tiếp nhận Viện YHHN & Ung bướu (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Sảnh tiếp nhận Viện YHHN & Ung bướu (Chưa có dữ liệu xác minh đường đi bên trong).',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -236,10 +236,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'F',
-        name: 'Tầng 1 - Sảnh Tòa F',
-        nameEn: '1st Floor - Building F Lobby',
+        name: 'Sảnh Tòa F',
+        nameEn: 'Building F Lobby',
         level: 1,
-        description: 'Sảnh tiếp nhận và tiêm chủng Tòa F (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Sảnh tiếp nhận và tiêm chủng Tòa F (Chưa có dữ liệu xác minh đường đi bên trong).',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -258,10 +258,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'E',
-        name: 'Tầng 1 - Khoa KSNK',
-        nameEn: '1st Floor - Infection Control',
+        name: 'Khu Vực Tòa E',
+        nameEn: 'Infection Control Lobby',
         level: 1,
-        description: 'Khu vực kiểm soát nhiễm khuẩn (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Khu vực kiểm soát nhiễm khuẩn (Chưa có dữ liệu xác minh đường đi bên trong).',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -280,10 +280,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'T1',
-        name: 'Tầng 1 - Sảnh Viện Thần Kinh',
-        nameEn: '1st Floor - Neurology Lobby',
+        name: 'Sảnh Viện Thần Kinh',
+        nameEn: 'Neurology Lobby',
         level: 1,
-        description: 'Sảnh tiếp nhận Viện Thần kinh (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Sảnh tiếp nhận Viện Thần kinh (Chưa có dữ liệu xác minh đường đi bên trong).',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -302,10 +302,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'T4',
-        name: 'Tầng 1 - Sảnh Viện SKTT',
-        nameEn: '1st Floor - Mental Health Lobby',
+        name: 'Sảnh Viện SKTT',
+        nameEn: 'Mental Health Lobby',
         level: 1,
-        description: 'Sảnh tiếp nhận Viện Sức khỏe tâm thần (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Sảnh tiếp nhận Viện Sức khỏe tâm thần (Chưa có dữ liệu xác minh đường đi bên trong).',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -324,10 +324,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'D2',
-        name: 'Tầng 1 - Sảnh D2',
-        nameEn: '1st Floor - Traditional Medicine Lobby',
+        name: 'Sảnh Tòa D2',
+        nameEn: 'Traditional Medicine Lobby',
         level: 1,
-        description: 'Sảnh tiếp nhận Y học cổ truyền (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Sảnh tiếp nhận Y học cổ truyền (Chưa có dữ liệu xác minh đường đi bên trong).',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -346,10 +346,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'D4',
-        name: 'Tầng 1 - Sảnh D4',
-        nameEn: '1st Floor - Rehab Lobby',
+        name: 'Sảnh Tòa D4',
+        nameEn: 'Rehab Lobby',
         level: 1,
-        description: 'Sảnh tiếp nhận Phục hồi chức năng (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Sảnh tiếp nhận Phục hồi chức năng (Chưa có dữ liệu xác minh đường đi bên trong).',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -368,10 +368,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'D5',
-        name: 'Tầng 1 - Sảnh D5',
-        nameEn: '1st Floor - Training Institute Lobby',
+        name: 'Sảnh Tòa D5',
+        nameEn: 'Training Institute Lobby',
         level: 1,
-        description: 'Sảnh Viện Đào tạo & NCKH (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Sảnh Viện Đào tạo & NCKH (Chưa có dữ liệu xác minh đường đi bên trong).',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -390,10 +390,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'D6',
-        name: 'Tầng 1 - Sảnh D6',
-        nameEn: '1st Floor - Allergy Center Lobby',
+        name: 'Sảnh Tòa D6',
+        nameEn: 'Allergy Center Lobby',
         level: 1,
-        description: 'Sảnh tiếp nhận Dị ứng - Miễn dịch (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Sảnh tiếp nhận Dị ứng - Miễn dịch (Chưa có dữ liệu xác minh đường đi bên trong).',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -412,10 +412,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'B2',
-        name: 'Tầng 1 - Sảnh B2',
-        nameEn: '1st Floor - Admin Lobby',
+        name: 'Sảnh Tòa B2',
+        nameEn: 'Admin Lobby',
         level: 1,
-        description: 'Sảnh hành chính (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Sảnh hành chính (Chưa có dữ liệu xác minh đường đi bên trong).',
         nodes: [],
         hasVerifiedFloorplan: false
       }

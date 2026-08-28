@@ -49,6 +49,7 @@ export const SimpleNavigationView: React.FC<SimpleNavigationViewProps> = ({
   const [confirmationNotice, setConfirmationNotice] = useState<string | null>(null);
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
   const [showAllStepsModal, setShowAllStepsModal] = useState(false);
+  const [isStopConfirmOpen, setIsStopConfirmOpen] = useState(false);
 
   const steps = activeRoute.steps;
   const currentStep: RouteStep | undefined = steps[currentStepIndex];
@@ -108,27 +109,43 @@ export const SimpleNavigationView: React.FC<SimpleNavigationViewProps> = ({
   return (
     <div className="flex-1 flex flex-col h-full w-full bg-slate-100 overflow-hidden relative">
       {/* Mini Navigation Bar */}
-      <div className="bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between gap-2 shrink-0 z-20">
+      <div className="bg-white border-b border-slate-200 px-3.5 py-2.5 flex items-center justify-between gap-2 shrink-0 z-20">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="w-3 h-3 rounded-full bg-emerald-600 animate-ping" />
-          <span className="text-sm sm:text-base font-black text-slate-900 truncate">
-            Đang đi đến: {destinationNode.name}
-          </span>
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-ping shrink-0" />
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-slate-500">
+              Đang đi đến:
+            </div>
+            <div className="text-base font-black text-slate-900 truncate">
+              {destinationNode.name}
+            </div>
+          </div>
         </div>
 
-        <button
-          id="btn-nav-options-toggle"
-          onClick={() => setIsOptionsMenuOpen(true)}
-          className="h-10 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm rounded-xl border border-slate-300 transition flex items-center gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-600"
-          aria-label="Mở tùy chọn chỉ đường"
-        >
-          <MoreVertical className="w-4 h-4 stroke-[2.5]" />
-          <span>Tùy chọn</span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            id="btn-nav-stop-trigger"
+            onClick={() => setIsStopConfirmOpen(true)}
+            className="h-10 px-3 bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold text-sm rounded-xl border border-rose-200 transition flex items-center gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-rose-500"
+          >
+            <X className="w-4 h-4 text-rose-700" />
+            <span>Dừng</span>
+          </button>
+
+          <button
+            id="btn-nav-options-toggle"
+            onClick={() => setIsOptionsMenuOpen(true)}
+            className="h-10 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm rounded-xl border border-slate-300 transition flex items-center gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-600"
+            aria-label="Mở tùy chọn chỉ đường"
+          >
+            <MoreVertical className="w-4 h-4 stroke-[2.5]" />
+            <span className="hidden xs:inline">Tùy chọn</span>
+          </button>
+        </div>
       </div>
 
-      {/* Map Area (40-45% height on mobile, full side on desktop) */}
-      <div className="w-full h-[40vh] sm:h-[45vh] md:h-1/2 shrink-0 relative bg-slate-200 border-b-2 border-slate-300 overflow-hidden">
+      {/* Map Area (Clamped mobile height clamp(200px, 34dvh, 300px)) */}
+      <div className="w-full h-[clamp(200px,34dvh,300px)] shrink-0 relative bg-slate-200 border-b-2 border-slate-300 overflow-hidden">
         <Hospital2DCampusMap
           startNode={startNode}
           destinationNode={destinationNode}
@@ -368,6 +385,47 @@ export const SimpleNavigationView: React.FC<SimpleNavigationViewProps> = ({
                 className="w-full h-13 bg-slate-800 text-white font-bold text-base rounded-2xl"
               >
                 Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Stop Navigation Confirmation Modal */}
+      {isStopConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="w-full max-w-sm bg-white rounded-3xl border border-slate-200 shadow-2xl p-5 space-y-4 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center mx-auto">
+              <X className="w-7 h-7 stroke-[2.5]" />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-xl font-black text-slate-900">
+                Bạn muốn dừng chỉ đường?
+              </h3>
+              <p className="text-sm font-semibold text-slate-600">
+                Tuyến đường hiện tại sẽ được dừng lại và quay về màn hình xem trước.
+              </p>
+            </div>
+
+            <div className="space-y-2.5 pt-2">
+              <button
+                id="btn-continue-navigation"
+                onClick={() => setIsStopConfirmOpen(false)}
+                className="w-full h-14 bg-cyan-700 hover:bg-cyan-800 active:bg-cyan-900 text-white font-black text-lg rounded-2xl transition cursor-pointer shadow-md"
+              >
+                Tiếp tục chỉ đường
+              </button>
+
+              <button
+                id="btn-confirm-stop-navigation"
+                onClick={() => {
+                  stopSpeaking();
+                  setIsStopConfirmOpen(false);
+                  onStopNavigation();
+                }}
+                className="w-full h-12 bg-slate-100 hover:bg-rose-50 text-rose-700 border border-slate-300 font-bold text-base rounded-2xl transition cursor-pointer"
+              >
+                Dừng chỉ đường
               </button>
             </div>
           </div>

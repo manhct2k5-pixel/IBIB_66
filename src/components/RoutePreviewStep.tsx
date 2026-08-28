@@ -90,8 +90,8 @@ export const RoutePreviewStep: React.FC<RoutePreviewStepProps> = ({
         </div>
       </div>
 
-      {/* Interactive 2D Map Area (Clean, full width container) */}
-      <div className="w-full h-72 sm:h-96 md:h-108 bg-slate-100 rounded-3xl border-2 border-slate-300 overflow-hidden shadow-sm relative">
+      {/* Interactive 2D Map Area (Clean, clamped mobile height) */}
+      <div className="w-full h-[clamp(240px,42dvh,380px)] bg-slate-100 rounded-3xl border-2 border-slate-300 overflow-hidden shadow-sm relative">
         <Hospital2DCampusMap
           startNode={startNode}
           destinationNode={destinationNode}
@@ -141,21 +141,21 @@ export const RoutePreviewStep: React.FC<RoutePreviewStepProps> = ({
           <div>
             <div className="text-xs text-slate-500 font-semibold">Phạm vi hướng dẫn:</div>
             <div className="text-base font-black text-slate-900">
-              Đến sảnh tầng 1 tòa nhà
+              Đến cửa / sảnh tòa nhà
             </div>
           </div>
         </div>
       </div>
 
       {/* Transparency Note */}
-      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-sm text-slate-600 font-medium">
-        <span>Tuyến đường dựa trên sơ đồ khuôn viên Bệnh viện Bạch Mai.</span>
+      <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-sm text-slate-600 font-medium">
+        <span>MedNav chỉ hướng dẫn đến cửa hoặc sảnh tòa nhà. Chưa có dữ liệu xác minh đường đi bên trong từng tòa.</span>
         <button
           id="btn-preview-data-info"
           onClick={onOpenDataInfo}
-          className="text-cyan-800 font-bold hover:underline cursor-pointer"
+          className="text-cyan-800 font-bold hover:underline cursor-pointer shrink-0"
         >
-          Xem nguồn và giới hạn dữ liệu
+          Nguồn dữ liệu
         </button>
       </div>
 

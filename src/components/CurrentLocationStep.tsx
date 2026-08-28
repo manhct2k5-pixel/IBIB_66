@@ -32,13 +32,12 @@ export const CurrentLocationStep: React.FC<CurrentLocationStepProps> = ({
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [expandedGate, setExpandedGate] = useState<string | null>(null);
 
-  // 4 Official Gates
+  // 4 Official Gates (Exact descriptions, 1-column direct tap)
   const officialGates = [
     {
       id: 'node_gate_4',
       name: 'Cổng 4',
-      subtitle: 'Đường Giải Phóng – thuận tiện đến K1, K2',
-      detail: 'Lối vào chính cho người bệnh đi bộ, taxi và xe máy đến Khám bệnh K1 và Tòa K2.',
+      subtitle: 'Thuận tiện đến K1 và K2 (Đường Giải Phóng)',
       badgeColor: 'bg-emerald-700 text-white',
       borderColor: 'border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100/70'
     },
@@ -46,23 +45,20 @@ export const CurrentLocationStep: React.FC<CurrentLocationStepProps> = ({
       id: 'node_gate_1',
       name: 'Cổng 1',
       subtitle: 'Số 78 Giải Phóng – gần Cấp cứu A9, K3',
-      detail: 'Cổng tiếp nhận xe cấp cứu 24/7 và người bệnh vào Trung tâm Cấp cứu A9, Trung tâm Chống độc K3.',
       badgeColor: 'bg-rose-600 text-white',
       borderColor: 'border-rose-200 bg-rose-50/50 hover:bg-rose-100/70'
     },
     {
       id: 'node_gate_3',
       name: 'Cổng 3',
-      subtitle: 'Phố Phương Mai – lối vào phía sau bệnh viện',
-      detail: 'Lối đi từ phố Phương Mai (khu vực Bệnh viện Lão Khoa & Da Liễu TW), gần Tòa P Việt Nhật và Nhà B.',
+      subtitle: 'Phố Phương Mai (Lối vào phía sau bệnh viện)',
       badgeColor: 'bg-cyan-700 text-white',
       borderColor: 'border-cyan-200 bg-cyan-50/50 hover:bg-cyan-100/70'
     },
     {
       id: 'node_gate_2',
       name: 'Cổng 2',
-      subtitle: 'Đường Giải Phóng – chủ yếu là lối ô tô đi ra',
-      detail: 'Cổng dành cho xe ô tô lưu thông ra đường Giải Phóng.',
+      subtitle: 'Chủ yếu là lối ô tô đi ra (Đường Giải Phóng)',
       badgeColor: 'bg-slate-700 text-white',
       borderColor: 'border-slate-200 bg-slate-50/80 hover:bg-slate-100'
     }
@@ -158,53 +154,30 @@ export const CurrentLocationStep: React.FC<CurrentLocationStepProps> = ({
 
         <div className="space-y-3">
           {officialGates.map((gate) => (
-            <div
+            <button
               key={gate.id}
-              className={`w-full rounded-2xl border-2 transition overflow-hidden shadow-xs ${gate.borderColor}`}
+              id={`btn-select-${gate.id}`}
+              onClick={() => handleSelectGate(gate.id)}
+              className={`w-full min-h-18 p-4 rounded-2xl border-2 transition flex items-center justify-between gap-3 text-left cursor-pointer shadow-xs focus:outline-none focus:ring-4 focus:ring-cyan-600/30 ${gate.borderColor}`}
             >
-              <div className="flex items-center justify-between p-4 gap-3">
-                <button
-                  id={`btn-select-${gate.id}`}
-                  onClick={() => handleSelectGate(gate.id)}
-                  className="flex-1 flex items-center gap-3.5 min-w-0 text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-600 rounded-xl"
-                >
-                  <div className={`w-12 h-12 rounded-xl font-black text-base flex items-center justify-center shrink-0 shadow-xs ${gate.badgeColor}`}>
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className={`w-12 h-12 rounded-xl font-black text-base flex items-center justify-center shrink-0 shadow-xs ${gate.badgeColor}`}>
+                  {gate.name}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-lg sm:text-xl font-black text-slate-900 leading-snug">
                     {gate.name}
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-lg sm:text-xl font-black text-slate-900 leading-snug">
-                      {gate.name}
-                    </div>
-                    <div className="text-sm sm:text-base text-slate-600 font-medium truncate mt-0.5">
-                      {gate.subtitle}
-                    </div>
+                  <div className="text-sm sm:text-base text-slate-600 font-medium truncate mt-0.5">
+                    {gate.subtitle}
                   </div>
-                </button>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button
-                    onClick={() => setExpandedGate(expandedGate === gate.id ? null : gate.id)}
-                    className="p-2 text-slate-500 hover:text-slate-800 rounded-lg transition"
-                    aria-label={`Xem chi tiết ${gate.name}`}
-                  >
-                    {expandedGate === gate.id ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                  </button>
-
-                  <button
-                    onClick={() => handleSelectGate(gate.id)}
-                    className="h-11 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold text-base rounded-xl transition cursor-pointer"
-                  >
-                    Chọn
-                  </button>
                 </div>
               </div>
 
-              {expandedGate === gate.id && (
-                <div className="px-4 pb-3.5 pt-1 text-sm sm:text-base text-slate-700 font-medium bg-white/60 border-t border-slate-200">
-                  {gate.detail}
-                </div>
-              )}
-            </div>
+              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-slate-700 shrink-0 border border-slate-200">
+                <ChevronRight className="w-5 h-5 stroke-[2.5]" />
+              </div>
+            </button>
           ))}
         </div>
       </div>

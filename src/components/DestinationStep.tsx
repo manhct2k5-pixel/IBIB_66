@@ -34,37 +34,37 @@ export const DestinationStep: React.FC<DestinationStepProps> = ({
   const [voiceMessage, setVoiceMessage] = useState<string | null>(null);
   const voiceControllerRef = useRef<VoiceSearchController | null>(null);
 
-  // Key popular destinations (4 primary items)
+  // Key popular destinations (4 primary items strictly in 1 column)
   const popularDestinations = useMemo(() => {
     return [
       {
         badge: 'K1',
-        title: 'Khám bệnh – Tòa K1',
-        desc: 'Trung tâm Khám bệnh và Điều trị trong ngày',
+        title: 'Khám bệnh – K1',
+        desc: 'Khoa khám bệnh, tiếp đón và đăng ký BHYT',
         nodeId: 'node_k1_entrance',
         color: 'border-cyan-200 bg-cyan-50/70 hover:bg-cyan-100/80 text-cyan-950',
         badgeColor: 'bg-cyan-700 text-white'
       },
       {
         badge: 'A9',
-        title: 'Cấp cứu – Tòa A9',
+        title: 'Cấp cứu – A9',
         desc: 'Trung tâm Cấp cứu 24/7 (Cạnh Cổng 1)',
-        nodeId: 'node_a9_entrance',
+        nodeId: 'node_a9_emergency_entrance',
         color: 'border-rose-200 bg-rose-50/70 hover:bg-rose-100/80 text-rose-950',
         badgeColor: 'bg-rose-600 text-white'
       },
       {
         badge: 'VTM',
-        title: 'Viện Tim mạch (Nhà C)',
-        desc: 'Viện Tim Mạch Quốc Gia – Khám & Điều trị tim mạch',
+        title: 'Viện Tim mạch',
+        desc: 'Viện Tim Mạch Quốc Gia (Tòa Nhà C)',
         nodeId: 'node_vtm_entrance',
         color: 'border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100/80 text-emerald-950',
         badgeColor: 'bg-emerald-700 text-white'
       },
       {
         badge: 'K2',
-        title: 'Tòa Nhà K2',
-        desc: 'Điều trị theo yêu cầu, Thận nhân tạo & Tiết niệu',
+        title: 'Khám bệnh – K2',
+        desc: 'Điều trị theo yêu cầu & Điều trị trong ngày',
         nodeId: 'node_k2_entrance',
         color: 'border-blue-200 bg-blue-50/70 hover:bg-blue-100/80 text-blue-950',
         badgeColor: 'bg-blue-700 text-white'
@@ -189,10 +189,14 @@ export const DestinationStep: React.FC<DestinationStepProps> = ({
 
           <input
             id="input-destination-search"
-            type="text"
+            type="search"
+            inputMode="search"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Ví dụ: K1, A9, Viện Tim mạch…"
+            placeholder="Nhập K1, A9, Viện Tim mạch…"
             className="w-full h-15 sm:h-16 pl-13 pr-28 bg-white border-2 border-slate-300 focus:border-cyan-700 rounded-2xl text-lg sm:text-xl font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-cyan-600/30 transition shadow-xs"
           />
 

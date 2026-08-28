@@ -98,7 +98,7 @@ export const DataInfoView: React.FC<DataInfoViewProps> = ({
             <div className="flex items-start gap-2.5">
               <CheckCircle2 className="w-4 h-4 text-cyan-600 shrink-0 mt-0.5" />
               <p>
-                <strong>Điểm đến ngoài trời:</strong> Mọi tuyến chỉ đường kết nối chính xác từ 4 cổng đến cửa/sảnh tầng 1 của các tòa nhà (K1, K2, K3, A9, A10, P, Q 21 tầng, H, F, T1-T6...).
+                <strong>Phạm vi chỉ đường:</strong> MedNav chỉ hướng dẫn đến cửa hoặc sảnh tòa nhà. Chưa có dữ liệu xác minh đường đi bên trong từng tòa.
               </p>
             </div>
 

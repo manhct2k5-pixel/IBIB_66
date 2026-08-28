@@ -78,7 +78,7 @@ export const DataLimitDrawer: React.FC<DataLimitDrawerProps> = ({
             </div>
             <ul className="text-sm sm:text-base text-slate-700 font-medium space-y-1.5 list-disc pl-5 leading-relaxed">
               <li>
-                <strong>Phạm vi chỉ đường:</strong> Dẫn đường từ các cổng đến cửa/sảnh tầng 1 các tòa nhà. Khi vào trong nhà, vui lòng xem sơ đồ tầng và biển chỉ dẫn tại sảnh.
+                <strong>Phạm vi chỉ đường:</strong> MedNav chỉ hướng dẫn đến cửa hoặc sảnh tòa nhà. Chưa có dữ liệu xác minh đường đi bên trong từng tòa.
               </li>
               <li>
                 <strong>Không mô phỏng GPS ảo:</strong> MedNav sử dụng vị trí xuất phát do bạn chọn hoặc quét mã vị trí tại cổng/tòa nhà thực tế để đảm bảo độ tin cậy.
