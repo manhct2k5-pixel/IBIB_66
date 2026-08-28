@@ -1,7 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  BuildingId, 
-  FloorId, 
   MapNode, 
   NavigationRoute, 
   RoutingProfile,
@@ -10,204 +8,236 @@ import {
 import { 
   MAP_NODES_DATA, 
   BACH_MAI_CAMPUS, 
-  DEFAULT_EMERGENCY_NODE_ID,
-  BACH_MAI_QR_CHECKPOINTS
+  DEFAULT_EMERGENCY_NODE_ID 
 } from './data/hospitalData';
 import { findRoute } from './utils/pathfinding';
-import { Header, AppNavTab } from './components/Header';
-import { Hospital2DCampusMap } from './components/Hospital2DCampusMap';
-import { SearchAndRoutePanel } from './components/SearchAndRoutePanel';
-import { NavigationController } from './components/NavigationController';
-import { AIAssistantModal } from './components/AIAssistantModal';
+import { SimpleHeader } from './components/SimpleHeader';
+import { DestinationStep } from './components/DestinationStep';
+import { CurrentLocationStep } from './components/CurrentLocationStep';
+import { RoutePreviewStep } from './components/RoutePreviewStep';
+import { SimpleNavigationView } from './components/SimpleNavigationView';
+import { ArrivalView } from './components/ArrivalView';
 import { EmergencyModal } from './components/EmergencyModal';
-import { QRCheckpointModal } from './components/QRCheckpointModal';
-import { DataInfoView } from './components/DataInfoView';
+import { QRLocationModal } from './components/QRLocationModal';
+import { DataLimitDrawer } from './components/DataLimitDrawer';
+import { UserGuideModal } from './components/UserGuideModal';
+import { MoreMenuDrawer } from './components/MoreMenuDrawer';
 import { VerifiedQRCheckpoint } from './data/bachMai/checkpoints';
 
-export default function App() {
-  const [currentCampus] = useState<HospitalCampus>(BACH_MAI_CAMPUS);
-  const [activeTab, setActiveTab] = useState<AppNavTab>('home');
+export type AppFlowState = 
+  | 'destination'       // Step 1: Chọn nơi muốn đến
+  | 'start_location'    // Step 2: Chọn vị trí hiện tại
+  | 'route_preview'     // Step 3: Xem trước tuyến đường & bản đồ
+  | 'navigating'        // Step 4: Chỉ đường từng bước
+  | 'arrived';          // Step 5: Đã đến nơi
 
-  // Navigation state (Starts clean as null - Destination first flow)
-  const [startNode, setStartNode] = useState<MapNode | null>(null);
+export default function App() {
+  // Main Sequential Flow State
+  const [flowState, setFlowState] = useState<AppFlowState>('destination');
+
+  // Wayfinding Nodes
   const [destinationNode, setDestinationNode] = useState<MapNode | null>(null);
+  const [startNode, setStartNode] = useState<MapNode | null>(null);
   const [routingProfile, setRoutingProfile] = useState<RoutingProfile>('fastest');
-  const [isNavigating, setIsNavigating] = useState<boolean>(false);
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
-  const [lastVerifiedCheckpoint, setLastVerifiedCheckpoint] = useState<VerifiedQRCheckpoint | null>(null);
   const [language, setLanguage] = useState<'vi' | 'en'>('vi');
 
-  // Modals state
-  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState<boolean>(false);
+  // Modals & Drawers
   const [isEmergencyOpen, setIsEmergencyOpen] = useState<boolean>(false);
   const [isQRScannerOpen, setIsQRScannerOpen] = useState<boolean>(false);
+  const [isDataLimitOpen, setIsDataLimitOpen] = useState<boolean>(false);
+  const [isUserGuideOpen, setIsUserGuideOpen] = useState<boolean>(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState<boolean>(false);
 
-  // Compute Active Route
+  // Compute Active Navigation Route
   const activeRoute: NavigationRoute | null = useMemo(() => {
     if (!startNode || !destinationNode) return null;
     return findRoute(startNode.id, destinationNode.id, routingProfile);
   }, [startNode, destinationNode, routingProfile]);
 
-  // Destination Selection
-  const handleSelectDestinationNode = (node: MapNode | null) => {
+  // Step 1 Handler: Destination Selected -> Move to Step 2
+  const handleSelectDestination = (node: MapNode) => {
     setDestinationNode(node);
-    setCurrentStepIndex(0);
-    setIsNavigating(false);
+    setFlowState('start_location');
   };
 
-  // Start Node Selection
-  const handleSelectStartNode = (node: MapNode | null) => {
+  // Step 2 Handler: Start Location Selected -> Move to Step 3
+  const handleSelectStartLocation = (node: MapNode) => {
     setStartNode(node);
     setCurrentStepIndex(0);
-    setIsNavigating(false);
+    setFlowState('route_preview');
   };
 
-  // Swap Start & Destination
-  const handleSwapNodes = () => {
-    const temp = startNode;
-    setStartNode(destinationNode);
-    setDestinationNode(temp);
-    setCurrentStepIndex(0);
-    setIsNavigating(false);
-  };
-
-  // QR Checkpoint Confirmation
+  // QR Code Location Confirmation
   const handleConfirmQRCheckpoint = (node: MapNode, checkpoint: VerifiedQRCheckpoint) => {
-    setStartNode(node);
-    setLastVerifiedCheckpoint(checkpoint);
-    setCurrentStepIndex(0);
-    setIsNavigating(false);
+    if (flowState === 'destination' || flowState === 'start_location') {
+      setStartNode(node);
+      setCurrentStepIndex(0);
+      if (destinationNode) {
+        setFlowState('route_preview');
+      } else {
+        setFlowState('destination');
+      }
+    } else if (flowState === 'navigating' || flowState === 'route_preview') {
+      setStartNode(node);
+      setCurrentStepIndex(0);
+    }
   };
 
-  // Emergency flow (Redirect to A9)
-  const handleEmergencyRoute = () => {
+  // Step 3 Handler: Start Active Navigation
+  const handleStartNavigation = () => {
+    if (startNode && destinationNode && activeRoute) {
+      setCurrentStepIndex(0);
+      setFlowState('navigating');
+    }
+  };
+
+  // Step 4 Handler: Arrived at Final Step
+  const handleArrived = () => {
+    setFlowState('arrived');
+  };
+
+  // Reset to Home / Step 1
+  const handleResetToHome = () => {
+    setDestinationNode(null);
+    setStartNode(null);
+    setCurrentStepIndex(0);
+    setFlowState('destination');
+  };
+
+  // Emergency Flow: Route directly to A9 Center
+  const handleEmergencySelect = () => {
     const a9Node = MAP_NODES_DATA.find(n => n.id === DEFAULT_EMERGENCY_NODE_ID) || 
                    MAP_NODES_DATA.find(n => n.buildingId === 'A9') || 
                    MAP_NODES_DATA[0];
     
     setDestinationNode(a9Node);
     setRoutingProfile('emergency');
-    setActiveTab('navigation');
-    setIsEmergencyOpen(false);
 
-    // If start node is already known, begin navigation immediately
+    // If start node is already set, jump straight to preview
     if (startNode) {
-      setIsNavigating(true);
-      setCurrentStepIndex(0);
+      setFlowState('route_preview');
+    } else {
+      setFlowState('start_location');
     }
   };
 
   return (
-    <div className="flex flex-col h-screen w-full bg-slate-100 text-slate-900 overflow-hidden font-sans">
-      {/* Top Header */}
-      <Header
+    <div className="flex flex-col min-h-screen w-full bg-slate-100 text-slate-900 overflow-x-hidden font-sans">
+      {/* Elderly-Friendly Simplified Header */}
+      <SimpleHeader
         language={language}
-        onChangeLanguage={setLanguage}
         onOpenEmergency={() => setIsEmergencyOpen(true)}
-        onOpenAIAssistant={() => setIsAIAssistantOpen(true)}
-        activeTab={activeTab}
-        onChangeTab={setActiveTab}
+        onOpenGuide={() => setIsUserGuideOpen(true)}
+        onOpenMenu={() => setIsMoreMenuOpen(true)}
+        onGoHome={handleResetToHome}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-        {activeTab === 'data_info' ? (
-          /* ================= DATA TRANSPARENCY TAB ================= */
-          <DataInfoView 
-            onGoToNavigation={() => setActiveTab('navigation')}
+      {/* Main Flow Container */}
+      <main className="flex-1 flex flex-col w-full relative">
+        {/* STEP 1: CHỌN NƠI MUỐN ĐẾN */}
+        {flowState === 'destination' && (
+          <DestinationStep
+            onSelectDestination={handleSelectDestination}
+            onOpenEmergency={() => setIsEmergencyOpen(true)}
             language={language}
           />
-        ) : (
-          /* ================= HOME & NAVIGATION TAB (2D MAP + WAYFINDING) ================= */
-          <>
-            {/* Left / Bottom Panel: Search, Gate Picking, & Turn-by-Turn Nav Controller */}
-            <div className="w-full md:w-88 lg:w-96 flex-shrink-0 h-1/2 md:h-full overflow-hidden order-2 md:order-1 border-t md:border-t-0 md:border-r border-slate-200 bg-white flex flex-col shadow-sm z-10">
-              {isNavigating && activeRoute ? (
-                <NavigationController
-                  route={activeRoute}
-                  currentStepIndex={currentStepIndex}
-                  onStepChange={setCurrentStepIndex}
-                  onClose={() => setIsNavigating(false)}
-                  onOpenQRScanner={() => setIsQRScannerOpen(true)}
-                  language={language}
-                />
-              ) : (
-                <SearchAndRoutePanel
-                  currentCampus={currentCampus}
-                  startNode={startNode}
-                  destinationNode={destinationNode}
-                  onSelectStartNode={handleSelectStartNode}
-                  onSelectDestinationNode={handleSelectDestinationNode}
-                  onSwapNodes={handleSwapNodes}
-                  routingProfile={routingProfile}
-                  onChangeRoutingProfile={setRoutingProfile}
-                  onStartNavigation={() => {
-                    if (startNode && destinationNode) {
-                      setIsNavigating(true);
-                      setCurrentStepIndex(0);
-                    }
-                  }}
-                  onOpenQRScanner={() => setIsQRScannerOpen(true)}
-                  lastVerifiedCheckpoint={lastVerifiedCheckpoint}
-                  language={language}
-                />
-              )}
-            </div>
-
-            {/* Right / Top Area: 2D Interactive Hospital Map */}
-            <div className="flex-1 flex flex-col h-1/2 md:h-full overflow-hidden relative order-1 md:order-2">
-              <Hospital2DCampusMap
-                startNode={startNode}
-                destinationNode={destinationNode}
-                onSelectStartNode={handleSelectStartNode}
-                onSelectDestinationNode={handleSelectDestinationNode}
-                activeRoute={activeRoute}
-                currentStepIndex={currentStepIndex}
-                isNavigating={isNavigating}
-                routingProfile={routingProfile}
-                language={language}
-                onOpenQRScanner={() => setIsQRScannerOpen(true)}
-              />
-            </div>
-          </>
         )}
-      </div>
 
-      {/* ================= MODALS ================= */}
+        {/* STEP 2: CHỌN VỊ TRÍ HIỆN TẠI */}
+        {flowState === 'start_location' && destinationNode && (
+          <CurrentLocationStep
+            destinationNode={destinationNode}
+            onSelectStartLocation={handleSelectStartLocation}
+            onBackToDestination={() => setFlowState('destination')}
+            onOpenQRScanner={() => setIsQRScannerOpen(true)}
+            language={language}
+          />
+        )}
+
+        {/* STEP 3: KIỂM TRA TUYẾN ĐƯỜNG */}
+        {flowState === 'route_preview' && startNode && destinationNode && activeRoute && (
+          <RoutePreviewStep
+            startNode={startNode}
+            destinationNode={destinationNode}
+            activeRoute={activeRoute}
+            onStartNavigation={handleStartNavigation}
+            onChangeStartLocation={() => setFlowState('start_location')}
+            onChangeDestination={() => setFlowState('destination')}
+            onOpenDataInfo={() => setIsDataLimitOpen(true)}
+            language={language}
+          />
+        )}
+
+        {/* STEP 4: CHỈ ĐƯỜNG TỪNG BƯỚC */}
+        {flowState === 'navigating' && startNode && destinationNode && activeRoute && (
+          <SimpleNavigationView
+            startNode={startNode}
+            destinationNode={destinationNode}
+            activeRoute={activeRoute}
+            currentStepIndex={currentStepIndex}
+            onStepChange={setCurrentStepIndex}
+            onArrived={handleArrived}
+            onStopNavigation={() => setFlowState('route_preview')}
+            onOpenQRScanner={() => setIsQRScannerOpen(true)}
+            language={language}
+          />
+        )}
+
+        {/* STEP 5: BÁO ĐÃ ĐẾN NƠI */}
+        {flowState === 'arrived' && destinationNode && (
+          <ArrivalView
+            destinationNode={destinationNode}
+            onFinish={handleResetToHome}
+            onSearchAnother={handleResetToHome}
+            language={language}
+          />
+        )}
+      </main>
+
+      {/* ================= MODALS & DRAWERS ================= */}
 
       {/* Emergency Modal */}
       <EmergencyModal
         isOpen={isEmergencyOpen}
         onClose={() => setIsEmergencyOpen(false)}
-        onSelectEmergencyDestination={handleEmergencyRoute}
+        onSelectEmergencyDestination={handleEmergencySelect}
         language={language}
       />
 
-      {/* QR Checkpoint Modal */}
-      <QRCheckpointModal
+      {/* QR Location Modal */}
+      <QRLocationModal
         isOpen={isQRScannerOpen}
         onClose={() => setIsQRScannerOpen(false)}
         onConfirmCheckpointNode={handleConfirmQRCheckpoint}
         language={language}
       />
 
-      {/* AI Assistant Modal */}
-      {isAIAssistantOpen && (
-        <AIAssistantModal
-          isOpen={isAIAssistantOpen}
-          onClose={() => setIsAIAssistantOpen(false)}
-          onNavigateToDepartment={(deptId) => {
-            const node = MAP_NODES_DATA.find(n => n.roomId === deptId) || 
-                         MAP_NODES_DATA.find(n => n.id === deptId);
-            if (node) {
-              handleSelectDestinationNode(node);
-              setIsAIAssistantOpen(false);
-              setActiveTab('navigation');
-            }
-          }}
-          language={language}
-        />
-      )}
+      {/* Data Limits Drawer */}
+      <DataLimitDrawer
+        isOpen={isDataLimitOpen}
+        onClose={() => setIsDataLimitOpen(false)}
+        language={language}
+      />
+
+      {/* Senior User Guide Modal */}
+      <UserGuideModal
+        isOpen={isUserGuideOpen}
+        onClose={() => setIsUserGuideOpen(false)}
+        language={language}
+      />
+
+      {/* More Options Menu Drawer */}
+      <MoreMenuDrawer
+        isOpen={isMoreMenuOpen}
+        onClose={() => setIsMoreMenuOpen(false)}
+        onGoHome={handleResetToHome}
+        onOpenGuide={() => setIsUserGuideOpen(true)}
+        onOpenDataInfo={() => setIsDataLimitOpen(true)}
+        onOpenEmergency={() => setIsEmergencyOpen(true)}
+        language={language}
+        onChangeLanguage={setLanguage}
+      />
     </div>
   );
 }

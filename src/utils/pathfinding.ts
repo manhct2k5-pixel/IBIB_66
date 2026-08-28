@@ -371,11 +371,20 @@ export function findRoute(
   }
   const floorsInvolved = Array.from(floorsInvolvedMap.values());
 
+  // Ensure each step has instruction, action, visualCue populated for all consumers
+  const enrichedSteps = steps.map(s => ({
+    ...s,
+    instruction: s.instructionVi,
+    action: s.maneuver.includes('left') ? 'turn-left' : s.maneuver.includes('right') ? 'turn-right' : s.maneuver === 'arrive' ? 'arrive' : 'straight',
+    visualCue: s.toNode ? `Mốc đến: ${s.toNode.name}` : undefined
+  }));
+
   return {
     pathNodes,
     totalDistance,
     estimatedDurationSeconds,
-    steps,
+    estimatedTimeSeconds: estimatedDurationSeconds,
+    steps: enrichedSteps,
     profile,
     buildingsInvolved,
     floorsInvolved

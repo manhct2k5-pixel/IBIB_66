@@ -178,6 +178,9 @@ export interface NavigationStep {
   stepIndex: number;
   instructionVi: string;
   instructionEn: string;
+  instruction?: string; // Backwards compatible alias for instructionVi
+  action?: 'straight' | 'turn-left' | 'turn-right' | 'arrive' | string;
+  visualCue?: string;
   distance: number; // meters
   maneuver: 
     | 'start' 
@@ -198,10 +201,13 @@ export interface NavigationStep {
   floorId?: FloorId;
 }
 
+export type RouteStep = NavigationStep;
+
 export interface NavigationRoute {
   pathNodes: MapNode[];
   totalDistance: number; // in meters (ước lượng)
   estimatedDurationSeconds: number; // seconds
+  estimatedTimeSeconds?: number; // alias
   steps: NavigationStep[];
   profile: RoutingProfile;
   buildingsInvolved: BuildingId[];

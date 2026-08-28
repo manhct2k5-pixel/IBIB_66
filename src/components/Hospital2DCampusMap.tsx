@@ -454,78 +454,64 @@ export const Hospital2DCampusMap: React.FC<Hospital2DCampusMapProps> = ({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* ================= TOP FLOATING CONTROL BAR ================= */}
-      <div className="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between pointer-events-none">
-        
-        {/* Campus Header Badge */}
-        <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-slate-200 shadow-sm pointer-events-auto flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-cyan-600 flex items-center justify-center text-white font-black text-xs">
-            BM
-          </div>
-          <div>
-            <div className="text-xs font-black text-slate-900 flex items-center gap-1.5">
-              <span>Sơ đồ Bệnh viện Bạch Mai</span>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded border border-emerald-300">
-                2D Chính Thức
-              </span>
-            </div>
-          </div>
-        </div>
+      {/* ================= RIGHT FLOATING SENIOR CONTROL COLUMN ================= */}
+      <div className="absolute top-3 right-3 z-20 flex flex-col gap-2.5 pointer-events-auto">
+        {/* Zoom In */}
+        <button
+          id="btn-map-zoom-in"
+          onClick={() => setScale(s => Math.min(s + 0.15, 2.4))}
+          className="w-13 h-13 bg-white/95 hover:bg-cyan-50 active:bg-cyan-100 text-slate-800 hover:text-cyan-800 rounded-2xl border-2 border-slate-300 shadow-md transition flex items-center justify-center cursor-pointer focus:outline-none focus:ring-4 focus:ring-cyan-600/30"
+          aria-label="Phóng to bản đồ"
+          title="Phóng to (+)"
+        >
+          <ZoomIn className="w-6 h-6 stroke-[2.5]" />
+        </button>
 
-        {/* Map Control Buttons: Zoom +, Zoom -, Fit to Screen, Reset, Center Route */}
-        <div className="flex items-center gap-1 bg-white/95 backdrop-blur-md p-1 rounded-2xl border border-slate-200 shadow-sm pointer-events-auto">
-          {/* Zoom In */}
+        {/* Zoom Out */}
+        <button
+          id="btn-map-zoom-out"
+          onClick={() => setScale(s => Math.max(s - 0.15, 0.45))}
+          className="w-13 h-13 bg-white/95 hover:bg-cyan-50 active:bg-cyan-100 text-slate-800 hover:text-cyan-800 rounded-2xl border-2 border-slate-300 shadow-md transition flex items-center justify-center cursor-pointer focus:outline-none focus:ring-4 focus:ring-cyan-600/30"
+          aria-label="Thu nhỏ bản đồ"
+          title="Thu nhỏ (−)"
+        >
+          <ZoomOut className="w-6 h-6 stroke-[2.5]" />
+        </button>
+
+        {/* Fit to screen */}
+        <button
+          id="btn-map-fit-screen"
+          onClick={handleFitToScreen}
+          className="w-13 h-13 bg-white/95 hover:bg-cyan-50 active:bg-cyan-100 text-slate-800 hover:text-cyan-800 rounded-2xl border-2 border-slate-300 shadow-md transition flex items-center justify-center cursor-pointer focus:outline-none focus:ring-4 focus:ring-cyan-600/30"
+          aria-label="Xem toàn bộ khuôn viên bệnh viện"
+          title="Vừa màn hình"
+        >
+          <Maximize2 className="w-6 h-6 stroke-[2.5]" />
+        </button>
+
+        {/* Center Active Route */}
+        {activeRoute && (
           <button
-            id="btn-map-zoom-in"
-            onClick={() => setScale(s => Math.min(s + 0.15, 2.4))}
-            className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-700 hover:text-cyan-700 transition cursor-pointer"
-            title="Phóng to (+)"
+            id="btn-map-center-route"
+            onClick={handleCenterActiveRoute}
+            className="w-13 h-13 bg-cyan-700 hover:bg-cyan-800 active:bg-cyan-900 text-white rounded-2xl border-2 border-cyan-800 shadow-md transition flex items-center justify-center cursor-pointer focus:outline-none focus:ring-4 focus:ring-cyan-600/40"
+            aria-label="Căn giữa tuyến đường đang đi"
+            title="Căn giữa tuyến đường"
           >
-            <ZoomIn className="w-4 h-4" />
+            <Crosshair className="w-6 h-6 stroke-[2.5]" />
           </button>
+        )}
 
-          {/* Zoom Out */}
-          <button
-            id="btn-map-zoom-out"
-            onClick={() => setScale(s => Math.max(s - 0.15, 0.45))}
-            className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-700 hover:text-cyan-700 transition cursor-pointer"
-            title="Thu nhỏ (−)"
-          >
-            <ZoomOut className="w-4 h-4" />
-          </button>
-
-          {/* Fit to screen */}
-          <button
-            id="btn-map-fit-screen"
-            onClick={handleFitToScreen}
-            className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-700 hover:text-cyan-700 transition cursor-pointer"
-            title="Vừa màn hình (Fit to screen)"
-          >
-            <Maximize2 className="w-4 h-4" />
-          </button>
-
-          {/* Center Active Route */}
-          {activeRoute && (
-            <button
-              id="btn-map-center-route"
-              onClick={handleCenterActiveRoute}
-              className="p-1.5 bg-cyan-50 hover:bg-cyan-100 rounded-xl text-cyan-800 transition cursor-pointer border border-cyan-200"
-              title="Căn giữa tuyến đường"
-            >
-              <Crosshair className="w-4 h-4" />
-            </button>
-          )}
-
-          {/* Reset View */}
-          <button
-            id="btn-map-reset-view"
-            onClick={handleResetView}
-            className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-700 hover:text-cyan-700 transition cursor-pointer"
-            title="Đặt lại góc nhìn"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
-        </div>
+        {/* Reset View */}
+        <button
+          id="btn-map-reset-view"
+          onClick={handleResetView}
+          className="w-13 h-13 bg-white/95 hover:bg-cyan-50 active:bg-cyan-100 text-slate-800 hover:text-cyan-800 rounded-2xl border-2 border-slate-300 shadow-md transition flex items-center justify-center cursor-pointer focus:outline-none focus:ring-4 focus:ring-cyan-600/30"
+          aria-label="Đặt lại góc nhìn ban đầu"
+          title="Đặt lại góc nhìn"
+        >
+          <RotateCcw className="w-6 h-6 stroke-[2.5]" />
+        </button>
       </div>
 
       {/* ================= MAP SVG CANVAS ================= */}
@@ -800,8 +786,8 @@ export const Hospital2DCampusMap: React.FC<Hospital2DCampusMapProps> = ({
               <g transform={`translate(${startNode.x}, ${startNode.y - 12})`}>
                 <circle cx="0" cy="0" r="14" fill="#059669" stroke="#ffffff" strokeWidth="2" />
                 <text x="0" y="4" fill="#ffffff" fontSize="9" fontWeight="bold" textAnchor="middle">ĐI</text>
-                <text x="0" y="-18" fill="#065f46" fontSize="10" fontWeight="black" textAnchor="middle">
-                  Xuất phát: {startNode.name}
+                <text x="0" y="-18" fill="#065f46" fontSize="11" fontWeight="black" textAnchor="middle">
+                  Vị trí đã chọn: {startNode.name}
                 </text>
               </g>
             )}
@@ -811,8 +797,8 @@ export const Hospital2DCampusMap: React.FC<Hospital2DCampusMapProps> = ({
               <g transform={`translate(${destinationNode.x}, ${destinationNode.y - 14})`}>
                 <circle cx="0" cy="0" r="15" fill="#e11d48" stroke="#ffffff" strokeWidth="2" />
                 <text x="0" y="4" fill="#ffffff" fontSize="9" fontWeight="bold" textAnchor="middle">ĐÍCH</text>
-                <text x="0" y="-20" fill="#9f1239" fontSize="10" fontWeight="black" textAnchor="middle">
-                  Đích: {destinationNode.name}
+                <text x="0" y="-20" fill="#9f1239" fontSize="11" fontWeight="black" textAnchor="middle">
+                  Nơi đến: {destinationNode.name}
                 </text>
               </g>
             )}
@@ -821,7 +807,7 @@ export const Hospital2DCampusMap: React.FC<Hospital2DCampusMapProps> = ({
       </div>
 
       {/* ================= MAP LEGEND (CHÚ THÍCH) ================= */}
-      <div className="absolute bottom-2.5 left-2.5 z-20 bg-white/95 backdrop-blur-md p-2 rounded-2xl border border-slate-200 shadow-sm text-[11px] font-semibold text-slate-700 flex flex-wrap items-center gap-3 pointer-events-auto">
+      <div className="absolute bottom-2.5 left-2.5 z-20 bg-white/95 backdrop-blur-md p-2 rounded-2xl border border-slate-200 shadow-sm text-xs font-bold text-slate-700 flex flex-wrap items-center gap-3 pointer-events-auto">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-cyan-700" />
           <span>Đang đi</span>
@@ -836,11 +822,11 @@ export const Hospital2DCampusMap: React.FC<Hospital2DCampusMapProps> = ({
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-rose-600" />
-          <span>Điểm đến</span>
+          <span>Nơi đến</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-slate-900 border border-cyan-400" />
-          <span>QR Checkpoint</span>
+          <span>Mã vị trí</span>
         </div>
       </div>
 
