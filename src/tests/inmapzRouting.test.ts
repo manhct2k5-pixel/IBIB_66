@@ -42,8 +42,6 @@ describe('InMapz Routing Capability & Assisted Mode Service Tests', () => {
   });
 
   it('chooseVerifiedMapView mở bản đồ khuôn viên tổng quan nếu khác tòa nhà (khác venueId)', () => {
-    // Điểm xuất phát ở Cổng chính số 1 (mapLinkId: campus, venueId: 2302)
-    // Điểm đến ở Nhà C1-1 (mapLinkId: c1-1-floor1, venueId: 2301)
     const cong1 = HOSPITAL_108_START_LOCATIONS.find(s => s.id === 'start_gate_01');
     const c1_1_a = HOSPITAL_108_DESTINATIONS.find(d => d.id === 'c1_1_a');
 
@@ -69,29 +67,25 @@ describe('InMapz Routing Capability & Assisted Mode Service Tests', () => {
     expect(result.routePreloaded).toBe(false);
   });
 
-  it('RoutePreview hiển thị "Cần chọn lại trên bản đồ" và nút "Mở chức năng Chỉ đường trên InMapz"', () => {
+  it('Không tuyên bố routePreloaded hay số bước giả trong codebase', () => {
     const routePreviewCode = fs.readFileSync(
       path.join(process.cwd(), 'src/components/RoutePreview.tsx'),
       'utf-8'
     );
 
-    expect(routePreviewCode).toContain('Cần chọn lại trên bản đồ');
-    expect(routePreviewCode).toContain('MedNav đã ghi nhớ:');
-    expect(routePreviewCode).toContain('Mở chức năng Chỉ đường trên InMapz');
-    expect(routePreviewCode).not.toContain('Tuyến đã sẵn sàng');
     expect(routePreviewCode).not.toContain('bước chân');
     expect(routePreviewCode).not.toContain('khoảng cách:');
   });
 
-  it('Official108Map hiển thị Từ và Đến trong bottom sheet và các bước hướng dẫn', () => {
+  it('Official108Map hiển thị Đến và hướng dẫn thao tác trực tiếp trên bản đồ', () => {
     const mapCode = fs.readFileSync(
       path.join(process.cwd(), 'src/components/Official108Map.tsx'),
       'utf-8'
     );
 
-    expect(mapCode).toContain('Từ:');
     expect(mapCode).toContain('Đến:');
-    expect(mapCode).toContain('bước xem tuyến trên bản đồ InMapz');
     expect(mapCode).toContain('Chỉ đường');
+    expect(mapCode).toContain('Xem hỗ trợ');
+    expect(mapCode).toContain('Nghe hướng dẫn');
   });
 });

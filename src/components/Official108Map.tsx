@@ -19,9 +19,17 @@ import {
   ShieldAlert,
   Navigation,
   HelpCircle,
-  X
+  X,
+  Info,
+  MapPin,
+  Clock,
+  Building,
+  Layers,
+  Check
 } from 'lucide-react';
 import { speakText, stopSpeaking } from '../utils/speech';
+import { HOSPITAL_108_START_LOCATIONS } from '../data/hospital108';
+import { MapPrecisionBadge } from './MapPrecisionBadge';
 
 interface Official108MapProps {
   mapLink: Official108MapLink;
@@ -39,7 +47,7 @@ interface Official108MapProps {
 export function Official108Map({ 
   mapLink, 
   destination,
-  startLocation,
+  startLocation: initialStartLocation,
   routingMode = 'assisted_external_map',
   routeLaunchResult,
   onClose,
@@ -53,15 +61,19 @@ export function Official108Map({
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSheetExpanded, setIsSheetExpanded] = useState(false);
-  const [isBannerDismissed, setIsBannerDismissed] = useState(false);
   const [showIconHelper, setShowIconHelper] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  // Vị trí xuất phát hỗ trợ (tùy chọn)
+  const [selectedStart, setSelectedStart] = useState<Hospital108StartLocation | null>(initialStartLocation || null);
+  const [isSelectingStart, setIsSelectingStart] = useState(false);
+  const [isViewingDestInfo, setIsViewingDestInfo] = useState(false);
 
   const effectiveMapUrl =
     routingMode === 'official_deep_link' &&
     routeLaunchResult?.routePreloaded === true
       ? routeLaunchResult.url
       : mapLink.url;
-  const isDeepLinkReady = routingMode === 'official_deep_link' && routeLaunchResult?.routePreloaded;
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -77,14 +89,17 @@ export function Official108Map({
     };
   }, []);
 
+  // Đặt lại trạng thái khi đổi URL hoặc reload
   useEffect(() => {
-    if (isLoading) {
-      const timer = setTimeout(() => {
-        setHasError(true);
-      }, 10000); // 10s fallback
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading]);
+    setIsLoading(true);
+    setHasError(false);
+    const timer = setTimeout(() => {
+      // Sau 10s nếu chưa load xong -> hiển thị fallback hỗ trợ
+      setIsLoading(false);
+      setHasError(true);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [effectiveMapUrl, reloadKey]);
 
   const handleIframeLoad = () => {
     setIsLoading(false);
@@ -95,6 +110,13 @@ export function Official108Map({
     setHasError(true);
   };
 
+  const handleReloadIframe = () => {
+    setHasError(false);
+    setIsLoading(true);
+    setReloadKey(k => k + 1);
+  };
+
+  // Đọc hướng dẫn ngắn gọn chuẩn chỉ
   const handleToggleSpeak = () => {
     if (isSpeaking) {
       stopSpeaking();
@@ -102,13 +124,12 @@ export function Official108Map({
       return;
     }
 
+    const destName = destination?.name || mapLink.label;
     let textToRead = '';
-    if (isDeepLinkReady) {
-      textToRead = `Tuyến đường đã được mở trên bản đồ chính thức từ ${startLocation?.name || 'vị trí ban đầu'} đến ${destination?.name || 'điểm đến'}.`;
+    if (selectedStart) {
+      textToRead = `Bác đang ở ${selectedStart.name}. Trên bản đồ, hãy chọn vị trí này làm điểm bắt đầu và chọn ${destName} làm điểm đến.`;
     } else {
-      const fromText = startLocation ? `từ ${startLocation.name}` : '';
-      const toText = destination ? `đến ${destination.name}` : mapLink.label;
-      textToRead = `Hướng dẫn thao tác trên bản đồ InMapz: Bác đang muốn đi ${fromText} ${toText}. Bước 1: Mở bản đồ toàn màn hình. Bước 2: Tìm và bấm nút Chỉ đường. Bước 3: Chọn điểm bắt đầu là ${startLocation?.name || 'vị trí hiện tại'}. Bước 4: Chọn nơi muốn đến là ${destination?.name || mapLink.label}.`;
+      textToRead = `Bác muốn đến ${destName}. Trên bản đồ, bác bấm Chỉ đường, chọn điểm bắt đầu, sau đó chọn ${destName}.`;
     }
 
     setIsSpeaking(true);
@@ -118,6 +139,20 @@ export function Official108Map({
       () => setIsSpeaking(false),
       () => setIsSpeaking(false)
     );
+  };
+
+  // Xử lý nút Back thông minh
+  const handleSmartBack = () => {
+    stopSpeaking();
+    if (isSelectingStart) {
+      setIsSelectingStart(false);
+    } else if (isViewingDestInfo) {
+      setIsViewingDestInfo(false);
+    } else if (isSheetExpanded) {
+      setIsSheetExpanded(false);
+    } else {
+      onClose();
+    }
   };
 
   if (!isOnline) {
@@ -147,31 +182,31 @@ export function Official108Map({
 
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col h-[100dvh] overflow-hidden">
-      {/* Top Header tối ưu cho mobile */}
-      <header className="h-16 flex-none bg-teal-800 text-white border-b border-teal-900 flex items-center px-2 justify-between sticky top-0 z-20 safe-top shadow-md">
-        {/* Bên trái: Nút quay lại 48x48 */}
+      {/* Top Header: Chiều cao 56-64px, tối ưu cho mobile */}
+      <header className="h-14 sm:h-16 flex-none bg-teal-800 text-white border-b border-teal-900 flex items-center px-2 justify-between sticky top-0 z-20 safe-top shadow-md">
+        {/* Nút quay lại: Vùng chạm >= 48x48px */}
         <button
-          onClick={onClose}
-          className="w-12 h-12 rounded-xl text-white hover:bg-white/10 active:bg-white/20 flex items-center justify-center font-bold transition-colors shrink-0"
+          onClick={handleSmartBack}
+          className="min-w-[48px] min-h-[48px] w-12 h-12 rounded-xl text-white hover:bg-white/10 active:bg-white/20 flex items-center justify-center font-bold transition-colors shrink-0"
           aria-label="Quay lại"
         >
           <ArrowLeft className="w-6 h-6" />
         </button>
         
-        {/* Chính giữa: Tên điểm đến 1 dòng, truncate */}
+        {/* Tên điểm đến ở giữa */}
         <div className="flex-1 px-2 text-center min-w-0">
-          <h1 className="text-base sm:text-lg font-black text-white truncate">
+          <h1 className="text-base sm:text-lg font-black text-white truncate leading-tight">
             {destination ? destination.name : mapLink.label}
           </h1>
-          <p className="text-sm text-teal-200 truncate font-medium">
-            {mapLink.label}
+          <p className="text-sm text-teal-200 truncate font-medium mt-0.5">
+            {destination?.building || mapLink.label}
           </p>
         </div>
         
-        {/* Bên phải: Nút cấp cứu 48x48 icon */}
+        {/* Nút cấp cứu: Vùng chạm >= 48x48px */}
         <button
           onClick={onOpenEmergency}
-          className="w-12 h-12 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white rounded-xl flex items-center justify-center font-bold transition-colors shadow-sm shrink-0"
+          className="min-w-[48px] min-h-[48px] w-12 h-12 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white rounded-xl flex items-center justify-center font-bold transition-colors shadow-sm shrink-0"
           aria-label="Cấp cứu khẩn cấp"
           title="Cấp cứu khẩn cấp"
         >
@@ -179,93 +214,75 @@ export function Official108Map({
         </button>
       </header>
 
-      {/* Main Map Container */}
+      {/* Main Map Container: Không có lớp phủ chặn tương tác của iframe */}
       <div className="flex-1 relative bg-slate-100 w-full overflow-hidden">
         {isLoading && !hasError && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 z-10 pointer-events-none">
             <div className="w-12 h-12 border-4 border-teal-200 border-t-teal-700 rounded-full animate-spin mb-4"></div>
-            <p className="text-slate-700 font-bold text-lg">Đang tải bản đồ chính thức Bệnh viện 108...</p>
+            <p className="text-slate-700 font-bold text-lg text-center px-4">
+              Đang tải bản đồ chính thức Bệnh viện 108...
+            </p>
           </div>
         )}
         
         <iframe
+          key={reloadKey}
           src={effectiveMapUrl}
-          title={mapLink.label}
-          className="w-full h-full border-0"
+          title={`Bản đồ Bệnh viện 108 - ${destination?.name ?? mapLink.label}`}
+          loading="eager"
+          className="h-full w-full border-0"
           onLoad={handleIframeLoad}
           onError={handleIframeError}
         />
 
-        {/* Thanh hướng dẫn nổi BƯỚC TIẾP THEO (chỉ hiện trong assisted_external_map) */}
-        {!isBannerDismissed && routingMode === 'assisted_external_map' && (
-          <div className="absolute top-3 left-3 right-3 sm:left-auto sm:right-4 sm:w-96 bg-white/95 backdrop-blur-sm border-2 border-teal-600 rounded-2xl p-3.5 shadow-2xl z-20 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="flex items-center justify-between gap-2">
-              <span className="px-2 py-0.5 bg-teal-100 text-teal-800 text-sm font-black rounded uppercase tracking-wider">
-                BƯỚC TIẾP THEO
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsBannerDismissed(true)}
-                aria-label="Đóng thông báo"
-                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-100 text-slate-500 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <p className="font-black text-slate-900 text-base mt-1.5 leading-snug">
-              Bấm nút “Chỉ đường” trên bản đồ InMapz
-            </p>
-            <p className="text-sm font-semibold text-slate-600 mt-1">
-              Sau đó chọn điểm đầu ({startLocation?.name || 'Vị trí hiện tại'}) và nơi đến ({destination?.name || mapLink.label}).
-            </p>
-            <a
-              href={effectiveMapUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2.5 w-full min-h-[48px] h-12 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-sm transition-colors text-center"
-            >
-              <ExternalLink className="w-4 h-4 shrink-0" />
-              <span>Mở InMapz toàn màn hình để chỉ đường</span>
-            </a>
-          </div>
-        )}
-        
-        {/* Fallback khi tải lâu (>10s) hoặc lỗi */}
+        {/* Fallback khi tải lỗi hoặc quá 10s */}
         {hasError && (
-          <div className="absolute top-4 left-4 right-4 bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 shadow-lg z-10 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="absolute top-3 left-3 right-3 bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 shadow-lg z-20 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <AlertTriangle className="w-6 h-6 text-amber-700 shrink-0" />
-              <p className="text-amber-900 font-bold text-sm sm:text-base">
-                Nếu vùng bản đồ bị trắng hoặc không thao tác được, bác hãy bấm nút &quot;Mở tab mới&quot;.
+              <p className="text-amber-950 font-bold text-sm sm:text-base">
+                Bản đồ tải chậm hoặc trình duyệt đang hạn chế nhúng. Bác có thể thử tải lại ngay hoặc mở ở tab mới.
               </p>
             </div>
-            <a
-              href={effectiveMapUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="min-h-[48px] h-12 px-4 bg-teal-700 hover:bg-teal-800 text-white font-bold rounded-xl flex items-center justify-center gap-2 shrink-0 text-sm"
-            >
-              <ExternalLink className="w-4 h-4" />
-              <span>Mở tab mới</span>
-            </a>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                onClick={handleReloadIframe}
+                className="flex-1 sm:flex-initial min-h-[48px] h-12 px-4 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white font-bold rounded-xl flex items-center justify-center gap-2 text-sm shadow-sm"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>Thử tải lại trong MedNav</span>
+              </button>
+              <a
+                href={effectiveMapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 sm:flex-initial min-h-[48px] h-12 px-4 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-2 text-sm"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span>Mở tab mới</span>
+              </a>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Bottom Sheet - Khi thu gọn (!isSheetExpanded) */}
+      {/* Bottom Sheet - Trạng thái Thu gọn (!isSheetExpanded) */}
       {!isSheetExpanded && (
         <div className="flex-none bg-white border-t-2 border-slate-200 shadow-2xl z-20 safe-bottom">
-          {/* Header Sheet: Luôn hiển thị Từ & Đến */}
-          <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
-            <div className="flex flex-col gap-0.5 overflow-hidden pr-2 min-w-0 flex-1">
-              {startLocation && (
+          <div className="p-3 sm:p-4 flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-0.5 overflow-hidden min-w-0 flex-1">
+              <div className="text-base sm:text-lg font-black text-slate-900 truncate">
+                Đến: <span className="text-teal-800">{destination?.name || mapLink.label}</span>
+              </div>
+              <div className="text-sm font-bold text-teal-900 flex items-center gap-1.5 truncate">
+                <Navigation className="w-4 h-4 text-teal-700 shrink-0" />
+                <span>Bấm “Chỉ đường” ngay trên bản đồ</span>
+              </div>
+              {selectedStart && (
                 <div className="text-sm font-semibold text-slate-600 truncate">
-                  Từ: <span className="text-slate-900 font-bold">{startLocation.name}</span>
+                  Điểm bắt đầu gợi ý: {selectedStart.name}
                 </div>
               )}
-              <div className="text-base font-bold text-slate-800 truncate">
-                Đến: <span className="text-teal-800 font-black">{destination?.name || mapLink.label}</span>
-              </div>
             </div>
 
             <button 
@@ -273,42 +290,29 @@ export function Official108Map({
               aria-expanded={false}
               aria-controls="routing-sheet-content"
               onClick={() => setIsSheetExpanded(true)}
-              className="min-h-[44px] h-11 flex items-center gap-1.5 text-slate-700 font-bold text-sm bg-white hover:bg-slate-100 active:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-300 shadow-sm shrink-0 transition-colors"
+              className="min-w-[48px] min-h-[48px] h-12 flex items-center gap-1.5 text-teal-900 font-black text-sm sm:text-base bg-teal-50 hover:bg-teal-100 active:bg-teal-200 px-4 py-2 rounded-xl border border-teal-200 shadow-sm shrink-0 transition-colors"
             >
-              <span>Xem hướng dẫn</span>
-              <ChevronUp className="w-4 h-4 text-slate-600" />
+              <span>Xem hỗ trợ</span>
+              <ChevronUp className="w-5 h-5 text-teal-800" />
             </button>
-          </div>
-
-          {/* Phần hành động khi thu gọn: Luôn có nút CTA >= 56px */}
-          <div className="p-3">
-            <a
-              href={effectiveMapUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full min-h-[56px] h-14 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white rounded-2xl font-black text-base sm:text-lg flex items-center justify-center gap-2.5 transition-colors shadow-md text-center"
-            >
-              <ExternalLink className="w-5 h-5 shrink-0" />
-              <span>Mở InMapz để xem đường đi</span>
-            </a>
           </div>
         </div>
       )}
 
-      {/* Bottom Sheet - Khi mở rộng (isSheetExpanded) */}
+      {/* Bottom Sheet - Trạng thái Mở rộng (isSheetExpanded) */}
       {isSheetExpanded && (
-        <div className="flex-none bg-white border-t-2 border-slate-200 shadow-2xl z-20 safe-bottom max-h-[65dvh] flex flex-col">
-          {/* Header Sheet: Luôn hiển thị Từ & Đến */}
-          <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2 flex-none">
-            <div className="flex flex-col gap-0.5 overflow-hidden pr-2 min-w-0 flex-1">
-              {startLocation && (
+        <div className="flex-none bg-white border-t-2 border-slate-200 shadow-2xl z-20 safe-bottom max-h-[65dvh] flex flex-col animate-in fade-in slide-in-from-bottom-3 duration-200">
+          {/* Header Sheet Mở rộng */}
+          <div className="p-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2 flex-none">
+            <div className="flex flex-col gap-0.5 overflow-hidden min-w-0 flex-1">
+              <div className="text-base sm:text-lg font-black text-slate-900 truncate">
+                Đến: <span className="text-teal-800">{destination?.name || mapLink.label}</span>
+              </div>
+              {destination && (
                 <div className="text-sm font-semibold text-slate-600 truncate">
-                  Từ: <span className="text-slate-900 font-bold">{startLocation.name}</span>
+                  {destination.building} {destination.floor ? `• ${destination.floor}` : ''}
                 </div>
               )}
-              <div className="text-base font-bold text-slate-800 truncate">
-                Đến: <span className="text-teal-800 font-black">{destination?.name || mapLink.label}</span>
-              </div>
             </div>
 
             <button 
@@ -316,141 +320,288 @@ export function Official108Map({
               aria-expanded={true}
               aria-controls="routing-sheet-content"
               onClick={() => setIsSheetExpanded(false)}
-              className="min-h-[44px] h-11 flex items-center gap-1.5 text-slate-700 font-bold text-sm bg-white hover:bg-slate-100 active:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-300 shadow-sm shrink-0 transition-colors"
+              className="min-w-[48px] min-h-[48px] h-12 flex items-center gap-1.5 text-slate-700 font-bold text-sm bg-white hover:bg-slate-100 active:bg-slate-200 px-3.5 py-2 rounded-xl border border-slate-300 shadow-sm shrink-0 transition-colors"
             >
               <span>Thu gọn</span>
-              <ChevronDown className="w-4 h-4 text-slate-600" />
+              <ChevronDown className="w-5 h-5 text-slate-600" />
             </button>
           </div>
 
-          {/* Nội dung Sheet mở rộng id="routing-sheet-content" */}
-          <div id="routing-sheet-content" className="p-3 sm:p-4 space-y-3 overflow-y-auto flex-1">
-            {/* 5 bước xem tuyến trên InMapz */}
-            <div className="p-3.5 bg-teal-50 rounded-2xl border border-teal-200 text-slate-800 text-sm sm:text-base font-medium space-y-2">
-              <div className="font-bold text-teal-900 flex items-center gap-1.5">
+          {/* Nội dung Sheet mở rộng */}
+          <div id="routing-sheet-content" className="p-4 space-y-3.5 overflow-y-auto flex-1">
+            {/* Hiển thị vị trí đã chọn nếu có */}
+            {selectedStart && (
+              <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-2xl text-slate-800 space-y-1">
+                <div className="text-sm sm:text-base font-bold text-blue-900 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-blue-700 shrink-0" />
+                  <span>Bác đang ở: <strong>{selectedStart.name}</strong></span>
+                </div>
+                <p className="text-sm font-medium text-slate-600 leading-relaxed">
+                  Khi mở Chỉ đường trên bản đồ, hãy chọn vị trí này làm điểm bắt đầu.
+                </p>
+                <p className="text-sm font-semibold text-amber-800 pt-0.5">
+                  * Lưu ý: MedNav chưa thể tự điền vị trí này vào InMapz.
+                </p>
+              </div>
+            )}
+
+            {/* 3 bước ngắn gọn chỉ đường */}
+            <div className="p-3.5 bg-teal-50 rounded-2xl border border-teal-200 text-slate-800 text-sm sm:text-base font-medium space-y-2.5">
+              <div className="font-black text-teal-950 flex items-center gap-2 text-base">
                 <Navigation className="w-5 h-5 text-teal-700 shrink-0" />
-                <span>Các bước xem tuyến trên bản đồ InMapz:</span>
+                <span>3 bước xem đường đi trên bản đồ:</span>
               </div>
-              <div className="flex items-start gap-2 pt-1">
+              <div className="flex items-start gap-2.5 pt-1">
                 <span className="w-6 h-6 rounded-full bg-teal-700 text-white font-black text-sm flex items-center justify-center shrink-0 mt-0.5">1</span>
-                <span>Mở bản đồ InMapz toàn màn hình.</span>
+                <span className="text-slate-800 leading-snug">
+                  Bấm nút <strong>“Chỉ đường”</strong> ngay trên bản đồ bên trên.
+                </span>
               </div>
-              <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2.5">
                 <span className="w-6 h-6 rounded-full bg-teal-700 text-white font-black text-sm flex items-center justify-center shrink-0 mt-0.5">2</span>
-                <span>Tìm và bấm biểu tượng <strong>“Chỉ đường”</strong> trên bản đồ.</span>
+                <span className="text-slate-800 leading-snug">
+                  Chọn điểm bắt đầu {selectedStart ? <>là <strong className="text-teal-900">{selectedStart.name}</strong></> : '(vị trí bác đang đứng)'}.
+                </span>
               </div>
-              <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2.5">
                 <span className="w-6 h-6 rounded-full bg-teal-700 text-white font-black text-sm flex items-center justify-center shrink-0 mt-0.5">3</span>
-                <span>Chọn điểm bắt đầu: <strong className="text-teal-950">{startLocation?.name || 'Vị trí hiện tại'}</strong>.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="w-6 h-6 rounded-full bg-teal-700 text-white font-black text-sm flex items-center justify-center shrink-0 mt-0.5">4</span>
-                <span>Chọn nơi muốn đến: <strong className="text-teal-950">{destination?.name || mapLink.label}</strong>.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="w-6 h-6 rounded-full bg-teal-700 text-white font-black text-sm flex items-center justify-center shrink-0 mt-0.5">5</span>
-                <span>Bấm tìm đường và đi theo tuyến do InMapz hiển thị.</span>
+                <span className="text-slate-800 leading-snug">
+                  Chọn nơi muốn đến là <strong className="text-teal-900">{destination?.name || mapLink.label}</strong> và xem tuyến.
+                </span>
               </div>
             </div>
 
-            {/* Nút trợ giúp khi không thấy nút Chỉ đường */}
+            {/* Trợ giúp không tìm thấy nút Chỉ đường */}
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
               <button
                 type="button"
                 onClick={() => setShowIconHelper(v => !v)}
-                className="w-full text-left font-bold text-sm text-teal-800 hover:text-teal-900 flex items-center justify-between"
+                className="w-full text-left font-bold text-sm sm:text-base text-teal-800 hover:text-teal-900 flex items-center justify-between min-h-[44px]"
               >
                 <span className="flex items-center gap-1.5">
                   <HelpCircle className="w-4 h-4 text-teal-700 shrink-0" />
-                  <span>Không tìm thấy nút Chỉ đường?</span>
+                  <span>Tôi không thấy nút Chỉ đường?</span>
                 </span>
-                <span className="text-sm font-semibold text-slate-500 underline">{showIconHelper ? 'Đóng' : 'Xem trợ giúp'}</span>
+                <span className="text-sm font-semibold text-slate-500 underline">
+                  {showIconHelper ? 'Đóng' : 'Xem trợ giúp'}
+                </span>
               </button>
               {showIconHelper && (
-                <p className="text-sm text-slate-700 font-medium leading-relaxed bg-white p-2.5 rounded-lg border border-slate-200">
-                  Hãy mở bản đồ trong tab mới/toàn màn hình. Một số điện thoại có thể ẩn bớt công cụ khi bản đồ nằm trong khung nhỏ.
+                <p className="text-sm text-slate-700 font-medium leading-relaxed bg-white p-3 rounded-lg border border-slate-200">
+                  Biểu tượng Chỉ đường (hình mũi tên rẽ) nằm ở góc dưới hoặc thanh tìm kiếm của bản đồ InMapz. Nếu màn hình quá nhỏ không thấy, bác có thể bấm &quot;Mở bản đồ ở tab mới&quot; phía dưới.
                 </p>
               )}
             </div>
 
             {/* Lưới các nút hành động */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-              {/* 1. Mở InMapz toàn màn hình */}
-              <a
-                href={effectiveMapUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="min-h-[48px] h-12 bg-teal-700 hover:bg-teal-800 text-white rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-colors shadow-sm text-center"
-              >
-                <ExternalLink className="w-5 h-5 shrink-0" />
-                <span>Mở InMapz toàn màn hình</span>
-              </a>
-
-              {/* 2. Nghe hướng dẫn */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+              {/* 1. Nút quan trọng nhất: Nghe hướng dẫn */}
               <button
                 type="button"
                 onClick={handleToggleSpeak}
-                className={`min-h-[48px] h-12 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 border transition-all ${
+                className={`min-h-[56px] h-14 rounded-2xl font-black text-base flex items-center justify-center gap-2.5 border transition-all shadow-sm ${
                   isSpeaking 
                     ? 'bg-amber-100 border-amber-300 text-amber-900' 
-                    : 'bg-slate-100 border-slate-200 text-slate-800 hover:bg-slate-200'
+                    : 'bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white border-transparent'
                 }`}
               >
                 {isSpeaking ? (
                   <>
                     <VolumeX className="w-5 h-5 text-amber-800 shrink-0" />
-                    <span>Dừng đọc</span>
+                    <span>Dừng đọc hướng dẫn</span>
                   </>
                 ) : (
                   <>
-                    <Volume2 className="w-5 h-5 text-teal-700 shrink-0" />
+                    <Volume2 className="w-5 h-5 text-teal-100 shrink-0" />
                     <span>Nghe hướng dẫn</span>
                   </>
                 )}
               </button>
 
-              {/* 3. Xem hướng dẫn chi tiết */}
+              {/* 2. Chọn vị trí hiện tại để được hỗ trợ (Tùy chọn) */}
               <button
                 type="button"
                 onClick={() => {
                   stopSpeaking();
-                  onOpenHelp();
+                  setIsSelectingStart(true);
                 }}
-                className="min-h-[48px] h-12 bg-teal-50 hover:bg-teal-100 text-teal-900 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-colors border border-teal-200"
+                className="min-h-[48px] h-12 bg-white hover:bg-slate-50 text-slate-800 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-colors border border-slate-300 shadow-sm"
               >
-                <HelpCircle className="w-5 h-5 text-teal-700 shrink-0" />
-                <span>Xem hướng dẫn chi tiết</span>
+                <MapPin className="w-4 h-4 text-teal-700 shrink-0" />
+                <span>{selectedStart ? 'Đổi vị trí hiện tại' : 'Chọn vị trí hiện tại để được hỗ trợ'}</span>
               </button>
 
-              {/* 4. Đổi điểm xuất phát (nếu có callback) */}
-              {onChangeStart && (
+              {/* 3. Thông tin nơi đến */}
+              {destination && (
                 <button
                   type="button"
                   onClick={() => {
                     stopSpeaking();
-                    onChangeStart();
+                    setIsViewingDestInfo(true);
                   }}
-                  className="min-h-[48px] h-12 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-colors border border-slate-200"
+                  className="min-h-[48px] h-12 bg-white hover:bg-slate-50 text-slate-800 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-colors border border-slate-300 shadow-sm"
                 >
-                  <RotateCcw className="w-5 h-5 text-slate-600 shrink-0" />
-                  <span>Đổi điểm xuất phát</span>
+                  <Info className="w-4 h-4 text-teal-700 shrink-0" />
+                  <span>Thông tin nơi đến</span>
                 </button>
               )}
 
-              {/* 5. Đổi nơi đến (nếu có callback) */}
-              {onChangeDestination && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    stopSpeaking();
-                    onChangeDestination();
-                  }}
-                  className="min-h-[48px] h-12 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-colors border border-slate-200"
+              {/* 4. Đổi nơi đến */}
+              <button
+                type="button"
+                onClick={() => {
+                  stopSpeaking();
+                  onChangeDestination();
+                }}
+                className="min-h-[48px] h-12 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-colors border border-slate-200"
+              >
+                <RotateCcw className="w-4 h-4 text-slate-600 shrink-0" />
+                <span>Đổi nơi đến</span>
+              </button>
+
+              {/* 5. Nút phụ: Mở bản đồ ở tab mới (dự phòng, không nổi bật) */}
+              <div className="sm:col-span-2 pt-1">
+                <a
+                  href={effectiveMapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full min-h-[48px] h-12 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-colors border border-slate-200 text-center"
                 >
-                  <RotateCcw className="w-5 h-5 text-slate-600 shrink-0" />
-                  <span>Đổi nơi đến</span>
-                </button>
+                  <ExternalLink className="w-4 h-4 text-slate-500 shrink-0" />
+                  <span>Mở bản đồ ở tab mới (Dự phòng)</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sub-sheet / Modal Chọn vị trí hiện tại (Tùy chọn) */}
+      {isSelectingStart && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div 
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+            onClick={() => setIsSelectingStart(false)}
+          />
+          <div className="relative w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[85dvh] flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-200 z-10">
+            <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg sm:text-xl font-black text-slate-900">
+                  Bác đang đứng ở đâu?
+                </h3>
+                <p className="text-sm font-medium text-slate-500 mt-0.5">
+                  Chọn mốc để MedNav nhắc bác làm điểm bắt đầu trên InMapz.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsSelectingStart(false)}
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+                aria-label="Đóng"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-2.5 overflow-y-auto flex-1">
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm font-semibold text-amber-900">
+                * Lưu ý: MedNav chưa thể tự điền vị trí này vào InMapz. Bác sẽ chọn vị trí này khi bấm “Chỉ đường” trên bản đồ.
+              </div>
+
+              {HOSPITAL_108_START_LOCATIONS.map(loc => {
+                const isCurrent = selectedStart?.id === loc.id;
+                return (
+                  <button
+                    key={loc.id}
+                    onClick={() => {
+                      setSelectedStart(loc);
+                      setIsSelectingStart(false);
+                    }}
+                    className={`w-full text-left p-3.5 rounded-xl border-2 transition-all flex items-center justify-between gap-3 ${
+                      isCurrent 
+                        ? 'border-teal-700 bg-teal-50 text-teal-950' 
+                        : 'border-slate-200 hover:border-teal-400 bg-white'
+                    }`}
+                  >
+                    <div>
+                      <h4 className="font-bold text-base text-slate-900">{loc.name}</h4>
+                      <p className="text-sm text-slate-600 mt-0.5">{loc.building}</p>
+                    </div>
+                    {isCurrent && (
+                      <div className="w-8 h-8 rounded-full bg-teal-700 text-white flex items-center justify-center shrink-0">
+                        <Check className="w-4 h-4" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sub-sheet / Modal Thông tin nơi đến (Tùy chọn) */}
+      {isViewingDestInfo && destination && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div 
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+            onClick={() => setIsViewingDestInfo(false)}
+          />
+          <div className="relative w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[85dvh] flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-200 z-10">
+            <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-lg sm:text-xl font-black text-slate-900 truncate pr-2">
+                Thông tin: {destination.name}
+              </h3>
+              <button
+                onClick={() => setIsViewingDestInfo(false)}
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+                aria-label="Đóng"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-start gap-3">
+                  <Building className="w-5 h-5 text-teal-700 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-sm font-bold text-slate-500 uppercase">Tòa nhà</div>
+                    <div className="text-base font-bold text-slate-900">{destination.building}</div>
+                  </div>
+                </div>
+
+                {destination.floor && (
+                  <div className="flex items-start gap-3">
+                    <Layers className="w-5 h-5 text-teal-700 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="text-sm font-bold text-slate-500 uppercase">Tầng</div>
+                      <div className="text-base font-bold text-slate-900">{destination.floor}</div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-teal-700 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-sm font-bold text-slate-500 uppercase">Thời gian tiếp đón</div>
+                    <div className="text-base font-bold text-slate-900">06:30 - 17:00 (Thứ 2 - Thứ 6)</div>
+                  </div>
+                </div>
+              </div>
+
+              {destination.description && (
+                <div className="p-4 bg-teal-50 border border-teal-100 rounded-2xl">
+                  <div className="text-sm font-bold text-teal-900 uppercase mb-1">Ghi chú hướng dẫn</div>
+                  <p className="text-sm font-medium text-slate-700 leading-relaxed">
+                    {destination.description}
+                  </p>
+                </div>
               )}
+
+              <div className="flex items-center justify-between pt-2">
+                <div className="text-sm text-slate-500">Mức độ xác minh bản đồ:</div>
+                <MapPrecisionBadge precision={destination.mapPrecision} />
+              </div>
             </div>
           </div>
         </div>

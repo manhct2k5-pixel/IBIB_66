@@ -187,8 +187,11 @@ export function DestinationStep({
                     <p className="text-slate-600 text-base font-medium mt-1">
                       {dest.building}
                     </p>
-                    <div className="mt-2">
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
                       <MapPrecisionBadge precision={dest.mapPrecision} />
+                      <span className="text-sm font-bold text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-md">
+                        Mở bản đồ và chỉ đường
+                      </span>
                     </div>
                   </div>
                 </div>
