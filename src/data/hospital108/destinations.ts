@@ -39,8 +39,8 @@ export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
   },
   {
     id: 'cap_cuu',
-    name: 'Khoa Cấp cứu',
-    aliases: ['cấp cứu', 'cap cuu', '115'],
+    name: 'Khoa Cấp cứu (C1-3)',
+    aliases: ['cấp cứu', 'cap cuu', '115', 'c1-3', 'c1.3', 'khoa cap cuu'],
     mapLinkId: 'campus',
     building: 'Bệnh viện 108',
     description: 'Tiếp nhận và xử trí cấp cứu 24/7. Điện thoại: 024 6278 4115',

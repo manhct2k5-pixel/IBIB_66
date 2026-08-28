@@ -12,16 +12,6 @@ export const HOSPITAL_108_START_LOCATIONS: Hospital108StartLocation[] = [
     verificationStatus: 'source_verified_landmark'
   },
   {
-    id: 'start_gate_emergency',
-    name: 'Cổng tiếp nhận Cấp cứu (Số 1B Trần Hưng Đạo)',
-    building: 'Khoa Cấp cứu Bệnh viện 108',
-    mapLinkId: 'campus',
-    description: 'Lối vào tiếp nhận cấp cứu 24/7',
-    aliases: ['cổng cấp cứu', 'khoa cấp cứu', '1b trần hưng đạo', 'cap cuu'],
-    sourceUrl: 'https://benhvien108.vn/gioi-thieu-khoa-cap-cuu.htm',
-    verificationStatus: 'source_verified_landmark'
-  },
-  {
     id: 'start_campus_overview',
     name: 'Khuôn viên Bệnh viện 108 – Bản đồ tổng quan',
     building: 'Khuôn viên Bệnh viện 108',

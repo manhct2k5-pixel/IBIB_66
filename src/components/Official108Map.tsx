@@ -17,7 +17,8 @@ import {
   ChevronDown, 
   RotateCcw,
   ShieldAlert,
-  Navigation
+  Navigation,
+  HelpCircle
 } from 'lucide-react';
 import { speakText, stopSpeaking } from '../utils/speech';
 
@@ -43,6 +44,7 @@ export function Official108Map({
   onClose,
   onChangeStart,
   onChangeDestination,
+  onOpenHelp,
   onOpenEmergency
 }: Official108MapProps) {
   const [isLoading, setIsLoading] = useState(true);
@@ -51,6 +53,7 @@ export function Official108Map({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSheetExpanded, setIsSheetExpanded] = useState(false);
 
+  const effectiveMapUrl = routeLaunchResult?.url || mapLink.url;
   const isDeepLinkReady = routingMode === 'official_deep_link' && routeLaunchResult?.routePreloaded;
 
   useEffect(() => {
@@ -120,14 +123,14 @@ export function Official108Map({
         </p>
         <button 
           onClick={() => window.location.reload()}
-          className="h-14 px-8 bg-teal-700 hover:bg-teal-800 text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2"
+          className="min-h-[48px] h-14 px-8 bg-teal-700 hover:bg-teal-800 text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2"
         >
           <RefreshCw className="w-6 h-6" />
           Thử lại
         </button>
         <button 
           onClick={onClose}
-          className="mt-4 h-14 px-8 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-2xl font-bold text-lg flex items-center justify-center gap-2"
+          className="mt-4 min-h-[48px] h-14 px-8 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-2xl font-bold text-lg flex items-center justify-center gap-2"
         >
           Quay lại
         </button>
@@ -179,7 +182,7 @@ export function Official108Map({
         )}
         
         <iframe
-          src={mapLink.url}
+          src={effectiveMapUrl}
           title={mapLink.label}
           className="w-full h-full border-0"
           onLoad={handleIframeLoad}
@@ -192,14 +195,14 @@ export function Official108Map({
             <div className="flex items-center gap-3">
               <AlertTriangle className="w-6 h-6 text-amber-700 shrink-0" />
               <p className="text-amber-900 font-bold text-sm sm:text-base">
-                Nếu vùng bản đồ bị trắng hoặc không thao tác được, bác hãy bấm nút &quot;Mở bản đồ chính thức&quot;.
+                Nếu vùng bản đồ bị trắng hoặc không thao tác được, bác hãy bấm nút &quot;Mở tab mới&quot;.
               </p>
             </div>
             <a
-              href={mapLink.url}
+              href={effectiveMapUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="h-12 px-4 bg-teal-700 hover:bg-teal-800 text-white font-bold rounded-xl flex items-center justify-center gap-2 shrink-0 text-sm"
+              className="min-h-[48px] h-12 px-4 bg-teal-700 hover:bg-teal-800 text-white font-bold rounded-xl flex items-center justify-center gap-2 shrink-0 text-sm"
             >
               <ExternalLink className="w-4 h-4" />
               <span>Mở tab mới</span>
@@ -210,14 +213,14 @@ export function Official108Map({
 
       {/* Bottom Sheet - Luôn hiển thị Từ: [điểm xuất phát] và Đến: [điểm đến] */}
       <div className={`flex-none bg-white border-t-2 border-slate-200 shadow-2xl transition-all duration-300 z-20 flex flex-col safe-bottom ${
-        isSheetExpanded ? 'max-h-[50dvh] overflow-y-auto' : 'h-[112px]'
+        isSheetExpanded ? 'max-h-[55dvh] overflow-y-auto' : 'h-[112px]'
       }`}>
         {/* Header Sheet: Luôn hiển thị Từ & Đến */}
         <div 
           onClick={() => setIsSheetExpanded(!isSheetExpanded)}
-          className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between cursor-pointer hover:bg-slate-100 transition-colors select-none"
+          className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between cursor-pointer hover:bg-slate-100 transition-colors select-none gap-2"
         >
-          <div className="flex flex-col gap-0.5 overflow-hidden pr-2 min-w-0">
+          <div className="flex flex-col gap-0.5 overflow-hidden pr-2 min-w-0 flex-1">
             {startLocation && (
               <div className="text-sm font-semibold text-slate-600 truncate">
                 Từ: <span className="text-slate-900 font-bold">{startLocation.name}</span>
@@ -230,7 +233,7 @@ export function Official108Map({
 
           <button 
             type="button"
-            className="flex items-center gap-1 text-slate-700 font-bold text-sm bg-white px-3 py-1.5 rounded-lg border border-slate-300 shadow-sm shrink-0"
+            className="min-h-[40px] flex items-center gap-1 text-slate-700 font-bold text-sm bg-white px-3 py-1.5 rounded-lg border border-slate-300 shadow-sm shrink-0"
           >
             <span>{isSheetExpanded ? 'Thu gọn' : 'Xem hướng dẫn'}</span>
             {isSheetExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
@@ -265,7 +268,7 @@ export function Official108Map({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {/* Nút Mở bản đồ trong tab mới */}
             <a
-              href={mapLink.url}
+              href={effectiveMapUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="min-h-[48px] h-12 bg-teal-700 hover:bg-teal-800 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-colors shadow-sm"
@@ -296,8 +299,20 @@ export function Official108Map({
               )}
             </button>
 
-            {/* Nút Đổi điểm xuất phát */}
-            {onChangeStart && (
+            {/* Nút Xem hướng dẫn chi tiết (gọi onOpenHelp) */}
+            <button
+              onClick={() => {
+                stopSpeaking();
+                onOpenHelp();
+              }}
+              className="min-h-[48px] h-12 bg-teal-50 hover:bg-teal-100 text-teal-900 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-colors border border-teal-200"
+            >
+              <HelpCircle className="w-5 h-5 text-teal-700 shrink-0" />
+              <span>Xem hướng dẫn chi tiết</span>
+            </button>
+
+            {/* Nút Đổi điểm xuất phát hoặc Đổi nơi đến */}
+            {onChangeStart ? (
               <button
                 onClick={() => {
                   stopSpeaking();
@@ -308,19 +323,18 @@ export function Official108Map({
                 <RotateCcw className="w-5 h-5 text-slate-600 shrink-0" />
                 <span>Đổi điểm xuất phát</span>
               </button>
+            ) : (
+              <button
+                onClick={() => {
+                  stopSpeaking();
+                  onChangeDestination();
+                }}
+                className="min-h-[48px] h-12 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-colors border border-slate-200"
+              >
+                <RotateCcw className="w-5 h-5 text-slate-600 shrink-0" />
+                <span>Đổi nơi đến</span>
+              </button>
             )}
-
-            {/* Nút Đổi nơi đến */}
-            <button
-              onClick={() => {
-                stopSpeaking();
-                onChangeDestination();
-              }}
-              className="min-h-[48px] h-12 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-colors border border-slate-200"
-            >
-              <RotateCcw className="w-5 h-5 text-slate-600 shrink-0" />
-              <span>Đổi nơi đến</span>
-            </button>
           </div>
         </div>
       </div>

@@ -67,17 +67,17 @@ export function StartLocationStep({
         </div>
 
         {/* Tóm tắt điểm đến đã chọn */}
-        <div className="p-4 bg-teal-50 border-2 border-teal-200 rounded-2xl flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="p-4 bg-teal-50 border-2 border-teal-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-teal-700 flex items-center justify-center text-white font-bold text-base shrink-0">
               Đến
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="text-sm font-bold text-teal-800 uppercase tracking-wider">Nơi muốn đến</div>
-              <div className="text-base sm:text-lg font-black text-slate-900 line-clamp-1">{destination.name}</div>
+              <div className="text-base sm:text-lg font-black text-slate-900 truncate">{destination.name}</div>
             </div>
           </div>
-          <span className="text-sm font-bold text-teal-900 bg-white px-3 py-1.5 rounded-xl border border-teal-200 shrink-0">
+          <span className="text-sm font-bold text-teal-900 bg-white px-3 py-1.5 rounded-xl border border-teal-200 shrink-0 self-start sm:self-auto">
             {destination.building}
           </span>
         </div>
@@ -97,14 +97,14 @@ export function StartLocationStep({
           <button
             type="button"
             onClick={onShowUnknownHelp}
-            className="min-h-[56px] w-full p-4 bg-amber-50 hover:bg-amber-100/80 active:bg-amber-200 border-2 border-amber-300 rounded-2xl text-left flex items-center justify-between transition-colors shadow-sm"
+            className="min-h-[56px] w-full p-4 bg-amber-50 hover:bg-amber-100/80 active:bg-amber-200 border-2 border-amber-300 rounded-2xl text-left flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-colors shadow-sm"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-amber-200/80 flex items-center justify-center shrink-0">
                 <HelpCircle className="w-6 h-6 text-amber-900" />
               </div>
-              <div>
-                <div className="font-black text-base sm:text-lg text-amber-950">
+              <div className="min-w-0">
+                <div className="font-black text-base sm:text-lg text-amber-950 truncate">
                   Tôi không biết mình đang ở đâu
                 </div>
                 <div className="text-sm font-semibold text-amber-800 mt-0.5">
@@ -112,7 +112,7 @@ export function StartLocationStep({
                 </div>
               </div>
             </div>
-            <span className="h-9 px-3.5 bg-white text-amber-900 rounded-xl font-bold text-sm border border-amber-300 flex items-center shrink-0">
+            <span className="min-h-[36px] h-9 px-3.5 bg-white text-amber-900 rounded-xl font-bold text-sm border border-amber-300 flex items-center justify-center shrink-0 self-stretch sm:self-auto text-center">
               Trợ giúp
             </span>
           </button>
@@ -161,14 +161,14 @@ export function StartLocationStep({
                 <button
                   key={loc.id}
                   onClick={() => onSelectStartLocation(loc)}
-                  className="w-full p-4 bg-white hover:bg-teal-50 active:bg-teal-100 border-2 border-slate-200 hover:border-teal-500 rounded-2xl transition-all text-left flex items-center justify-between group shadow-sm"
+                  className="w-full p-4 bg-white hover:bg-teal-50 active:bg-teal-100 border-2 border-slate-200 hover:border-teal-500 rounded-2xl transition-all text-left flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 group shadow-sm"
                 >
-                  <div className="flex items-start gap-3.5 pr-2">
+                  <div className="flex items-start gap-3.5 pr-2 min-w-0">
                     <div className="w-11 h-11 rounded-xl bg-slate-100 group-hover:bg-teal-100 flex items-center justify-center shrink-0 transition-colors">
                       <MapPin className="w-6 h-6 text-slate-600 group-hover:text-teal-700" />
                     </div>
-                    <div>
-                      <h4 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-teal-950">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-teal-950 truncate">
                         {loc.name}
                       </h4>
                       <div className="flex flex-wrap items-center gap-2 mt-1">
@@ -191,8 +191,8 @@ export function StartLocationStep({
                     </div>
                   </div>
 
-                  <div className="shrink-0">
-                    <span className="h-11 px-4 bg-slate-100 group-hover:bg-teal-700 text-slate-700 group-hover:text-white rounded-xl font-bold text-base transition-colors flex items-center justify-center">
+                  <div className="shrink-0 self-stretch sm:self-auto">
+                    <span className="min-h-[44px] h-11 px-4 bg-slate-100 group-hover:bg-teal-700 text-slate-700 group-hover:text-white rounded-xl font-bold text-base transition-colors flex items-center justify-center">
                       Chọn điểm này
                     </span>
                   </div>

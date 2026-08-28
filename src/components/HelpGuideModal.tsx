@@ -26,7 +26,7 @@ export function HelpGuideModal({ isOpen, onClose, mapUrl }: HelpGuideModalProps)
       return;
     }
 
-    const textToRead = `Hướng dẫn sử dụng bản đồ Bệnh viện 108 gồm ba bước đơn giản. Bước 1: Chạm vào ô tìm kiếm trên bản đồ. Bước 2: Chọn nơi đang đứng và nơi muốn đến. Bước 3: Đi theo đường được bản đồ đánh dấu. Nếu cần nhân viên bệnh viện hỗ trợ trực tiếp, bác có thể liên hệ Ban Công tác xã hội qua số điện thoại 0333 100 018.`;
+    const textToRead = `Cách xem tuyến trên bản đồ InMapz gồm ba bước đơn giản. Bước 1: Chạm vào ô tìm kiếm trên bản đồ hoặc bấm nút Chỉ đường. Bước 2: Chọn nơi đang đứng và nơi muốn đến. Bước 3: Đi theo đường được bản đồ đánh dấu. Nếu cần chuyển tầng, bản đồ InMapz sẽ hiển thị vị trí thang máy hoặc thang bộ. Nếu cần nhân viên hỗ trợ trực tiếp, bác có thể liên hệ Ban Công tác xã hội qua số điện thoại 0333 100 018.`;
 
     setIsSpeaking(true);
     speakText(
@@ -48,12 +48,12 @@ export function HelpGuideModal({ isOpen, onClose, mapUrl }: HelpGuideModalProps)
 
       <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col p-6 sm:p-8 my-auto animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-          <h3 className="text-2xl font-black text-slate-900">
-            Hướng dẫn chỉ đường
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900">
+            Cách xem tuyến trên bản đồ InMapz
           </h3>
           <button
             onClick={onClose}
-            className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 transition-colors"
+            className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 transition-colors shrink-0"
             aria-label="Đóng"
           >
             <X className="w-6 h-6 text-slate-600" />
@@ -68,7 +68,7 @@ export function HelpGuideModal({ isOpen, onClose, mapUrl }: HelpGuideModalProps)
             </div>
             <div>
               <h4 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Search className="w-5 h-5 text-teal-700" />
+                <Search className="w-5 h-5 text-teal-700 shrink-0" />
                 Chạm vào ô tìm kiếm trên bản đồ
               </h4>
               <p className="text-base font-medium text-slate-600 mt-1 leading-relaxed">
@@ -84,7 +84,7 @@ export function HelpGuideModal({ isOpen, onClose, mapUrl }: HelpGuideModalProps)
             </div>
             <div>
               <h4 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Navigation className="w-5 h-5 text-teal-700" />
+                <Navigation className="w-5 h-5 text-teal-700 shrink-0" />
                 Chọn nơi đứng và nơi đến
               </h4>
               <p className="text-base font-medium text-slate-600 mt-1 leading-relaxed">
@@ -100,11 +100,11 @@ export function HelpGuideModal({ isOpen, onClose, mapUrl }: HelpGuideModalProps)
             </div>
             <div>
               <h4 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Footprints className="w-5 h-5 text-teal-700" />
+                <Footprints className="w-5 h-5 text-teal-700 shrink-0" />
                 Đi theo đường được vẽ trên bản đồ
               </h4>
               <p className="text-base font-medium text-slate-600 mt-1 leading-relaxed">
-                Nếu phải lên tầng khác, bản đồ sẽ hướng dẫn bác ra thang máy hoặc cầu thang bộ.
+                Nếu cần chuyển tầng, bản đồ InMapz sẽ hiển thị vị trí thang máy hoặc thang bộ.
               </p>
             </div>
           </div>

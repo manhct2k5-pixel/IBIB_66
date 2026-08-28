@@ -212,16 +212,16 @@ export function RoutePreview({
           )}
         </button>
 
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <button
             onClick={onChangeStart}
-            className="flex-1 h-12 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-base rounded-xl transition-colors"
+            className="flex-1 min-h-[48px] h-12 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-base rounded-xl transition-colors flex items-center justify-center"
           >
             Đổi điểm xuất phát
           </button>
           <button
             onClick={onChangeDestination}
-            className="flex-1 h-12 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-base rounded-xl transition-colors"
+            className="flex-1 min-h-[48px] h-12 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-base rounded-xl transition-colors flex items-center justify-center"
           >
             Đổi nơi đến
           </button>

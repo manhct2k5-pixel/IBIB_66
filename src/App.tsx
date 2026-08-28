@@ -173,8 +173,18 @@ export default function App() {
     });
   };
 
+  // Điều hướng lùi lại 1 bước theo History API
+  const handleBackStep = useCallback(() => {
+    stopSpeaking();
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigateTo('home', false);
+    }
+  }, [navigateTo]);
+
   // Quay về trang chủ
-  const handleBackToHome = () => {
+  const handleBackToHome = useCallback(() => {
     stopSpeaking();
     setSelectedDestination(null);
     setSelectedStartLocation(null);
@@ -185,16 +195,7 @@ export default function App() {
       startLocationId: undefined,
       mapLinkId: undefined
     });
-  };
-
-  // Quay về chi tiết điểm đến
-  const handleBackToDetail = () => {
-    stopSpeaking();
-    setSelectedStartLocation(null);
-    setActiveMapLinkId(null);
-    setActiveRouteLaunchResult(null);
-    navigateTo('destination_detail');
-  };
+  }, [navigateTo]);
 
   // Mở bản đồ toàn viện tổng quan
   const handleOpenGeneralMap = () => {
@@ -214,13 +215,10 @@ export default function App() {
   const getHeaderBackButtonProps = () => {
     switch (currentView) {
       case 'destination_detail':
-        return { showBackButton: true, onBack: handleBackToHome };
       case 'select_start':
-        return { showBackButton: true, onBack: handleBackToDetail };
       case 'unknown_location_help':
-        return { showBackButton: true, onBack: () => navigateTo('select_start') };
       case 'route_preview':
-        return { showBackButton: true, onBack: () => navigateTo('select_start') };
+        return { showBackButton: true, onBack: handleBackStep };
       default:
         return { showBackButton: false, onBack: undefined };
     }
@@ -254,7 +252,7 @@ export default function App() {
           <DestinationDetailView 
             destination={selectedDestination}
             onSelectStart={handleProceedToSelectStart}
-            onBack={handleBackToHome}
+            onBack={handleBackStep}
           />
         )}
 
@@ -262,14 +260,14 @@ export default function App() {
           <StartLocationStep 
             destination={selectedDestination}
             onSelectStartLocation={handleSelectStartLocation}
-            onBack={handleBackToDetail}
+            onBack={handleBackStep}
             onShowUnknownHelp={() => navigateTo('unknown_location_help')}
           />
         )}
 
         {currentView === 'unknown_location_help' && (
           <UnknownLocationHelp 
-            onBackToSelect={() => navigateTo('select_start')}
+            onBackToSelect={handleBackStep}
             onOpenCampusMap={handleOpenGeneralMap}
           />
         )}
@@ -279,7 +277,7 @@ export default function App() {
             startLocation={selectedStartLocation}
             destination={selectedDestination}
             onStartNavigation={handleStartNavigationFromPreview}
-            onChangeStart={() => navigateTo('select_start')}
+            onChangeStart={handleBackStep}
             onChangeDestination={handleBackToHome}
           />
         )}
@@ -291,14 +289,8 @@ export default function App() {
             startLocation={selectedStartLocation}
             routingMode={activeRouteLaunchResult?.mode || 'assisted_external_map'}
             routeLaunchResult={activeRouteLaunchResult}
-            onClose={() => {
-              if (selectedStartLocation) {
-                navigateTo('route_preview');
-              } else {
-                handleBackToHome();
-              }
-            }}
-            onChangeStart={() => navigateTo('select_start')}
+            onClose={handleBackStep}
+            onChangeStart={selectedStartLocation ? handleBackStep : undefined}
             onChangeDestination={handleBackToHome}
             onOpenHelp={() => setIsHelpModalOpen(true)}
             onOpenEmergency={() => setIsEmergencyOpen(true)}

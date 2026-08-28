@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { HOSPITAL_108_OFFICIAL_MAP_LINKS, HOSPITAL_108_DESTINATIONS, HOSPITAL_108_SOURCES } from '../data/hospital108';
+import { 
+  HOSPITAL_108_OFFICIAL_MAP_LINKS, 
+  HOSPITAL_108_DESTINATIONS, 
+  HOSPITAL_108_START_LOCATIONS,
+  HOSPITAL_108_SOURCES 
+} from '../data/hospital108';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -148,5 +153,21 @@ describe('Bệnh viện Trung ương Quân đội 108 Data & Code Verification',
 
     const html = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
     expect(html).toContain('MedNav 108');
+  });
+
+  it('Không có điểm xuất phát sai start_gate_emergency hoặc gán bừa cổng cấp cứu 1B', () => {
+    const emergencyGate = HOSPITAL_108_START_LOCATIONS.find(s => s.id === 'start_gate_emergency');
+    expect(emergencyGate).toBeUndefined();
+
+    HOSPITAL_108_START_LOCATIONS.forEach(loc => {
+      expect(loc.name).not.toContain('Cổng tiếp nhận Cấp cứu');
+      expect(loc.name).not.toContain('1B Trần Hưng Đạo');
+    });
+  });
+
+  it('HelpGuideModal có tiêu đề "Cách xem tuyến trên bản đồ InMapz"', () => {
+    const modalCode = fs.readFileSync(path.join(process.cwd(), 'src/components/HelpGuideModal.tsx'), 'utf-8');
+    expect(modalCode).toContain('Cách xem tuyến trên bản đồ InMapz');
+    expect(modalCode).toContain('Nếu cần chuyển tầng, bản đồ InMapz sẽ hiển thị vị trí thang máy hoặc thang bộ');
   });
 });
