@@ -1,8 +1,15 @@
-import React, { useState, useRef } from 'react';
-import { ZoomIn, ZoomOut, Maximize2, Map, ExternalLink } from 'lucide-react';
+import React, { useState, useRef, useMemo } from 'react';
+import {
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  Map as MapIcon,
+  ExternalLink,
+  Info
+} from 'lucide-react';
 import type { RouteNode, RouteEdge, NavigationStep } from '../../types';
 
-interface RouteMapProps {
+export interface RouteMapProps {
   nodes: RouteNode[];
   edges: RouteEdge[];
   pathNodeIds: string[];
@@ -18,7 +25,7 @@ export const RouteMap: React.FC<RouteMapProps> = ({
   pathNodeIds,
   currentNodeId,
   currentStepIndex,
-  steps,
+  steps: _steps,
   onOpenOfficialMap
 }) => {
   const [zoom, setZoom] = useState<number>(1);
@@ -26,26 +33,68 @@ export const RouteMap: React.FC<RouteMapProps> = ({
   const isDraggingRef = useRef<boolean>(false);
   const startDragRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // Map các node theo ID
-  const nodeMap = new Map<string, RouteNode>();
-  for (const n of nodes) {
-    nodeMap.set(n.id, n);
-  }
+  // Map các node theo ID bằng globalThis.Map và useMemo tránh khởi tạo lại không cần thiết
+  const nodeMap = useMemo(() => {
+    return new globalThis.Map<string, RouteNode>(
+      nodes.map(node => [node.id, node])
+    );
+  }, [nodes]);
 
   // Tập hợp các node thuộc tuyến đi
-  const pathSet = new Set(pathNodeIds);
+  const pathSet = useMemo(() => {
+    return new globalThis.Set<string>(pathNodeIds);
+  }, [pathNodeIds]);
 
-  // Tính tọa độ bounding box cơ bản để tự động căn giữa
-  const pathNodes = pathNodeIds.map(id => nodeMap.get(id)).filter(Boolean) as RouteNode[];
-  const minX = Math.min(...pathNodes.map(n => n.x ?? 100), 50);
-  const maxX = Math.max(...pathNodes.map(n => n.x ?? 700), 750);
-  const minY = Math.min(...pathNodes.map(n => n.y ?? 100), 50);
-  const maxY = Math.max(...pathNodes.map(n => n.y ?? 500), 550);
+  // Lọc các node hợp lệ trên tuyến đi
+  const pathNodes = useMemo(() => {
+    return pathNodeIds
+      .map(id => nodeMap.get(id))
+      .filter((node): node is RouteNode => Boolean(node));
+  }, [pathNodeIds, nodeMap]);
 
-  const viewBoxWidth = Math.max(maxX - minX + 160, 400);
-  const viewBoxHeight = Math.max(maxY - minY + 160, 300);
-  const viewBoxX = minX - 80;
-  const viewBoxY = minY - 80;
+  // Lấy các node có tọa độ x, y để tính bounding box an toàn
+  const { viewBoxX, viewBoxY, viewBoxWidth, viewBoxHeight, hasValidCoordinates } = useMemo(() => {
+    const positionedPathNodes = pathNodes.filter(
+      n => typeof n.x === 'number' && typeof n.y === 'number' && !Number.isNaN(n.x) && !Number.isNaN(n.y)
+    );
+    
+    const allPositionedNodes = nodes.filter(
+      n => typeof n.x === 'number' && typeof n.y === 'number' && !Number.isNaN(n.x) && !Number.isNaN(n.y)
+    );
+
+    const targetNodes = positionedPathNodes.length > 0 ? positionedPathNodes : allPositionedNodes;
+
+    if (targetNodes.length === 0) {
+      return {
+        viewBoxX: 0,
+        viewBoxY: 0,
+        viewBoxWidth: 500,
+        viewBoxHeight: 300,
+        hasValidCoordinates: false
+      };
+    }
+
+    const xs = targetNodes.map(n => n.x as number);
+    const ys = targetNodes.map(n => n.y as number);
+
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+
+    const width = Math.max(maxX - minX + 160, 400);
+    const height = Math.max(maxY - minY + 160, 300);
+    const vx = minX - 80;
+    const vy = minY - 80;
+
+    return {
+      viewBoxX: Number.isFinite(vx) ? vx : 0,
+      viewBoxY: Number.isFinite(vy) ? vy : 0,
+      viewBoxWidth: Number.isFinite(width) ? width : 500,
+      viewBoxHeight: Number.isFinite(height) ? height : 300,
+      hasValidCoordinates: true
+    };
+  }, [pathNodes, nodes]);
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.25, 2.5));
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.25, 0.6));
@@ -77,25 +126,31 @@ export const RouteMap: React.FC<RouteMapProps> = ({
       <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10 bg-slate-900/90 backdrop-blur-sm p-1 rounded-xl border border-slate-700/80 shadow-md">
         <button
           type="button"
+          data-testid="btn-zoom-in"
           onClick={handleZoomIn}
           className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 transition-colors"
           title="Phóng to"
+          aria-label="Phóng to"
         >
           <ZoomIn className="w-5 h-5" />
         </button>
         <button
           type="button"
+          data-testid="btn-zoom-out"
           onClick={handleZoomOut}
           className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 transition-colors"
           title="Thu nhỏ"
+          aria-label="Thu nhỏ"
         >
           <ZoomOut className="w-5 h-5" />
         </button>
         <button
           type="button"
+          data-testid="btn-reset-view"
           onClick={handleResetView}
           className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 transition-colors"
           title="Vừa màn hình"
+          aria-label="Vừa màn hình"
         >
           <Maximize2 className="w-5 h-5" />
         </button>
@@ -105,17 +160,27 @@ export const RouteMap: React.FC<RouteMapProps> = ({
       {onOpenOfficialMap && (
         <button
           type="button"
+          data-testid="btn-official-map"
           onClick={onOpenOfficialMap}
           className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-teal-300 border border-teal-500/40 text-sm font-bold shadow-md transition-colors"
         >
-          <Map className="w-4 h-4 text-teal-400" />
+          <MapIcon className="w-4 h-4 text-teal-400" />
           <span>Bản đồ đối chiếu</span>
           <ExternalLink className="w-3.5 h-3.5 text-teal-400" />
         </button>
       )}
 
+      {/* Thông báo nếu chưa có dữ liệu tọa độ */}
+      {!hasValidCoordinates && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-slate-950/80 text-slate-400 text-center z-0">
+          <Info className="w-8 h-8 text-slate-500 mb-2" />
+          <p className="text-sm font-medium">Chưa có dữ liệu sơ đồ cho tuyến này.</p>
+        </div>
+      )}
+
       {/* SVG Canvas sơ đồ đồ thị */}
       <svg
+        data-testid="route-map-svg"
         className="w-full h-full cursor-grab active:cursor-grabbing"
         viewBox={`${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`}
         onMouseDown={handleMouseDown}
@@ -142,7 +207,16 @@ export const RouteMap: React.FC<RouteMapProps> = ({
           {edges.map(edge => {
             const fromNode = nodeMap.get(edge.from);
             const toNode = nodeMap.get(edge.to);
-            if (!fromNode || !toNode || fromNode.x === undefined || fromNode.y === undefined || toNode.x === undefined || toNode.y === undefined) return null;
+            if (
+              !fromNode ||
+              !toNode ||
+              typeof fromNode.x !== 'number' ||
+              typeof fromNode.y !== 'number' ||
+              typeof toNode.x !== 'number' ||
+              typeof toNode.y !== 'number'
+            ) {
+              return null;
+            }
 
             const isPartOfRoute = pathSet.has(edge.from) && pathSet.has(edge.to);
             if (isPartOfRoute) return null; // Vẽ ở bước sau
@@ -167,7 +241,16 @@ export const RouteMap: React.FC<RouteMapProps> = ({
             const nextNodeId = pathNodeIds[idx + 1];
             const fromNode = nodeMap.get(nodeId);
             const toNode = nodeMap.get(nextNodeId);
-            if (!fromNode || !toNode || fromNode.x === undefined || fromNode.y === undefined || toNode.x === undefined || toNode.y === undefined) return null;
+            if (
+              !fromNode ||
+              !toNode ||
+              typeof fromNode.x !== 'number' ||
+              typeof fromNode.y !== 'number' ||
+              typeof toNode.x !== 'number' ||
+              typeof toNode.y !== 'number'
+            ) {
+              return null;
+            }
 
             let strokeColor = '#0284c7'; // Xanh nhạt cho chặng tiếp theo
             let strokeWidth = 6;
@@ -202,11 +285,11 @@ export const RouteMap: React.FC<RouteMapProps> = ({
 
           {/* 3. Vẽ các NODE */}
           {nodes.map(node => {
-            if (node.x === undefined || node.y === undefined) return null;
+            if (typeof node.x !== 'number' || typeof node.y !== 'number') return null;
 
             const isCurrentNode = node.id === currentNodeId;
-            const isStartNode = node.id === pathNodeIds[0];
-            const isDestNode = node.id === pathNodeIds[pathNodeIds.length - 1];
+            const isStartNode = pathNodeIds.length > 0 && node.id === pathNodeIds[0];
+            const isDestNode = pathNodeIds.length > 0 && node.id === pathNodeIds[pathNodeIds.length - 1];
             const isPartOfRoute = pathSet.has(node.id);
 
             let nodeFill = '#475569';

@@ -11,6 +11,7 @@ import { MoreMenuDrawer } from './components/MoreMenuDrawer';
 import { VoiceSearchModal } from './components/VoiceSearchModal';
 import { HelpGuideModal } from './components/HelpGuideModal';
 import { NavigationView, ArrivalView } from './components/navigation';
+import { NavigationErrorBoundary } from './components/errors/NavigationErrorBoundary';
 import { 
   HOSPITAL_108_OFFICIAL_MAP_LINKS, 
   HOSPITAL_108_DESTINATIONS,
@@ -531,21 +532,23 @@ export default function App() {
 
         {/* Chế độ Điều hướng từng bước (Assisted Checkpoint Navigation) */}
         {currentView === 'navigating' && activeNavigationSession && activeCalculatedRoute && selectedDestination && (
-          <NavigationView
-            session={activeNavigationSession}
-            route={activeCalculatedRoute}
-            destination={selectedDestination}
-            startLocation={selectedStartLocation || HOSPITAL_108_START_LOCATIONS[0]}
-            onArrive={handleArrival}
-            onExit={handleBackToHome}
-            onRecalculateRoute={handleRecalculateRoute}
-            onOpenOfficialMap={() => {
-              if (selectedDestination) {
-                setActiveMapLinkId(selectedDestination.mapLinkId);
-                setCurrentView('official_map');
-              }
-            }}
-          />
+          <NavigationErrorBoundary onReset={handleBackToHome}>
+            <NavigationView
+              session={activeNavigationSession}
+              route={activeCalculatedRoute}
+              destination={selectedDestination}
+              startLocation={selectedStartLocation || HOSPITAL_108_START_LOCATIONS[0]}
+              onArrive={handleArrival}
+              onExit={handleBackToHome}
+              onRecalculateRoute={handleRecalculateRoute}
+              onOpenOfficialMap={() => {
+                if (selectedDestination) {
+                  setActiveMapLinkId(selectedDestination.mapLinkId);
+                  setCurrentView('official_map');
+                }
+              }}
+            />
+          </NavigationErrorBoundary>
         )}
 
         {/* Chế độ Đã đến đích */}
