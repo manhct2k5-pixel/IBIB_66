@@ -18,8 +18,10 @@ import {
 import type { 
   AppView, 
   Hospital108Destination, 
-  Hospital108StartLocation 
+  Hospital108StartLocation,
+  RouteLaunchResult
 } from './types';
+import { createInMapzRouteLaunch } from './services/inmapzRouting';
 import { addRecentDestinationId } from './utils/history';
 import { stopSpeaking } from './utils/speech';
 
@@ -35,6 +37,7 @@ export default function App() {
   const [selectedDestination, setSelectedDestination] = useState<Hospital108Destination | null>(null);
   const [selectedStartLocation, setSelectedStartLocation] = useState<Hospital108StartLocation | null>(null);
   const [activeMapLinkId, setActiveMapLinkId] = useState<string | null>(null);
+  const [activeRouteLaunchResult, setActiveRouteLaunchResult] = useState<RouteLaunchResult | null>(null);
   
   // Trạng thái các modal
   const [isEmergencyOpen, setIsEmergencyOpen] = useState<boolean>(false);
@@ -54,16 +57,19 @@ export default function App() {
       const stateView: AppView = state?.view || 'home';
       setCurrentView(stateView);
 
+      let currentDest: Hospital108Destination | null = null;
+      let currentStart: Hospital108StartLocation | null = null;
+
       if (state?.destinationId) {
-        const dest = HOSPITAL_108_DESTINATIONS.find(d => d.id === state.destinationId) || null;
-        setSelectedDestination(dest);
+        currentDest = HOSPITAL_108_DESTINATIONS.find(d => d.id === state.destinationId) || null;
+        setSelectedDestination(currentDest);
       } else if (stateView === 'home') {
         setSelectedDestination(null);
       }
 
       if (state?.startLocationId) {
-        const startLoc = HOSPITAL_108_START_LOCATIONS.find(s => s.id === state.startLocationId) || null;
-        setSelectedStartLocation(startLoc);
+        currentStart = HOSPITAL_108_START_LOCATIONS.find(s => s.id === state.startLocationId) || null;
+        setSelectedStartLocation(currentStart);
       } else if (stateView === 'home' || stateView === 'destination_detail') {
         setSelectedStartLocation(null);
       }
@@ -72,6 +78,15 @@ export default function App() {
         setActiveMapLinkId(state.mapLinkId);
       } else {
         setActiveMapLinkId(null);
+      }
+
+      if (currentStart && currentDest) {
+        setActiveRouteLaunchResult(createInMapzRouteLaunch({
+          startLocationId: currentStart.id,
+          destinationId: currentDest.id
+        }));
+      } else {
+        setActiveRouteLaunchResult(null);
       }
     };
 
@@ -101,11 +116,16 @@ export default function App() {
   }, [selectedDestination, selectedStartLocation, activeMapLinkId]);
 
   const activeMapLink = useMemo(() => {
-    if (!activeMapLinkId) return null;
-    return HOSPITAL_108_OFFICIAL_MAP_LINKS.find(l => l.id === activeMapLinkId) || 
-           HOSPITAL_108_OFFICIAL_MAP_LINKS.find(l => l.id === 'campus') || 
-           HOSPITAL_108_OFFICIAL_MAP_LINKS[0];
-  }, [activeMapLinkId]);
+    if (activeMapLinkId) {
+      return HOSPITAL_108_OFFICIAL_MAP_LINKS.find(l => l.id === activeMapLinkId) || 
+             HOSPITAL_108_OFFICIAL_MAP_LINKS.find(l => l.id === 'campus') || 
+             HOSPITAL_108_OFFICIAL_MAP_LINKS[0];
+    }
+    if (activeRouteLaunchResult) {
+      return activeRouteLaunchResult.targetMapLink;
+    }
+    return HOSPITAL_108_OFFICIAL_MAP_LINKS.find(l => l.id === 'campus') || HOSPITAL_108_OFFICIAL_MAP_LINKS[0];
+  }, [activeMapLinkId, activeRouteLaunchResult]);
 
   // Xử lý chọn điểm đến
   const handleSelectDestination = (dest: Hospital108Destination) => {
@@ -113,6 +133,7 @@ export default function App() {
     setSelectedDestination(dest);
     setSelectedStartLocation(null);
     setActiveMapLinkId(null);
+    setActiveRouteLaunchResult(null);
     navigateTo('destination_detail', true, { 
       destinationId: dest.id,
       startLocationId: undefined,
@@ -131,17 +152,24 @@ export default function App() {
   // Bước 2 -> Bước 3: Từ chọn điểm xuất phát sang kiểm tra tuyến đường (RoutePreview)
   const handleSelectStartLocation = (start: Hospital108StartLocation) => {
     setSelectedStartLocation(start);
+    if (selectedDestination) {
+      const result = createInMapzRouteLaunch({
+        startLocationId: start.id,
+        destinationId: selectedDestination.id
+      });
+      setActiveRouteLaunchResult(result);
+    }
     navigateTo('route_preview', true, {
       startLocationId: start.id
     });
   };
 
-  // Bước 3 -> Bản đồ: Từ RoutePreview mở bản đồ chính thức
-  const handleStartNavigationFromPreview = (chosenMapLinkId?: string) => {
-    const linkId = chosenMapLinkId || selectedDestination?.mapLinkId || selectedStartLocation?.mapLinkId || 'campus';
-    setActiveMapLinkId(linkId);
+  // Bước 3 -> Bản đồ: Mở bản đồ chính thức
+  const handleStartNavigationFromPreview = (routeResult: RouteLaunchResult) => {
+    setActiveRouteLaunchResult(routeResult);
+    setActiveMapLinkId(routeResult.targetMapLink.id);
     navigateTo('official_map', true, {
-      mapLinkId: linkId
+      mapLinkId: routeResult.targetMapLink.id
     });
   };
 
@@ -151,6 +179,7 @@ export default function App() {
     setSelectedDestination(null);
     setSelectedStartLocation(null);
     setActiveMapLinkId(null);
+    setActiveRouteLaunchResult(null);
     navigateTo('home', true, {
       destinationId: undefined,
       startLocationId: undefined,
@@ -163,6 +192,7 @@ export default function App() {
     stopSpeaking();
     setSelectedStartLocation(null);
     setActiveMapLinkId(null);
+    setActiveRouteLaunchResult(null);
     navigateTo('destination_detail');
   };
 
@@ -173,6 +203,7 @@ export default function App() {
     setSelectedDestination(tongQuanDest || null);
     setSelectedStartLocation(null);
     setActiveMapLinkId('campus');
+    setActiveRouteLaunchResult(null);
     navigateTo('official_map', true, {
       destinationId: tongQuanDest?.id,
       startLocationId: undefined,
@@ -257,6 +288,9 @@ export default function App() {
           <Official108Map 
             mapLink={activeMapLink} 
             destination={selectedDestination}
+            startLocation={selectedStartLocation}
+            routingMode={activeRouteLaunchResult?.mode || 'assisted_external_map'}
+            routeLaunchResult={activeRouteLaunchResult}
             onClose={() => {
               if (selectedStartLocation) {
                 navigateTo('route_preview');

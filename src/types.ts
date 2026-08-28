@@ -12,6 +12,25 @@ export type MapPrecision =
   | 'building_start_view' 
   | 'campus_only';
 
+export type RoutingMode =
+  | 'official_deep_link'
+  | 'assisted_external_map';
+
+export interface RouteRequest {
+  startLocationId: string;
+  destinationId: string;
+}
+
+export interface RouteLaunchResult {
+  mode: RoutingMode;
+  url: string;
+  startResolved: boolean;
+  destinationResolved: boolean;
+  routePreloaded: boolean;
+  message: string;
+  targetMapLink: Official108MapLink;
+}
+
 export interface Hospital108Destination {
   id: string;
   name: string;

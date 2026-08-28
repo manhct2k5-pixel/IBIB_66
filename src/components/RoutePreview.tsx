@@ -5,21 +5,22 @@ import {
   Layers, 
   RotateCcw, 
   ShieldCheck, 
-  Info, 
-  ExternalLink 
+  AlertCircle,
+  Map
 } from 'lucide-react';
 import type { 
   Hospital108Destination, 
-  Hospital108StartLocation 
+  Hospital108StartLocation,
+  RouteLaunchResult
 } from '../types';
-import { HOSPITAL_108_OFFICIAL_MAP_LINKS } from '../data/hospital108';
+import { createInMapzRouteLaunch } from '../services/inmapzRouting';
 import { MapPrecisionBadge } from './MapPrecisionBadge';
 import { SpeechGuideButton } from './SpeechGuideButton';
 
 interface RoutePreviewProps {
   startLocation: Hospital108StartLocation;
   destination: Hospital108Destination;
-  onStartNavigation: (chosenMapLinkId?: string) => void;
+  onStartNavigation: (routeResult: RouteLaunchResult) => void;
   onChangeStart: () => void;
   onChangeDestination: () => void;
 }
@@ -31,18 +32,17 @@ export function RoutePreview({
   onChangeStart,
   onChangeDestination
 }: RoutePreviewProps) {
-  // Tìm map link đích và xuất phát
-  const destMapLink = HOSPITAL_108_OFFICIAL_MAP_LINKS.find(l => l.id === destination.mapLinkId);
-  const startMapLink = HOSPITAL_108_OFFICIAL_MAP_LINKS.find(l => l.id === startLocation.mapLinkId);
+  // Gọi dịch vụ định tuyến thật với cả startLocation.id và destination.id
+  const routeLaunchResult = createInMapzRouteLaunch({
+    startLocationId: startLocation.id,
+    destinationId: destination.id
+  });
 
-  // Quyết định mapLinkId mở ra: ưu tiên mapLinkId của điểm đến nếu có phân khu cụ thể, hoặc điểm xuất phát
-  const targetMapLinkId = (destination.mapLinkId && destination.mapLinkId !== 'campus') 
-    ? destination.mapLinkId 
-    : (startLocation.mapLinkId || 'campus');
+  const isDeepLink = routeLaunchResult.mode === 'official_deep_link' && routeLaunchResult.routePreloaded;
 
-  const activeMapLink = HOSPITAL_108_OFFICIAL_MAP_LINKS.find(l => l.id === targetMapLinkId) || destMapLink || startMapLink;
-
-  const speechText = `Kiểm tra tuyến đường: Điểm xuất phát tại ${startLocation.name}, ${startLocation.building}. Nơi muốn đến là ${destination.name}, ${destination.building}. MedNav sẽ mở khu vực bản đồ ${activeMapLink?.label || 'khuôn viên'}. Trên bản đồ InMapz chính thức, bác hãy bấm nút Chỉ đường, sau đó chọn điểm bắt đầu và nơi muốn đến.`;
+  const speechText = isDeepLink
+    ? `Tuyến chính thức đã sẵn sàng từ ${startLocation.name} đến ${destination.name}. Bấm bắt đầu chỉ đường để xem tuyến.`
+    : `Bác cần chọn lại trên bản đồ. MedNav đã ghi nhớ xuất phát từ ${startLocation.name}, ${startLocation.building} đến ${destination.name}, ${destination.building}. Sau khi mở InMapz, bác bấm nút Chỉ đường và chọn lại hai địa điểm trên.`;
 
   return (
     <div className="flex-1 w-full max-w-2xl mx-auto p-4 sm:p-6 flex flex-col justify-between animate-in fade-in duration-200">
@@ -143,7 +143,35 @@ export function RoutePreview({
           </div>
         </div>
 
-        {/* Thông tin bản đồ & Độ chính xác */}
+        {/* Trạng thái tích hợp trung thực */}
+        {isDeepLink ? (
+          <div className="p-4 bg-emerald-50 rounded-2xl border-2 border-emerald-300 flex items-start gap-3">
+            <ShieldCheck className="w-6 h-6 text-emerald-700 shrink-0 mt-0.5" />
+            <div className="text-sm sm:text-base font-medium text-emerald-950 leading-relaxed">
+              <p className="font-bold text-emerald-900">Tuyến chính thức đã sẵn sàng</p>
+              <p className="mt-1">Điểm đầu và điểm đến sẽ được mở sẵn trên InMapz.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 bg-amber-50 rounded-2xl border-2 border-amber-300 flex items-start gap-3">
+            <AlertCircle className="w-6 h-6 text-amber-700 shrink-0 mt-0.5" />
+            <div className="text-sm sm:text-base font-medium text-amber-950 leading-relaxed space-y-2">
+              <p className="font-black text-amber-900 text-base">Cần chọn lại trên bản đồ</p>
+              
+              <div className="bg-white/80 p-3 rounded-xl border border-amber-200 text-slate-800 font-semibold space-y-1">
+                <p className="text-sm uppercase tracking-wider text-slate-500 font-bold">MedNav đã ghi nhớ:</p>
+                <p>• Từ: <span className="font-bold text-slate-900">{startLocation.name}</span></p>
+                <p>• Đến: <span className="font-bold text-teal-800">{destination.name}</span></p>
+              </div>
+
+              <p className="text-slate-700">
+                Sau khi mở InMapz, bác bấm <strong className="text-slate-900">“Chỉ đường”</strong> và chọn lại hai địa điểm trên.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Thông tin bản đồ */}
         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-2.5">
           <div className="flex items-center justify-between text-base font-medium text-slate-700">
             <span className="flex items-center gap-1.5 text-slate-600">
@@ -156,31 +184,32 @@ export function RoutePreview({
           <div className="flex items-center justify-between text-base font-medium text-slate-700">
             <span className="flex items-center gap-1.5 text-slate-600">
               <Layers className="w-5 h-5 text-teal-700" />
-              Khu vực bản đồ sẽ mở:
+              Khu vực mở trước:
             </span>
             <span className="font-bold text-slate-900">
-              {activeMapLink?.label || 'Tổng quan khuôn viên'}
+              {routeLaunchResult.targetMapLink.label}
             </span>
           </div>
-        </div>
-
-        {/* Thông báo trung thực về cách thức hoạt động */}
-        <div className="p-4 bg-teal-50 rounded-2xl border-2 border-teal-200 flex items-start gap-3">
-          <Info className="w-6 h-6 text-teal-700 shrink-0 mt-0.5" />
-          <p className="text-sm sm:text-base font-medium text-teal-950 leading-relaxed">
-            MedNav mở đúng khu vực bản đồ. Tuyến đi chi tiết do bản đồ InMapz chính thức của Bệnh viện 108 cung cấp. Trên bản đồ, bác hãy chọn <span className="font-bold">“Chỉ đường”</span>, sau đó chọn điểm bắt đầu và nơi muốn đến.
-          </p>
         </div>
       </div>
 
       {/* Nút hành động chính */}
       <div className="pt-6 pb-4 space-y-3">
         <button
-          onClick={() => onStartNavigation(targetMapLinkId)}
+          onClick={() => onStartNavigation(routeLaunchResult)}
           className="w-full min-h-[56px] h-16 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white rounded-2xl font-black text-xl shadow-lg transition-all flex items-center justify-center gap-3"
         >
-          <Navigation className="w-7 h-7" />
-          <span>Mở bản đồ và bắt đầu chỉ đường</span>
+          {isDeepLink ? (
+            <>
+              <Navigation className="w-7 h-7" />
+              <span>Bắt đầu chỉ đường</span>
+            </>
+          ) : (
+            <>
+              <Map className="w-7 h-7" />
+              <span>Mở bản đồ chính thức</span>
+            </>
+          )}
         </button>
 
         <div className="flex gap-2">

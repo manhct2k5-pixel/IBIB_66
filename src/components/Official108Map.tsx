@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import type { Official108MapLink, Hospital108Destination } from '../types';
+import type { 
+  Official108MapLink, 
+  Hospital108Destination, 
+  Hospital108StartLocation,
+  RoutingMode,
+  RouteLaunchResult
+} from '../types';
 import { 
   AlertTriangle, 
   ExternalLink, 
@@ -9,7 +15,6 @@ import {
   VolumeX, 
   ChevronUp, 
   ChevronDown, 
-  HelpCircle, 
   RotateCcw,
   ShieldAlert,
   Navigation
@@ -19,6 +24,9 @@ import { speakText, stopSpeaking } from '../utils/speech';
 interface Official108MapProps {
   mapLink: Official108MapLink;
   destination?: Hospital108Destination | null;
+  startLocation?: Hospital108StartLocation | null;
+  routingMode?: RoutingMode;
+  routeLaunchResult?: RouteLaunchResult | null;
   onClose: () => void;
   onChangeStart?: () => void;
   onChangeDestination: () => void;
@@ -29,10 +37,12 @@ interface Official108MapProps {
 export function Official108Map({ 
   mapLink, 
   destination,
+  startLocation,
+  routingMode = 'assisted_external_map',
+  routeLaunchResult,
   onClose,
   onChangeStart,
   onChangeDestination,
-  onOpenHelp,
   onOpenEmergency
 }: Official108MapProps) {
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +50,8 @@ export function Official108Map({
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSheetExpanded, setIsSheetExpanded] = useState(false);
+
+  const isDeepLinkReady = routingMode === 'official_deep_link' && routeLaunchResult?.routePreloaded;
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -80,7 +92,14 @@ export function Official108Map({
       return;
     }
 
-    const textToRead = `Bác đang xem bản đồ ${mapLink.label}. Để xem đường đi, bác hãy chọn nút Chỉ đường trên bản đồ chính thức của Bệnh viện 108, sau đó chọn điểm bắt đầu và nơi muốn đến.`;
+    let textToRead = '';
+    if (isDeepLinkReady) {
+      textToRead = `Tuyến đường đã được mở trên bản đồ chính thức từ ${startLocation?.name || 'vị trí ban đầu'} đến ${destination?.name || 'điểm đến'}.`;
+    } else {
+      const fromText = startLocation ? `từ ${startLocation.name}` : '';
+      const toText = destination ? `đến ${destination.name}` : mapLink.label;
+      textToRead = `Hướng dẫn thao tác trên bản đồ InMapz: Bác đang muốn đi ${fromText} ${toText}. Bước một: Bác bấm nút Chỉ đường trên bản đồ. Bước hai: Chọn điểm bắt đầu là ${startLocation?.name || 'vị trí hiện tại'}. Bước ba: Chọn nơi muốn đến là ${destination?.name || mapLink.label}.`;
+    }
 
     setIsSpeaking(true);
     speakText(
@@ -118,7 +137,7 @@ export function Official108Map({
 
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col h-[100dvh] overflow-hidden">
-      {/* Top Header tối ưu cho màn hình nhỏ 320px */}
+      {/* Top Header tối ưu cho mobile */}
       <header className="h-16 flex-none bg-teal-800 text-white border-b border-teal-900 flex items-center px-2 justify-between sticky top-0 z-20 safe-top shadow-md">
         {/* Bên trái: Nút quay lại 48x48 */}
         <button
@@ -189,20 +208,24 @@ export function Official108Map({
         )}
       </div>
 
-      {/* Bottom Sheet - Hướng dẫn & Điều khiển có thể thu gọn (<= 120px khi thu gọn) */}
+      {/* Bottom Sheet - Luôn hiển thị Từ: [điểm xuất phát] và Đến: [điểm đến] */}
       <div className={`flex-none bg-white border-t-2 border-slate-200 shadow-2xl transition-all duration-300 z-20 flex flex-col safe-bottom ${
-        isSheetExpanded ? 'max-h-[46dvh] overflow-y-auto' : 'h-[112px]'
+        isSheetExpanded ? 'max-h-[50dvh] overflow-y-auto' : 'h-[112px]'
       }`}>
-        {/* Thanh cầm kéo / Header Sheet */}
+        {/* Header Sheet: Luôn hiển thị Từ & Đến */}
         <div 
           onClick={() => setIsSheetExpanded(!isSheetExpanded)}
           className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between cursor-pointer hover:bg-slate-100 transition-colors select-none"
         >
-          <div className="flex items-center gap-2 overflow-hidden pr-2">
-            <div className="w-3 h-3 rounded-full bg-teal-600 animate-pulse shrink-0"></div>
-            <span className="font-bold text-slate-800 text-base truncate">
+          <div className="flex flex-col gap-0.5 overflow-hidden pr-2 min-w-0">
+            {startLocation && (
+              <div className="text-sm font-semibold text-slate-600 truncate">
+                Từ: <span className="text-slate-900 font-bold">{startLocation.name}</span>
+              </div>
+            )}
+            <div className="text-base font-bold text-slate-800 truncate">
               Đến: <span className="text-teal-800 font-black">{destination?.name || mapLink.label}</span>
-            </span>
+            </div>
           </div>
 
           <button 
@@ -216,31 +239,31 @@ export function Official108Map({
 
         {/* Nội dung Sheet */}
         <div className="p-3 sm:p-4 space-y-3 flex-1">
-          {/* Khi mở rộng: Hướng dẫn chi tiết */}
+          {/* Khi mở rộng: Hiển thị 3 bước thao tác lớn */}
           {isSheetExpanded && (
             <div className="p-3.5 bg-teal-50 rounded-2xl border border-teal-200 text-slate-800 text-sm sm:text-base font-medium space-y-2">
               <div className="font-bold text-teal-900 flex items-center gap-1.5">
-                <Navigation className="w-4 h-4 text-teal-700" />
-                <span>Cách xem chỉ đường trên bản đồ InMapz:</span>
+                <Navigation className="w-5 h-5 text-teal-700 shrink-0" />
+                <span>3 bước xem tuyến trên bản đồ InMapz:</span>
+              </div>
+              <div className="flex items-start gap-2 pt-1">
+                <span className="w-6 h-6 rounded-full bg-teal-700 text-white font-black text-sm flex items-center justify-center shrink-0 mt-0.5">1</span>
+                <span>Bấm <strong>“Chỉ đường”</strong> trên bản đồ.</span>
               </div>
               <div className="flex items-start gap-2">
-                <span className="font-black text-teal-800">1.</span>
-                <span>Chạm vào nút <strong>“Chỉ đường”</strong> (Directions) trên bản đồ.</span>
+                <span className="w-6 h-6 rounded-full bg-teal-700 text-white font-black text-sm flex items-center justify-center shrink-0 mt-0.5">2</span>
+                <span>Chọn điểm bắt đầu: <strong className="text-teal-950">{startLocation?.name || 'Vị trí hiện tại'}</strong>.</span>
               </div>
               <div className="flex items-start gap-2">
-                <span className="font-black text-teal-800">2.</span>
-                <span>Chọn điểm bắt đầu và nơi muốn đến để bản đồ vẽ tuyến đi.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="font-black text-teal-800">3.</span>
-                <span>Nếu cần đổi tầng, bác dùng nút chọn tầng ở góc bản đồ.</span>
+                <span className="w-6 h-6 rounded-full bg-teal-700 text-white font-black text-sm flex items-center justify-center shrink-0 mt-0.5">3</span>
+                <span>Chọn nơi muốn đến: <strong className="text-teal-950">{destination?.name || mapLink.label}</strong>.</span>
               </div>
             </div>
           )}
 
-          {/* Dải nút hành động - Xếp 1 cột trên mobile nhỏ khi mở rộng, hoặc 2 cột trên sm */}
+          {/* Dải nút hành động */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {/* Nút Mở bản đồ chính thức */}
+            {/* Nút Mở bản đồ trong tab mới */}
             <a
               href={mapLink.url}
               target="_blank"
@@ -248,10 +271,10 @@ export function Official108Map({
               className="min-h-[48px] h-12 bg-teal-700 hover:bg-teal-800 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-colors shadow-sm"
             >
               <ExternalLink className="w-5 h-5 shrink-0" />
-              <span>Mở bản đồ chính thức</span>
+              <span>Mở bản đồ trong tab mới</span>
             </a>
 
-            {/* Nút Nghe / Dừng đọc */}
+            {/* Nút Nghe hướng dẫn / Dừng đọc */}
             <button
               onClick={handleToggleSpeak}
               className={`min-h-[48px] h-12 rounded-xl font-bold text-base flex items-center justify-center gap-2 border transition-all ${
@@ -273,7 +296,7 @@ export function Official108Map({
               )}
             </button>
 
-            {/* Nút Đổi điểm xuất phát (nếu có callback) */}
+            {/* Nút Đổi điểm xuất phát */}
             {onChangeStart && (
               <button
                 onClick={() => {
