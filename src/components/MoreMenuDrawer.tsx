@@ -1,171 +1,110 @@
 import React from 'react';
-import { 
-  X, 
-  HelpCircle, 
-  ShieldCheck, 
-  Globe, 
-  Building2, 
-  PhoneCall, 
-  Home, 
-  ChevronRight 
-} from 'lucide-react';
+import { X, Map, Info, Phone, HeartPulse, Building2 } from 'lucide-react';
+import { HOSPITAL_108_SOURCES } from '../data/hospital108';
 
 interface MoreMenuDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onGoHome: () => void;
-  onOpenGuide: () => void;
-  onOpenDataInfo: () => void;
-  onOpenEmergency: () => void;
-  language: 'vi' | 'en';
-  onChangeLanguage: (lang: 'vi' | 'en') => void;
 }
 
-export const MoreMenuDrawer: React.FC<MoreMenuDrawerProps> = ({
-  isOpen,
-  onClose,
-  onGoHome,
-  onOpenGuide,
-  onOpenDataInfo,
-  onOpenEmergency,
-  language,
-  onChangeLanguage
-}) => {
+export function MoreMenuDrawer({ isOpen, onClose }: MoreMenuDrawerProps) {
   if (!isOpen) return null;
 
   return (
-    <div 
-      id="more-menu-backdrop"
-      className="fixed inset-0 z-50 flex items-start justify-end bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150"
-    >
+    <div className="fixed inset-0 z-50 flex justify-end">
       <div 
-        id="more-menu-content"
-        className="w-full max-w-sm h-full bg-white shadow-2xl flex flex-col justify-between p-5 animate-in slide-in-from-right duration-200"
-      >
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-cyan-700 text-white flex items-center justify-center font-bold">
-                <Building2 className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-black text-slate-900">
-                  Menu tùy chọn
-                </h3>
-                <p className="text-xs text-slate-500 font-semibold">
-                  MedNav Bệnh viện Bạch Mai
-                </p>
-              </div>
-            </div>
-
-            <button
-              id="btn-close-more-menu"
-              onClick={onClose}
-              className="p-1.5 text-slate-500 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition cursor-pointer"
-              aria-label="Đóng menu"
-            >
-              <X className="w-6 h-6 stroke-[2.5]" />
-            </button>
-          </div>
-
-          {/* Menu Items */}
-          <div className="space-y-2">
-            <button
-              onClick={() => {
-                onGoHome();
-                onClose();
-              }}
-              className="w-full h-14 px-4 bg-slate-50 hover:bg-slate-100 rounded-2xl font-bold text-base text-slate-900 flex items-center justify-between transition cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <Home className="w-5 h-5 text-cyan-800" />
-                <span>Trang bắt đầu</span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-slate-400" />
-            </button>
-
-            <button
-              onClick={() => {
-                onOpenGuide();
-                onClose();
-              }}
-              className="w-full h-14 px-4 bg-slate-50 hover:bg-slate-100 rounded-2xl font-bold text-base text-slate-900 flex items-center justify-between transition cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <HelpCircle className="w-5 h-5 text-cyan-800" />
-                <span>Hướng dẫn sử dụng</span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-slate-400" />
-            </button>
-
-            <button
-              onClick={() => {
-                onOpenDataInfo();
-                onClose();
-              }}
-              className="w-full h-14 px-4 bg-slate-50 hover:bg-slate-100 rounded-2xl font-bold text-base text-slate-900 flex items-center justify-between transition cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="w-5 h-5 text-cyan-800" />
-                <span>Nguồn & Giới hạn dữ liệu</span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-slate-400" />
-            </button>
-
-            <button
-              onClick={() => {
-                onOpenEmergency();
-                onClose();
-              }}
-              className="w-full h-14 px-4 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-2xl font-bold text-base text-rose-950 flex items-center justify-between transition cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <PhoneCall className="w-5 h-5 text-rose-600" />
-                <span>Hỗ trợ cấp cứu (115 / A9)</span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-rose-400" />
-            </button>
-          </div>
-
-          {/* Language Switch */}
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-            <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-              <Globe className="w-4 h-4 text-cyan-700" />
-              <span>Ngôn ngữ hiển thị</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => onChangeLanguage('vi')}
-                className={`h-11 rounded-xl font-bold text-sm transition cursor-pointer ${
-                  language === 'vi' 
-                    ? 'bg-cyan-700 text-white shadow-xs' 
-                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                Tiếng Việt
-              </button>
-              <button
-                onClick={() => onChangeLanguage('en')}
-                className={`h-11 rounded-xl font-bold text-sm transition cursor-pointer ${
-                  language === 'en' 
-                    ? 'bg-cyan-700 text-white shadow-xs' 
-                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                English
-              </button>
-            </div>
-          </div>
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      <div className="relative w-full max-w-sm sm:max-w-md bg-slate-50 h-[100dvh] shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+        <div className="h-16 flex items-center justify-between px-4 sm:px-6 bg-white border-b border-slate-200">
+          <h2 className="text-xl font-black text-slate-800">Menu</h2>
+          <button 
+            onClick={onClose}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 transition-colors"
+          >
+            <X className="w-6 h-6 text-slate-600" />
+          </button>
         </div>
 
-        {/* Footer info */}
-        <div className="pt-4 border-t border-slate-200 text-xs text-slate-500 text-center space-y-1 font-medium">
-          <p>MedNav Bệnh viện Bạch Mai</p>
-          <p>Số 78 Đường Giải Phóng, Hà Nội</p>
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20">
+          <div className="bg-white rounded-2xl p-6 border-2 border-slate-200 mb-6 text-center shadow-sm">
+            <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Building2 className="w-8 h-8 text-emerald-700" />
+            </div>
+            <h3 className="text-xl font-black text-slate-900 mb-2">MedNav 108</h3>
+            <p className="text-sm font-medium text-slate-600 leading-relaxed mb-4">
+              Bản đồ chỉ dẫn Bệnh viện Trung ương Quân đội 108
+            </p>
+            <div className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-2 rounded-lg inline-block">
+              {HOSPITAL_108_SOURCES.address}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-black text-slate-500 uppercase tracking-wider px-2">Liên hệ & Hỗ trợ</h3>
+            
+            <a href={`tel:${HOSPITAL_108_SOURCES.hotlines.khamTheoYeuCau.replace(/\s+/g, '')}`} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 transition-colors group">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                  <HeartPulse className="w-5 h-5 text-emerald-700" />
+                </div>
+                <div>
+                  <div className="font-bold text-slate-900 group-hover:text-emerald-700">Khám theo yêu cầu</div>
+                  <div className="text-sm font-medium text-slate-500">{HOSPITAL_108_SOURCES.hotlines.khamTheoYeuCau}</div>
+                </div>
+              </div>
+              <Phone className="w-5 h-5 text-slate-400 group-hover:text-emerald-600" />
+            </a>
+
+            <a href={`tel:${HOSPITAL_108_SOURCES.hotlines.congTacXaHoi.replace(/\s+/g, '')}`} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 transition-colors group">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-sky-100 rounded-xl flex items-center justify-center">
+                  <Info className="w-5 h-5 text-sky-700" />
+                </div>
+                <div>
+                  <div className="font-bold text-slate-900 group-hover:text-sky-700">Ban Công tác xã hội</div>
+                  <div className="text-sm font-medium text-slate-500">Hướng dẫn thủ tục • {HOSPITAL_108_SOURCES.hotlines.congTacXaHoi}</div>
+                </div>
+              </div>
+              <Phone className="w-5 h-5 text-slate-400 group-hover:text-sky-600" />
+            </a>
+
+            <a href={`tel:${HOSPITAL_108_SOURCES.hotlines.keHoachTongHop.replace(/\s+/g, '')}`} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 transition-colors group">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-indigo-700" />
+                </div>
+                <div>
+                  <div className="font-bold text-slate-900 group-hover:text-indigo-700">Phòng Kế hoạch Tổng hợp</div>
+                  <div className="text-sm font-medium text-slate-500">BHYT & Chuyên môn • {HOSPITAL_108_SOURCES.hotlines.keHoachTongHop}</div>
+                </div>
+              </div>
+              <Phone className="w-5 h-5 text-slate-400 group-hover:text-indigo-600" />
+            </a>
+
+          </div>
+          
+          <div className="mt-8 space-y-4">
+            <h3 className="text-sm font-black text-slate-500 uppercase tracking-wider px-2">Nguồn thông tin</h3>
+            <a 
+              href={HOSPITAL_108_SOURCES.mainWebsite}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-200 hover:bg-slate-50 transition-colors"
+            >
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+                <Map className="w-5 h-5 text-slate-600" />
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-slate-900">Website Bệnh viện 108</div>
+                <div className="text-sm font-medium text-slate-500 truncate">benhvien108.vn</div>
+              </div>
+            </a>
+          </div>
         </div>
       </div>
     </div>
   );
-};
+}

@@ -1,10 +1,8 @@
 {
-  "name": "Remix MedNav - Bản Đồ Chỉ Đường Bệnh Viện",
-  "description": "Ứng dụng chỉ đường trực quan tại Bệnh viện Bạch Mai, tối ưu cho người cao tuổi và người lần đầu đến khám, dẫn đường đến cửa/sảnh tòa nhà với hỗ trợ quét mã vị trí và giọng đọc.",
+  "name": "MedNav 108",
+  "description": "MedNav 108 – Bản đồ chỉ dẫn Bệnh viện Trung ương Quân đội 108",
   "requestFramePermissions": [
-    "microphone",
-    "geolocation",
-    "camera"
+    "geolocation"
   ],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

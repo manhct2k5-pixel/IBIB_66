@@ -1,490 +1,95 @@
-import React, { useState, useMemo, useRef } from 'react';
-import { 
-  Search, 
-  X, 
-  Mic, 
-  MicOff, 
-  ChevronRight, 
-  Building2, 
-  ShieldAlert, 
-  Heart, 
-  ChevronDown, 
-  ChevronUp, 
-  Info,
-  Check,
-  MapPin
-} from 'lucide-react';
-import { MapNode, FloorDirectoryEntry } from '../types';
-import { MAP_NODES_DATA, BACH_MAI_FLOOR_DIRECTORY } from '../data/hospitalData';
-import { isSpeechRecognitionSupported, VoiceSearchController } from '../utils/voiceRecognition';
+import React, { useState, useMemo } from 'react';
+import { Search, MapPin, ExternalLink, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { HOSPITAL_108_DESTINATIONS, Hospital108Destination } from '../data/hospital108';
 
 interface DestinationStepProps {
-  onSelectDestination: (node: MapNode) => void;
-  onOpenDataInfo: () => void;
-  language?: 'vi' | 'en';
+  onSelectDestination: (mapLinkId: string) => void;
 }
 
-export const DestinationStep: React.FC<DestinationStepProps> = ({
-  onSelectDestination,
-  onOpenDataInfo,
-  language = 'vi'
-}) => {
+export function DestinationStep({ onSelectDestination }: DestinationStepProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [showAllBuildings, setShowAllBuildings] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [voiceMessage, setVoiceMessage] = useState<string | null>(null);
-  const voiceControllerRef = useRef<VoiceSearchController | null>(null);
-
-  const popularDestinations = useMemo(() => {
-    return [
-      {
-        badge: 'K1',
-        title: 'Khám bệnh – K1',
-        desc: 'Khoa khám bệnh, tiếp đón và đăng ký BHYT',
-        nodeId: 'node_k1_entrance',
-        color: 'border-cyan-200 bg-cyan-50/70 hover:bg-cyan-100/80 text-cyan-950',
-        badgeColor: 'bg-cyan-700 text-white'
-      },
-      {
-        badge: 'A9',
-        title: 'Cấp cứu – A9',
-        desc: 'Trung tâm Cấp cứu 24/7 (Cạnh Cổng 1)',
-        nodeId: 'node_a9_emergency_entrance',
-        color: 'border-rose-200 bg-rose-50/70 hover:bg-rose-100/80 text-rose-950',
-        badgeColor: 'bg-rose-600 text-white'
-      },
-      {
-        badge: 'VTM',
-        title: 'Viện Tim mạch',
-        desc: 'Viện Tim Mạch Quốc Gia (Tòa Nhà C)',
-        nodeId: 'node_vtm_entrance',
-        color: 'border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100/80 text-emerald-950',
-        badgeColor: 'bg-emerald-700 text-white'
-      },
-      {
-        badge: 'K2',
-        title: 'Khám bệnh – K2',
-        desc: 'Điều trị theo yêu cầu & Điều trị trong ngày',
-        nodeId: 'node_k2_entrance',
-        color: 'border-blue-200 bg-blue-50/70 hover:bg-blue-100/80 text-blue-950',
-        badgeColor: 'bg-blue-700 text-white'
-      }
-    ];
-  }, []);
-
-  const extendedBuildings = useMemo(() => {
-    return [
-      { badge: 'Q', title: 'Tòa Q (21 tầng)', desc: 'Trung tâm Ung bướu & Y học hạt nhân', nodeId: 'node_q_21story_entrance' },
-      { badge: 'P', title: 'Tòa P (Việt Nhật)', desc: 'Trung tâm kỹ thuật cao Hợp tác Việt - Nhật', nodeId: 'node_p_vietnhat_entrance' },
-      { badge: 'A10', title: 'Trung tâm Đột quỵ (A10)', desc: 'Tòa nhà A10 – Cấp cứu & Can thiệp mạch não', nodeId: 'node_a10_stroke_entrance' },
-      { badge: 'K3', title: 'Trung tâm Chống độc (K3)', desc: 'Tòa nhà K3 – Điều trị ngộ độc & Hồi sức', nodeId: 'node_k3_poison_entrance' },
-      { badge: 'H', title: 'Tòa H (Y học hạt nhân)', desc: 'Điều trị xạ trị & Chẩn đoán hình ảnh phóng xạ', nodeId: 'node_h_onco_entrance' },
-      { badge: 'F', title: 'Tòa F (Bệnh Nhiệt đới)', desc: 'Viện Y học Nhiệt đới Lâm sàng', nodeId: 'node_f_tropical_entrance' },
-      { badge: 'T1', title: 'Cụm T1 - T3 (Thần kinh)', desc: 'Khoa Thần kinh & Phẫu thuật thần kinh', nodeId: 'node_t1_neuro_entrance' },
-      { badge: 'T4', title: 'Cụm T4 - T6 (Sức khỏe tâm thần)', desc: 'Viện Sức khỏe Tâm thần', nodeId: 'node_t4_mental_entrance' }
-    ];
-  }, []);
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return [];
-
-    const isCanteenQuery = q.includes('căng tin') || q.includes('canteen') || q.includes('cang tin') || q.includes('ăn uống') || q.includes('an uong');
-    if (isCanteenQuery) {
-      return { isCanteen: true, items: [], directories: [] };
-    }
-
-    const matchedNodes = MAP_NODES_DATA.filter(node => {
-      if (node.type === 'entrance' || node.type === 'room' || node.type === 'emergency') {
-        const nameMatch = node.name.toLowerCase().includes(q);
-        const nameEnMatch = (node.nameEn || '').toLowerCase().includes(q);
-        const buildingMatch = (node.buildingId || '').toLowerCase().includes(q);
-        const roomMatch = (node.roomId || '').toLowerCase().includes(q);
-        return nameMatch || nameEnMatch || buildingMatch || roomMatch;
-      }
-      return false;
+    if (!q) return HOSPITAL_108_DESTINATIONS; // Show all by default if no query
+    
+    return HOSPITAL_108_DESTINATIONS.filter(dest => {
+      const nameMatch = dest.name.toLowerCase().includes(q);
+      const aliasMatch = dest.aliases.some(alias => alias.toLowerCase().includes(q));
+      return nameMatch || aliasMatch;
     });
-
-    const matchedDirectories = (BACH_MAI_FLOOR_DIRECTORY || []).filter(dir => {
-      const nameMatch = dir.destinationName.toLowerCase().includes(q);
-      const bMatch = dir.buildingId.toLowerCase().includes(q);
-      return nameMatch || bMatch;
-    });
-
-    return { isCanteen: false, items: matchedNodes, directories: matchedDirectories };
   }, [searchQuery]);
 
-  const handleToggleVoice = () => {
-    if (isListening) {
-      voiceControllerRef.current?.stop();
-      setIsListening(false);
-      return;
-    }
-
-    if (!isSpeechRecognitionSupported()) {
-      setVoiceMessage('Trình duyệt của bác chưa hỗ trợ nhận diện giọng nói. Bác vui lòng nhập bằng chữ.');
-      return;
-    }
-
-    if (!voiceControllerRef.current) {
-      voiceControllerRef.current = new VoiceSearchController();
-    }
-
-    setIsListening(true);
-    setVoiceMessage('Đang lắng nghe... Bác hãy nói tên nơi cần đến (Ví dụ: "Khám bệnh K1", "Viện Tim mạch")');
-
-    voiceControllerRef.current.start(
-      (transcript) => {
-        setSearchQuery(transcript);
-      },
-      (errorMsg) => {
-        setIsListening(false);
-        setVoiceMessage(errorMsg);
-      },
-      () => {
-        setIsListening(false);
-        setVoiceMessage(null);
-      }
-    );
-  };
-
-  const handleSelectByNodeId = (nodeId: string) => {
-    const node = MAP_NODES_DATA.find(n => n.id === nodeId);
-    if (node) {
-      onSelectDestination(node);
-    }
-  };
-
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 py-5 sm:py-8 flex flex-col space-y-6 animate-in fade-in duration-200">
-      {/* Step Indicator */}
-      <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-        <span className="text-base sm:text-lg font-black text-cyan-800 tracking-tight">
-          Bước 1/3 – Chọn nơi muốn đến
-        </span>
-        <span className="text-sm font-semibold text-slate-500">
-          Bệnh viện Bạch Mai
-        </span>
-      </div>
-
-      {/* Main Title Question */}
-      <div className="space-y-1.5">
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
-          Bạn muốn đến đâu?
-        </h1>
-        <p className="text-base sm:text-lg text-slate-600 font-medium leading-relaxed">
-          Nhập tên tòa nhà hoặc chọn một địa điểm phổ biến bên dưới.
+    <div className="flex flex-col h-full bg-slate-50 w-full max-w-3xl mx-auto">
+      {/* Hero Section */}
+      <div className="bg-emerald-700 pt-6 pb-8 px-4 sm:px-8 text-center text-white rounded-b-3xl shadow-md">
+        <h2 className="text-2xl sm:text-3xl font-black mb-3">
+          Bác muốn đến đâu trong Bệnh viện 108?
+        </h2>
+        <p className="text-emerald-100 mb-6 text-sm sm:text-base font-medium max-w-lg mx-auto">
+          Nhập khoa, phòng, hoặc khu vực bác cần đến để xem vị trí trên bản đồ chính thức.
         </p>
-      </div>
 
-      {/* Search Bar Input */}
-      <div className="space-y-2">
-        <label htmlFor="input-destination-search" className="sr-only">
-          Nhập tên nơi muốn đến tại Bệnh viện Bạch Mai
-        </label>
-        
-        <div className="relative flex items-center">
-          <div className="absolute left-4.5 text-slate-400 pointer-events-none">
-            <Search className="w-6 h-6 stroke-[2.5]" />
+        {/* Search Bar */}
+        <div className="relative max-w-xl mx-auto w-full">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search className="w-6 h-6 text-emerald-600 stroke-[2.5]" />
           </div>
-
           <input
-            id="input-destination-search"
-            type="search"
-            inputMode="search"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck={false}
+            type="text"
+            className="block w-full pl-12 pr-4 py-4 rounded-2xl bg-white border-2 border-transparent focus:border-emerald-300 focus:ring-4 focus:ring-emerald-500/20 text-slate-900 text-lg font-bold placeholder-slate-400 shadow-lg transition-all"
+            placeholder="Ví dụ: Cấp cứu, Khoa Khám bệnh..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Nhập K1, A9, Viện Tim mạch…"
-            className="w-full h-15 sm:h-16 pl-13 pr-28 bg-white border-2 border-slate-300 focus:border-cyan-700 rounded-2xl text-lg sm:text-xl font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-cyan-600/30 transition shadow-xs"
           />
-
-          {/* Action buttons inside search bar: Clear & Voice */}
-          <div className="absolute right-2.5 flex items-center gap-1.5">
-            {searchQuery && (
-              <button
-                id="btn-clear-destination-search"
-                onClick={() => setSearchQuery('')}
-                className="w-10 h-10 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-600"
-                aria-label="Xóa nội dung tìm kiếm"
-              >
-                <X className="w-5 h-5 stroke-[2.5]" />
-              </button>
-            )}
-
-            <button
-              id="btn-voice-search"
-              onClick={handleToggleVoice}
-              className={`h-11 px-3 rounded-xl font-bold text-sm flex items-center gap-1.5 transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-600 ${
-                isListening 
-                  ? 'bg-rose-600 text-white animate-pulse' 
-                  : 'bg-cyan-50 text-cyan-800 hover:bg-cyan-100 border border-cyan-200'
-              }`}
-              aria-label={isListening ? 'Đang nghe giọng nói' : 'Nói tên nơi cần đến'}
-              title="Nói tên nơi cần đến bằng giọng nói"
-            >
-              {isListening ? (
-                <>
-                  <MicOff className="w-5 h-5" />
-                  <span className="hidden sm:inline">Dừng</span>
-                </>
-              ) : (
-                <>
-                  <Mic className="w-5 h-5 text-cyan-700" />
-                  <span className="hidden sm:inline">Nói</span>
-                </>
-              )}
-            </button>
-          </div>
         </div>
-
-        {/* Voice Feedback Notification */}
-        {voiceMessage && (
-          <div className="p-3.5 bg-cyan-50 border border-cyan-200 rounded-xl text-sm sm:text-base font-semibold text-cyan-900 flex items-center justify-between gap-2">
-            <span>{voiceMessage}</span>
-            <button
-              onClick={() => setVoiceMessage(null)}
-              className="text-cyan-700 hover:text-cyan-900 p-1"
-              aria-label="Đóng thông báo giọng nói"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Dynamic Results OR Default Popular Destinations */}
-      {searchQuery.trim() !== '' ? (
-        <div className="space-y-3 pt-1">
-          <div className="text-base font-bold text-slate-700 flex items-center justify-between">
-            <span>Kết quả tìm kiếm cho "{searchQuery}"</span>
-            <button
-              onClick={() => setSearchQuery('')}
-              className="text-sm font-semibold text-cyan-700 hover:underline"
-            >
-              Xem các địa điểm phổ biến
-            </button>
+      {/* Destinations List */}
+      <div className="flex-1 p-4 sm:p-8 overflow-y-auto">
+        <h3 className="text-slate-500 font-bold text-sm uppercase tracking-wider mb-4 px-1">
+          {searchQuery ? 'Kết quả tìm kiếm' : 'Các khu vực phổ biến'}
+        </h3>
+        
+        {searchResults.length === 0 ? (
+          <div className="text-center py-10 px-4 bg-white rounded-2xl border-2 border-slate-200 border-dashed">
+            <p className="text-slate-500 font-medium">Không tìm thấy địa điểm phù hợp.</p>
+            <p className="text-slate-400 text-sm mt-1">Vui lòng thử tìm với từ khóa khác.</p>
           </div>
-
-          {/* Case 1: Canteen query */}
-          {typeof searchResults === 'object' && searchResults.isCanteen ? (
-            <div className="p-5 bg-amber-50 border-2 border-amber-200 rounded-2xl space-y-3">
-              <div className="flex items-start gap-3">
-                <Info className="w-6 h-6 text-amber-700 shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="text-lg font-bold text-amber-950">
-                    Chưa có dữ liệu xác minh vị trí căng tin trong phiên bản hiện tại.
-                  </h3>
-                  <p className="text-base text-amber-900 font-medium mt-1">
-                    MedNav chỉ hiển thị các tòa nhà và khoa khám bệnh đã được xác thực trên sơ đồ chính thức.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-2.5 pt-2 border-t border-amber-200/80">
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="h-13 px-4 bg-white border border-amber-300 hover:bg-amber-100 text-amber-950 font-bold text-base rounded-xl transition cursor-pointer text-center"
-                >
-                  Xem danh sách địa điểm đã xác minh
-                </button>
-                <button
-                  onClick={() => handleSelectByNodeId('node_k1_entrance')}
-                  className="h-13 px-4 bg-cyan-700 hover:bg-cyan-800 text-white font-bold text-base rounded-xl transition cursor-pointer text-center"
-                >
-                  Chỉ đường đến Quầy tiếp đón K1
-                </button>
-              </div>
-            </div>
-          ) : /* Case 2: Matching results */
-          (Array.isArray(searchResults.items) && searchResults.items.length > 0) || (searchResults.directories && searchResults.directories.length > 0) ? (
-            <div className="space-y-3">
-              {/* Matched directories */}
-              {searchResults.directories && searchResults.directories.map((dir, idx) => {
-                const baseNode = MAP_NODES_DATA.find(n => n.buildingId === dir.buildingId && n.type === 'entrance') || MAP_NODES_DATA.find(n => n.buildingId === dir.buildingId);
-                const node = baseNode ? { 
-                  ...baseNode, 
-                  displayAlias: dir.destinationName, 
-                  displayFloor: dir.floorLabel,
-                  directoryEntryId: dir.id
-                } : null;
-                
-                return (
-                  <button
-                    key={`dir-${idx}`}
-                    onClick={() => node && onSelectDestination(node)}
-                    className="w-full min-h-18 p-4 bg-white hover:bg-emerald-50/80 active:bg-emerald-100/90 border-2 border-slate-200 hover:border-emerald-600 rounded-2xl flex items-center justify-between gap-4 transition text-left cursor-pointer shadow-xs focus:outline-none focus:ring-4 focus:ring-emerald-600/30"
-                  >
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <div className="w-12 h-12 rounded-xl bg-emerald-700 text-white font-black text-lg flex items-center justify-center shrink-0">
-                        {dir.buildingId}
-                      </div>
-                      <div className="min-w-0 flex flex-col">
-                        <div className="text-lg sm:text-xl font-black text-slate-900 truncate">
-                          {dir.destinationName}
-                        </div>
-                        <div className="text-sm sm:text-base text-slate-600 font-medium truncate mt-0.5 flex items-center gap-1.5">
-                          <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span>Tòa {dir.buildingId} • {dir.floorLabel}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="h-11 px-4 bg-emerald-700 text-white font-bold text-base rounded-xl flex items-center gap-1.5 shrink-0">
-                      <span>Chọn</span>
-                      <ChevronRight className="w-5 h-5 stroke-[2.5]" />
-                    </div>
-                  </button>
-                );
-              })}
-              
-              {/* Matched buildings */}
-              {searchResults.items.map((node) => (
-                <button
-                  key={node.id}
-                  onClick={() => onSelectDestination(node)}
-                  className="w-full min-h-18 p-4 bg-white hover:bg-cyan-50/80 active:bg-cyan-100/90 border-2 border-slate-200 hover:border-cyan-600 rounded-2xl flex items-center justify-between gap-4 transition text-left cursor-pointer shadow-xs focus:outline-none focus:ring-4 focus:ring-cyan-600/30"
-                >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-12 h-12 rounded-xl bg-cyan-700 text-white font-black text-lg flex items-center justify-center shrink-0">
-                      {node.buildingId || 'BM'}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-lg sm:text-xl font-black text-slate-900 truncate">
-                        {node.name}
-                      </div>
-                      <div className="text-sm sm:text-base text-slate-600 font-medium truncate mt-0.5">
-                        {node.description || 'Khu vực khám & điều trị Bệnh viện Bạch Mai'}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="h-11 px-4 bg-cyan-700 text-white font-bold text-base rounded-xl flex items-center gap-1.5 shrink-0">
-                    <span>Chọn</span>
-                    <ChevronRight className="w-5 h-5 stroke-[2.5]" />
-                  </div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            /* Case 3: No results found */
-            <div className="p-6 bg-slate-50 border-2 border-slate-200 rounded-2xl space-y-4 text-center">
-              <div className="text-xl font-black text-slate-900">
-                Chưa tìm thấy địa điểm này.
-              </div>
-              <p className="text-base text-slate-600 font-medium">
-                Bác có thể kiểm tra lại tên tòa nhà hoặc chọn một trong các gợi ý dưới đây:
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="h-14 px-5 bg-white border-2 border-slate-300 hover:bg-slate-100 text-slate-800 font-bold text-base rounded-2xl transition cursor-pointer"
-                >
-                  Xem danh sách địa điểm
-                </button>
-                <button
-                  onClick={() => handleSelectByNodeId('node_k1_entrance')}
-                  className="h-14 px-5 bg-cyan-700 hover:bg-cyan-800 text-white font-bold text-base rounded-2xl transition cursor-pointer"
-                >
-                  Chỉ đường đến Quầy tiếp đón K1
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        /* Popular Destinations (Default View - 1 Single Clean Column) */
-        <div className="space-y-4 pt-1">
-          <div className="text-base sm:text-lg font-black text-slate-800">
-            Địa điểm phổ biến
-          </div>
-
-          {/* 4 Primary Large Cards in 1 Column */}
-          <div className="space-y-3">
-            {popularDestinations.map((item) => (
+        ) : (
+          <div className="flex flex-col gap-3">
+            {searchResults.map((dest) => (
               <button
-                key={item.badge}
-                id={`btn-popular-${item.badge.toLowerCase()}`}
-                onClick={() => handleSelectByNodeId(item.nodeId)}
-                className={`w-full min-h-18 p-4 rounded-2xl border-2 transition flex items-center justify-between gap-4 text-left cursor-pointer shadow-xs focus:outline-none focus:ring-4 focus:ring-cyan-600/30 ${item.color}`}
+                key={dest.id}
+                onClick={() => onSelectDestination(dest.mapLinkId)}
+                className="w-full text-left bg-white p-4 sm:p-5 rounded-2xl border-2 border-slate-200 hover:border-emerald-500 hover:shadow-md active:bg-slate-50 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
               >
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <div className={`w-13 h-13 rounded-2xl font-black text-lg flex items-center justify-center shrink-0 shadow-xs ${item.badgeColor}`}>
-                    {item.badge}
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0 group-hover:bg-emerald-100 transition-colors">
+                    <MapPin className="w-6 h-6 text-emerald-600" />
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-lg sm:text-xl font-black leading-snug truncate">
-                      {item.title}
-                    </div>
-                    <div className="text-sm sm:text-base font-medium opacity-90 truncate mt-0.5">
-                      {item.desc}
-                    </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-slate-900">{dest.name}</h4>
+                    <p className="text-slate-600 text-sm font-medium mt-0.5">{dest.building}</p>
+                    {dest.description && (
+                      <div className="mt-2 flex items-center gap-1.5 text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-md w-fit">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        {dest.description}
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                <div className="w-10 h-10 rounded-xl bg-white/80 flex items-center justify-center text-slate-700 shrink-0">
-                  <ChevronRight className="w-6 h-6 stroke-[2.5]" />
+                
+                <div className="flex items-center justify-center gap-2 h-12 px-4 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm group-hover:bg-emerald-600 group-hover:text-white transition-colors shrink-0 sm:self-center">
+                  <span>Xem trên bản đồ</span>
+                  <ChevronRight className="w-5 h-5" />
                 </div>
               </button>
             ))}
           </div>
-
-          {/* Toggle Extended Buildings */}
-          <div className="pt-2">
-            <button
-              id="btn-toggle-all-destinations"
-              onClick={() => setShowAllBuildings(!showAllBuildings)}
-              className="w-full h-14 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800 font-bold text-base rounded-2xl border border-slate-300 flex items-center justify-center gap-2 transition cursor-pointer focus:outline-none focus:ring-4 focus:ring-cyan-600/30"
-            >
-              <span>{showAllBuildings ? 'Thu gọn danh sách' : 'Xem thêm địa điểm khác'}</span>
-              {showAllBuildings ? <ChevronUp className="w-5 h-5 stroke-[2.5]" /> : <ChevronDown className="w-5 h-5 stroke-[2.5]" />}
-            </button>
-          </div>
-
-          {/* Extended List */}
-          {showAllBuildings && (
-            <div className="space-y-3 pt-2 animate-in fade-in duration-150">
-              {extendedBuildings.map((b) => (
-                <button
-                  key={b.badge}
-                  onClick={() => handleSelectByNodeId(b.nodeId)}
-                  className="w-full min-h-16 p-3.5 bg-white hover:bg-cyan-50 border-2 border-slate-200 hover:border-cyan-600 rounded-2xl flex items-center justify-between gap-3 text-left transition cursor-pointer shadow-2xs focus:outline-none focus:ring-4 focus:ring-cyan-600/30"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-11 h-11 rounded-xl bg-slate-800 text-white font-bold text-base flex items-center justify-center shrink-0">
-                      {b.badge}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-base sm:text-lg font-bold text-slate-900 truncate">
-                        {b.title}
-                      </div>
-                      <div className="text-xs sm:text-sm text-slate-600 font-medium truncate">
-                        {b.desc}
-                      </div>
-                    </div>
-                  </div>
-
-                  <ChevronRight className="w-5 h-5 text-slate-400 shrink-0" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Footer Info Link */}
-      <div className="pt-4 border-t border-slate-200 flex items-center justify-between text-sm text-slate-600 font-medium">
-        <span>Sơ đồ chính thức Bệnh viện Bạch Mai</span>
-        <button
-          onClick={onOpenDataInfo}
-          className="text-cyan-800 font-bold hover:underline cursor-pointer"
-        >
-          Thông tin dữ liệu
-        </button>
+        )}
       </div>
     </div>
   );
-};
+}

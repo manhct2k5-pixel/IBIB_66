@@ -1,141 +1,88 @@
 import React from 'react';
-import { 
-  NATIONAL_EMERGENCY_PHONE 
-} from '../data/hospitalData';
-import { 
-  PhoneCall, 
-  Navigation, 
-  X, 
-  ShieldAlert, 
-  ChevronRight
-} from 'lucide-react';
+import { Phone, Map, X, ExternalLink, ShieldAlert } from 'lucide-react';
+import { HOSPITAL_108_SOURCES } from '../data/hospital108';
 
 interface EmergencyModalProps {
-  isOpen: boolean;
   onClose: () => void;
-  onSelectEmergencyDestination: () => void;
-  language?: 'vi' | 'en';
+  onOpenMap: () => void;
 }
 
-export const EmergencyModal: React.FC<EmergencyModalProps> = ({
-  isOpen,
-  onClose,
-  onSelectEmergencyDestination,
-  language = 'vi'
-}) => {
-  if (!isOpen) return null;
-
+export function EmergencyModal({ onClose, onOpenMap }: EmergencyModalProps) {
   return (
-    <div 
-      id="emergency-modal-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs animate-in fade-in duration-150"
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <div 
-        id="emergency-modal-content"
-        className="w-full max-w-lg bg-white rounded-3xl border-2 border-rose-300 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
-      >
-        {/* Header */}
-        <div className="px-5 py-4 bg-rose-600 text-white flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
-              <ShieldAlert className="w-6 h-6 text-white stroke-[2.5]" />
-            </div>
-            <div>
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight leading-snug">
-                Bạn cần hỗ trợ cấp cứu?
-              </h2>
-              <p className="text-xs sm:text-sm text-rose-100 font-medium">
-                Bệnh viện Bạch Mai • Hà Nội
-              </p>
-            </div>
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+        <div className="bg-rose-600 p-6 flex flex-col items-center text-center text-white relative">
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+          >
+            <X className="w-5 h-5 text-white" />
+          </button>
+          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-lg">
+            <ShieldAlert className="w-8 h-8 text-rose-600 stroke-[2.5]" />
           </div>
-
-          <button
-            id="btn-close-emergency-modal"
-            onClick={onClose}
-            className="h-10 px-3 bg-white/20 hover:bg-white/30 text-white rounded-xl font-bold text-sm transition flex items-center gap-1 cursor-pointer"
-            aria-label="Đóng bảng cấp cứu"
-          >
-            <X className="w-5 h-5 stroke-[2.5]" />
-            <span className="hidden sm:inline">Đóng</span>
-          </button>
+          <h2 className="text-2xl font-black mb-2">Hỗ trợ khẩn cấp</h2>
+          <p className="text-rose-100 font-medium text-sm">
+            Trong trường hợp nguy kịch, hãy gọi 115 và làm theo hướng dẫn của nhân viên y tế.
+          </p>
         </div>
 
-        {/* 3 Large Vertical Buttons */}
-        <div className="p-5 space-y-3.5 overflow-y-auto">
-          {/* Button 1: Call 115 */}
-          <a
-            id="btn-call-115"
-            href={`tel:${NATIONAL_EMERGENCY_PHONE}`}
-            className="w-full min-h-18 p-4 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 border-2 border-rose-300 rounded-2xl flex items-center justify-between transition cursor-pointer text-rose-950 font-bold shadow-xs focus:outline-none focus:ring-4 focus:ring-rose-500/40"
+        <div className="p-4 sm:p-6 flex flex-col gap-3">
+          <a 
+            href={`tel:${HOSPITAL_108_SOURCES.nationalEmergency}`}
+            className="w-full flex items-center justify-between p-4 bg-rose-50 hover:bg-rose-100 border-2 border-rose-200 rounded-2xl transition-colors group"
           >
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                <PhoneCall className="w-6 h-6 stroke-[2.5]" />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-rose-600 rounded-xl flex items-center justify-center shadow-md">
+                <Phone className="w-6 h-6 text-white" />
               </div>
               <div className="text-left">
-                <div className="text-sm text-rose-700 font-bold">Tổng đài Cấp cứu Toàn quốc</div>
-                <div className="text-xl sm:text-2xl font-black">Gọi 115</div>
+                <div className="text-lg font-black text-slate-900">Gọi 115</div>
+                <div className="text-sm font-medium text-slate-600">Cấp cứu Quốc gia</div>
               </div>
             </div>
-            <span className="text-base font-black px-3.5 py-1.5 bg-rose-600 text-white rounded-xl shrink-0">
-              115
-            </span>
           </a>
 
-          {/* Button 2: Call Hotline A9 */}
-          <a
-            id="btn-call-hotline-a9"
-            href="tel:0869587707"
-            className="w-full min-h-18 p-4 bg-red-50 hover:bg-red-100 active:bg-red-200 border-2 border-red-300 rounded-2xl flex items-center justify-between transition cursor-pointer text-red-950 font-bold shadow-xs focus:outline-none focus:ring-4 focus:ring-red-500/40"
+          <a 
+            href={`tel:${HOSPITAL_108_SOURCES.emergencyPhone.replace(/\s+/g, '')}`}
+            className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 border-2 border-slate-200 rounded-2xl transition-colors group"
           >
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-red-700 text-white flex items-center justify-center shrink-0 shadow-xs">
-                <PhoneCall className="w-6 h-6 stroke-[2.5]" />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-slate-200 group-hover:bg-rose-100 rounded-xl flex items-center justify-center transition-colors">
+                <Phone className="w-6 h-6 text-slate-600 group-hover:text-rose-600" />
               </div>
               <div className="text-left">
-                <div className="text-sm text-red-700 font-bold">Hotline Cấp cứu A9 Bạch Mai</div>
-                <div className="text-lg sm:text-xl font-black">Gọi A9: 086 958 7707</div>
+                <div className="text-lg font-black text-slate-900">Gọi Khoa Cấp cứu</div>
+                <div className="text-sm font-medium text-slate-600">Bệnh viện 108 • {HOSPITAL_108_SOURCES.emergencyPhone}</div>
               </div>
             </div>
-            <span className="text-xs font-bold px-2.5 py-1 bg-red-700 text-white rounded-lg shrink-0">
-              24/7
-            </span>
           </a>
 
-          {/* Button 3: Route to A9 */}
-          <button
-            id="btn-route-to-a9"
+          <button 
             onClick={() => {
-              onSelectEmergencyDestination();
               onClose();
+              onOpenMap();
             }}
-            className="w-full min-h-18 p-4 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-black text-lg sm:text-xl rounded-2xl flex items-center justify-between transition cursor-pointer shadow-lg focus:outline-none focus:ring-4 focus:ring-slate-700/40"
+            className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 border-2 border-slate-200 rounded-2xl transition-colors group mt-2"
           >
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
-                <Navigation className="w-6 h-6 text-rose-400 stroke-[2.5]" />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center">
+                <Map className="w-6 h-6 text-slate-600" />
               </div>
               <div className="text-left">
-                <div>Chỉ đường đến Cấp cứu A9</div>
-                <div className="text-xs sm:text-sm text-slate-300 font-medium">Tòa A9 cạnh Cổng số 1 Giải Phóng</div>
+                <div className="text-lg font-black text-slate-900">Mở bản đồ Bệnh viện</div>
+                <div className="text-sm font-medium text-slate-600">Xem sơ đồ khuôn viên</div>
               </div>
             </div>
-            <ChevronRight className="w-6 h-6 text-slate-400 shrink-0" />
-          </button>
-        </div>
-
-        {/* Footer */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 text-center">
-          <button
-            id="btn-close-emergency-bottom"
-            onClick={onClose}
-            className="w-full h-12 bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-bold text-base rounded-xl transition cursor-pointer"
-          >
-            Đóng
+            <ExternalLink className="w-5 h-5 text-slate-400" />
           </button>
         </div>
       </div>
     </div>
   );
-};
+}

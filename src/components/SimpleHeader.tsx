@@ -1,94 +1,66 @@
 import React from 'react';
-import { 
-  Building2, 
-  PhoneCall, 
-  Menu,
-  ArrowLeft,
-  Home
-} from 'lucide-react';
-import { AppFlowState } from '../App';
+import { ShieldAlert, Heart, MoreVertical, ArrowLeft } from 'lucide-react';
 
 interface SimpleHeaderProps {
-  flowState: AppFlowState;
-  onGoHome: () => void;
-  onBack?: () => void;
+  onHome: () => void;
   onOpenEmergency: () => void;
-  onOpenGuide: () => void;
-  onOpenMenu: () => void;
-  language?: 'vi' | 'en';
+  onOpenMoreMenu: () => void;
+  showBackButton?: boolean;
+  onBack?: () => void;
 }
 
-export const SimpleHeader: React.FC<SimpleHeaderProps> = ({
-  flowState,
-  onGoHome,
-  onBack,
+export function SimpleHeader({
+  onHome,
   onOpenEmergency,
-  onOpenGuide,
-  onOpenMenu,
-  language = 'vi'
-}) => {
-  const showBackButton = onBack && (flowState === 'start_location' || flowState === 'route_preview' || flowState === 'navigating');
-
+  onOpenMoreMenu,
+  showBackButton,
+  onBack
+}: SimpleHeaderProps) {
   return (
-    <header className="w-full h-14 sm:h-16 bg-white border-b border-slate-200 px-3 sm:px-6 flex items-center justify-between gap-2 text-slate-900 shrink-0 z-30 shadow-2xs select-none">
-      {/* Left side: Back Button OR Logo */}
-      <div className="flex items-center gap-2 min-w-0">
-        {showBackButton ? (
-          <button
-            id="btn-header-back"
+    <header className="h-14 sm:h-16 flex-none bg-emerald-700 text-white flex items-center justify-between px-3 safe-top relative z-10 shadow-md">
+      <div className="flex items-center">
+        {showBackButton && onBack ? (
+          <button 
             onClick={onBack}
-            className="h-11 px-3 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-xl flex items-center gap-1 text-slate-800 font-bold text-sm cursor-pointer focus:outline-none focus:ring-3 focus:ring-cyan-600/30 transition shrink-0"
-            aria-label="Quay lại bước trước"
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 active:bg-white/20 transition-colors mr-1"
+            aria-label="Quay lại"
           >
-            <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
-            <span>Quay lại</span>
+            <ArrowLeft className="w-6 h-6 text-white" />
           </button>
-        ) : null}
-
-        <button
-          id="btn-header-home"
-          onClick={onGoHome}
-          className="flex items-center gap-2 min-w-0 cursor-pointer text-left rounded-xl p-1 focus:outline-none focus:ring-3 focus:ring-cyan-600/30"
-          aria-label="Về trang chủ MedNav Bệnh viện Bạch Mai"
-        >
-          <div className="w-9 h-9 rounded-xl bg-cyan-700 flex items-center justify-center text-white font-black shrink-0 shadow-2xs">
-            <Building2 className="w-5 h-5 stroke-[2.5]" />
+        ) : (
+          <div className="w-10 h-10 mr-1 flex items-center justify-center">
+            <Heart className="w-6 h-6 text-emerald-100" />
           </div>
-
-          <div className="flex items-baseline gap-1.5 min-w-0">
-            <span className="text-lg font-black tracking-tight text-cyan-800">
-              MedNav
-            </span>
-            <span className="text-xs font-bold text-slate-500 truncate hidden xs:inline">
-              Bạch Mai
-            </span>
+        )}
+        
+        <button 
+          onClick={onHome} 
+          className="flex items-center"
+        >
+          <div className="flex flex-col items-start leading-tight">
+            <span className="text-xl sm:text-2xl font-black tracking-tight text-white">MedNav <span className="text-emerald-200">108</span></span>
           </div>
         </button>
       </div>
 
-      {/* Right Action Buttons */}
-      <div className="flex items-center gap-2 shrink-0">
-        {/* Big Emergency Button (min 88x48px, bold red, always visible) */}
+      <div className="flex items-center gap-2">
         <button
-          id="btn-header-emergency"
           onClick={onOpenEmergency}
-          className="min-w-[88px] h-11 sm:h-12 px-3.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-black text-sm sm:text-base rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer focus:outline-none focus:ring-3 focus:ring-rose-500/40"
-          aria-label="Hỗ trợ cấp cứu khẩn cấp"
+          className="h-10 px-3 sm:px-4 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 rounded-full flex items-center justify-center gap-1.5 shadow-sm transition-colors border border-rose-500/50"
+          aria-label="Cấp cứu"
         >
-          <PhoneCall className="w-4 h-4 sm:w-5 sm:h-5 text-white stroke-[2.5] shrink-0" />
-          <span>Cấp cứu</span>
+          <ShieldAlert className="w-5 h-5 text-white stroke-[2.5]" />
+          <span className="text-white font-bold text-sm hidden sm:inline">Cấp cứu</span>
         </button>
 
-        {/* 3-Dots / Menu Button */}
         <button
-          id="btn-header-menu"
-          onClick={onOpenMenu}
-          className="w-11 h-11 sm:w-12 sm:h-12 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800 font-bold rounded-xl border border-slate-200 transition flex items-center justify-center cursor-pointer focus:outline-none focus:ring-3 focus:ring-cyan-600/30"
-          aria-label="Mở menu tùy chọn"
+          onClick={onOpenMoreMenu}
+          className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 active:bg-white/20 transition-colors"
+          aria-label="Menu mở rộng"
         >
-          <Menu className="w-5 h-5 text-slate-700 stroke-[2.5]" />
+          <MoreVertical className="w-6 h-6 text-white" />
         </button>
       </div>
     </header>
   );
-};
+}
