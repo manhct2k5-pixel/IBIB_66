@@ -37,11 +37,11 @@ export const SimpleHeader: React.FC<SimpleHeaderProps> = ({
           <button
             id="btn-header-back"
             onClick={onBack}
-            className="h-11 px-3 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-xl flex items-center gap-1.5 text-slate-800 font-bold text-base cursor-pointer focus:outline-none focus:ring-3 focus:ring-cyan-600/30"
+            className="h-11 px-3 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-xl flex items-center gap-1 text-slate-800 font-bold text-sm cursor-pointer focus:outline-none focus:ring-3 focus:ring-cyan-600/30 transition shrink-0"
             aria-label="Quay lại bước trước"
           >
-            <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
-            <span className="text-sm font-black">Lại</span>
+            <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
+            <span>Quay lại</span>
           </button>
         ) : null}
 

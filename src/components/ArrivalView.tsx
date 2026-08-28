@@ -50,7 +50,7 @@ export const ArrivalView: React.FC<ArrivalViewProps> = ({
           <span>Lưu ý quan trọng:</span>
         </div>
         <p className="text-base text-slate-700 font-medium leading-relaxed">
-          MedNav chỉ hướng dẫn đến cửa hoặc sảnh tòa nhà. Chưa có dữ liệu xác minh đường đi bên trong từng tòa.
+          MedNav chỉ hướng dẫn đến cửa hoặc sảnh tòa nhà. Vui lòng kiểm tra phiếu khám và biển chỉ dẫn tại tòa nhà để đến đúng phòng.
         </p>
       </div>
 

@@ -126,11 +126,21 @@ export default function App() {
     <div className="flex flex-col min-h-screen w-full bg-slate-100 text-slate-900 overflow-x-hidden font-sans">
       {/* Elderly-Friendly Simplified Header */}
       <SimpleHeader
+        flowState={flowState}
         language={language}
         onOpenEmergency={() => setIsEmergencyOpen(true)}
         onOpenGuide={() => setIsUserGuideOpen(true)}
         onOpenMenu={() => setIsMoreMenuOpen(true)}
         onGoHome={handleResetToHome}
+        onBack={
+          flowState === 'start_location'
+            ? () => setFlowState('destination')
+            : flowState === 'route_preview'
+            ? () => setFlowState('start_location')
+            : flowState === 'navigating'
+            ? () => setFlowState('route_preview')
+            : undefined
+        }
       />
 
       {/* Main Flow Container */}
@@ -139,7 +149,7 @@ export default function App() {
         {flowState === 'destination' && (
           <DestinationStep
             onSelectDestination={handleSelectDestination}
-            onOpenEmergency={() => setIsEmergencyOpen(true)}
+            onOpenDataInfo={() => setIsDataLimitOpen(true)}
             language={language}
           />
         )}

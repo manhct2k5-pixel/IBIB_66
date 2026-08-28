@@ -149,7 +149,7 @@ export const RoutePreviewStep: React.FC<RoutePreviewStepProps> = ({
 
       {/* Transparency Note */}
       <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-sm text-slate-600 font-medium">
-        <span>MedNav chỉ hướng dẫn đến cửa hoặc sảnh tòa nhà. Chưa có dữ liệu xác minh đường đi bên trong từng tòa.</span>
+        <span>MedNav chỉ hướng dẫn đến cửa/sảnh tòa nhà. Vui lòng xem biển chỉ dẫn tại tòa nhà để lên đúng tầng.</span>
         <button
           id="btn-preview-data-info"
           onClick={onOpenDataInfo}

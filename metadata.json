@@ -1,6 +1,6 @@
 {
   "name": "Remix MedNav - Bản Đồ Chỉ Đường Bệnh Viện",
-  "description": "Ứng dụng bản đồ số và chỉ đường từng bước thông minh trong bệnh viện, hỗ trợ đa tầng, đa tòa nhà, chế độ xe lăn, tìm khoa theo triệu chứng và dẫn đường giọng nói.",
+  "description": "Ứng dụng chỉ đường trực quan tại Bệnh viện Bạch Mai, tối ưu cho người cao tuổi và người lần đầu đến khám, dẫn đường đến cửa/sảnh tòa nhà với hỗ trợ quét mã vị trí và giọng đọc.",
   "requestFramePermissions": [
     "microphone",
     "geolocation",
