@@ -197,22 +197,28 @@ export function RoutePreview({
       <div className="pt-6 pb-4 space-y-3">
         <button
           onClick={() => onStartNavigation(routeLaunchResult)}
-          className="w-full min-h-[56px] h-16 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white rounded-2xl font-black text-xl shadow-lg transition-all flex items-center justify-center gap-3"
+          className="w-full min-h-[56px] h-16 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white rounded-2xl font-black text-lg sm:text-xl shadow-lg transition-all flex items-center justify-center gap-3 px-4 text-center"
         >
           {isDeepLink ? (
             <>
-              <Navigation className="w-7 h-7" />
+              <Navigation className="w-7 h-7 shrink-0" />
               <span>Bắt đầu chỉ đường</span>
             </>
           ) : (
             <>
-              <Map className="w-7 h-7" />
-              <span>Mở bản đồ chính thức</span>
+              <Map className="w-7 h-7 shrink-0" />
+              <span>Mở chức năng Chỉ đường trên InMapz</span>
             </>
           )}
         </button>
 
-        <div className="flex flex-col sm:flex-row gap-2">
+        {!isDeepLink && (
+          <p className="text-center text-sm font-semibold text-slate-600 px-2 leading-relaxed">
+            Bác sẽ cần chọn lại điểm bắt đầu và nơi muốn đến trên bản đồ chính thức.
+          </p>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-2 pt-1">
           <button
             onClick={onChangeStart}
             className="flex-1 min-h-[48px] h-12 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-base rounded-xl transition-colors flex items-center justify-center"

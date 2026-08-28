@@ -25,11 +25,11 @@ import { createInMapzRouteLaunch } from './services/inmapzRouting';
 import { addRecentDestinationId } from './utils/history';
 import { stopSpeaking } from './utils/speech';
 
-interface HistoryState {
+export interface HistoryState {
   view: AppView;
-  destinationId?: string;
-  startLocationId?: string;
-  mapLinkId?: string;
+  destinationId: string | null;
+  startLocationId: string | null;
+  mapLinkId: string | null;
 }
 
 export default function App() {
@@ -45,10 +45,45 @@ export default function App() {
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState<boolean>(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
 
+  // Helper commit state rõ ràng, không bao giờ để khuyết trường
+  const commitHistoryState = useCallback((nextState: HistoryState, method: 'push' | 'replace' = 'push') => {
+    if (method === 'push') {
+      window.history.pushState(nextState, '');
+    } else {
+      window.history.replaceState(nextState, '');
+    }
+  }, []);
+
   // Đồng bộ với History API (nút Back của trình duyệt / Android)
   useEffect(() => {
-    if (!window.history.state) {
-      window.history.replaceState({ view: 'home' } as HistoryState, '');
+    const initialState = window.history.state as HistoryState | null;
+    if (!initialState || !initialState.view) {
+      window.history.replaceState({ 
+        view: 'home',
+        destinationId: null,
+        startLocationId: null,
+        mapLinkId: null
+      } as HistoryState, '');
+    } else {
+      // Phục hồi trạng thái nếu tải lại trang hoặc có state sẵn
+      setCurrentView(initialState.view);
+      const restoredDest = initialState.destinationId 
+        ? HOSPITAL_108_DESTINATIONS.find(d => d.id === initialState.destinationId) || null 
+        : null;
+      const restoredStart = initialState.startLocationId 
+        ? HOSPITAL_108_START_LOCATIONS.find(s => s.id === initialState.startLocationId) || null 
+        : null;
+
+      setSelectedDestination(restoredDest);
+      setSelectedStartLocation(restoredStart);
+      setActiveMapLinkId(initialState.mapLinkId || null);
+
+      if (restoredStart && restoredDest) {
+        setActiveRouteLaunchResult(createInMapzRouteLaunch({
+          startLocationId: restoredStart.id,
+          destinationId: restoredDest.id
+        }));
+      }
     }
 
     const handlePopState = (event: PopStateEvent) => {
@@ -63,14 +98,14 @@ export default function App() {
       if (state?.destinationId) {
         currentDest = HOSPITAL_108_DESTINATIONS.find(d => d.id === state.destinationId) || null;
         setSelectedDestination(currentDest);
-      } else if (stateView === 'home') {
+      } else {
         setSelectedDestination(null);
       }
 
       if (state?.startLocationId) {
         currentStart = HOSPITAL_108_START_LOCATIONS.find(s => s.id === state.startLocationId) || null;
         setSelectedStartLocation(currentStart);
-      } else if (stateView === 'home' || stateView === 'destination_detail') {
+      } else {
         setSelectedStartLocation(null);
       }
 
@@ -96,25 +131,6 @@ export default function App() {
     };
   }, []);
 
-  const navigateTo = useCallback((
-    view: AppView, 
-    push = true, 
-    customState?: Partial<HistoryState>
-  ) => {
-    stopSpeaking();
-    if (push) {
-      const stateObj: HistoryState = {
-        view,
-        destinationId: customState?.destinationId || selectedDestination?.id,
-        startLocationId: customState?.startLocationId || selectedStartLocation?.id,
-        mapLinkId: customState?.mapLinkId || activeMapLinkId || undefined,
-        ...customState
-      };
-      window.history.pushState(stateObj, '');
-    }
-    setCurrentView(view);
-  }, [selectedDestination, selectedStartLocation, activeMapLinkId]);
-
   const activeMapLink = useMemo(() => {
     if (activeMapLinkId) {
       return HOSPITAL_108_OFFICIAL_MAP_LINKS.find(l => l.id === activeMapLinkId) || 
@@ -127,61 +143,16 @@ export default function App() {
     return HOSPITAL_108_OFFICIAL_MAP_LINKS.find(l => l.id === 'campus') || HOSPITAL_108_OFFICIAL_MAP_LINKS[0];
   }, [activeMapLinkId, activeRouteLaunchResult]);
 
-  // Xử lý chọn điểm đến
-  const handleSelectDestination = (dest: Hospital108Destination) => {
-    addRecentDestinationId(dest.id);
-    setSelectedDestination(dest);
-    setSelectedStartLocation(null);
-    setActiveMapLinkId(null);
-    setActiveRouteLaunchResult(null);
-    navigateTo('destination_detail', true, { 
-      destinationId: dest.id,
-      startLocationId: undefined,
-      mapLinkId: undefined
-    });
-  };
-
-  // Bước 1 -> Bước 2: Từ chi tiết điểm đến sang chọn điểm xuất phát
-  const handleProceedToSelectStart = () => {
-    if (!selectedDestination) return;
-    navigateTo('select_start', true, {
-      destinationId: selectedDestination.id
-    });
-  };
-
-  // Bước 2 -> Bước 3: Từ chọn điểm xuất phát sang kiểm tra tuyến đường (RoutePreview)
-  const handleSelectStartLocation = (start: Hospital108StartLocation) => {
-    setSelectedStartLocation(start);
-    if (selectedDestination) {
-      const result = createInMapzRouteLaunch({
-        startLocationId: start.id,
-        destinationId: selectedDestination.id
-      });
-      setActiveRouteLaunchResult(result);
+  // URL bản đồ thực tế có hiệu lực
+  const effectiveMapUrl = useMemo(() => {
+    if (
+      activeRouteLaunchResult?.mode === 'official_deep_link' &&
+      activeRouteLaunchResult.routePreloaded === true
+    ) {
+      return activeRouteLaunchResult.url;
     }
-    navigateTo('route_preview', true, {
-      startLocationId: start.id
-    });
-  };
-
-  // Bước 3 -> Bản đồ: Mở bản đồ chính thức
-  const handleStartNavigationFromPreview = (routeResult: RouteLaunchResult) => {
-    setActiveRouteLaunchResult(routeResult);
-    setActiveMapLinkId(routeResult.targetMapLink.id);
-    navigateTo('official_map', true, {
-      mapLinkId: routeResult.targetMapLink.id
-    });
-  };
-
-  // Điều hướng lùi lại 1 bước theo History API
-  const handleBackStep = useCallback(() => {
-    stopSpeaking();
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      navigateTo('home', false);
-    }
-  }, [navigateTo]);
+    return activeMapLink.url;
+  }, [activeRouteLaunchResult, activeMapLink]);
 
   // Quay về trang chủ
   const handleBackToHome = useCallback(() => {
@@ -190,26 +161,116 @@ export default function App() {
     setSelectedStartLocation(null);
     setActiveMapLinkId(null);
     setActiveRouteLaunchResult(null);
-    navigateTo('home', true, {
-      destinationId: undefined,
-      startLocationId: undefined,
-      mapLinkId: undefined
-    });
-  }, [navigateTo]);
+    commitHistoryState({
+      view: 'home',
+      destinationId: null,
+      startLocationId: null,
+      mapLinkId: null
+    }, 'push');
+    setCurrentView('home');
+  }, [commitHistoryState]);
+
+  // Điều hướng lùi lại 1 bước theo History API
+  const handleBackStep = useCallback(() => {
+    stopSpeaking();
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      handleBackToHome();
+    }
+  }, [handleBackToHome]);
+
+  // Xử lý chọn điểm đến
+  const handleSelectDestination = (dest: Hospital108Destination) => {
+    stopSpeaking();
+    addRecentDestinationId(dest.id);
+    setSelectedDestination(dest);
+    setSelectedStartLocation(null);
+    setActiveMapLinkId(null);
+    setActiveRouteLaunchResult(null);
+    commitHistoryState({
+      view: 'destination_detail',
+      destinationId: dest.id,
+      startLocationId: null,
+      mapLinkId: null
+    }, 'push');
+    setCurrentView('destination_detail');
+  };
+
+  // Bước 1 -> Bước 2: Từ chi tiết điểm đến sang chọn điểm xuất phát
+  const handleProceedToSelectStart = () => {
+    stopSpeaking();
+    if (!selectedDestination) return;
+    commitHistoryState({
+      view: 'select_start',
+      destinationId: selectedDestination.id,
+      startLocationId: null,
+      mapLinkId: null
+    }, 'push');
+    setCurrentView('select_start');
+  };
+
+  // Bước 2 -> Bước 3: Từ chọn điểm xuất phát sang kiểm tra tuyến đường (RoutePreview)
+  const handleSelectStartLocation = (start: Hospital108StartLocation) => {
+    stopSpeaking();
+    setSelectedStartLocation(start);
+    if (selectedDestination) {
+      const result = createInMapzRouteLaunch({
+        startLocationId: start.id,
+        destinationId: selectedDestination.id
+      });
+      setActiveRouteLaunchResult(result);
+      commitHistoryState({
+        view: 'route_preview',
+        destinationId: selectedDestination.id,
+        startLocationId: start.id,
+        mapLinkId: null
+      }, 'push');
+      setCurrentView('route_preview');
+    }
+  };
+
+  // Xem trợ giúp khi không biết vị trí
+  const handleShowUnknownHelp = () => {
+    stopSpeaking();
+    commitHistoryState({
+      view: 'unknown_location_help',
+      destinationId: selectedDestination ? selectedDestination.id : null,
+      startLocationId: null,
+      mapLinkId: null
+    }, 'push');
+    setCurrentView('unknown_location_help');
+  };
+
+  // Bước 3 -> Bản đồ: Mở bản đồ chính thức
+  const handleStartNavigationFromPreview = (routeResult: RouteLaunchResult) => {
+    stopSpeaking();
+    setActiveRouteLaunchResult(routeResult);
+    setActiveMapLinkId(routeResult.targetMapLink.id);
+    commitHistoryState({
+      view: 'official_map',
+      destinationId: selectedDestination ? selectedDestination.id : null,
+      startLocationId: selectedStartLocation ? selectedStartLocation.id : null,
+      mapLinkId: routeResult.targetMapLink.id
+    }, 'push');
+    setCurrentView('official_map');
+  };
 
   // Mở bản đồ toàn viện tổng quan
   const handleOpenGeneralMap = () => {
     stopSpeaking();
-    const tongQuanDest = HOSPITAL_108_DESTINATIONS.find(d => d.id === 'tong_quan');
-    setSelectedDestination(tongQuanDest || null);
+    const tongQuanDest = HOSPITAL_108_DESTINATIONS.find(d => d.id === 'tong_quan') || null;
+    setSelectedDestination(tongQuanDest);
     setSelectedStartLocation(null);
     setActiveMapLinkId('campus');
     setActiveRouteLaunchResult(null);
-    navigateTo('official_map', true, {
-      destinationId: tongQuanDest?.id,
-      startLocationId: undefined,
+    commitHistoryState({
+      view: 'official_map',
+      destinationId: tongQuanDest ? tongQuanDest.id : null,
+      startLocationId: null,
       mapLinkId: 'campus'
-    });
+    }, 'push');
+    setCurrentView('official_map');
   };
 
   const getHeaderBackButtonProps = () => {
@@ -261,7 +322,7 @@ export default function App() {
             destination={selectedDestination}
             onSelectStartLocation={handleSelectStartLocation}
             onBack={handleBackStep}
-            onShowUnknownHelp={() => navigateTo('unknown_location_help')}
+            onShowUnknownHelp={handleShowUnknownHelp}
           />
         )}
 
@@ -323,7 +384,7 @@ export default function App() {
       <HelpGuideModal 
         isOpen={isHelpModalOpen}
         onClose={() => setIsHelpModalOpen(false)}
-        mapUrl={activeMapLink?.url}
+        mapUrl={effectiveMapUrl}
       />
     </div>
   );

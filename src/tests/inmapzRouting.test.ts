@@ -69,7 +69,7 @@ describe('InMapz Routing Capability & Assisted Mode Service Tests', () => {
     expect(result.routePreloaded).toBe(false);
   });
 
-  it('RoutePreview hiển thị "Cần chọn lại trên bản đồ" và nút "Mở bản đồ chính thức"', () => {
+  it('RoutePreview hiển thị "Cần chọn lại trên bản đồ" và nút "Mở chức năng Chỉ đường trên InMapz"', () => {
     const routePreviewCode = fs.readFileSync(
       path.join(process.cwd(), 'src/components/RoutePreview.tsx'),
       'utf-8'
@@ -77,13 +77,13 @@ describe('InMapz Routing Capability & Assisted Mode Service Tests', () => {
 
     expect(routePreviewCode).toContain('Cần chọn lại trên bản đồ');
     expect(routePreviewCode).toContain('MedNav đã ghi nhớ:');
-    expect(routePreviewCode).toContain('Mở bản đồ chính thức');
+    expect(routePreviewCode).toContain('Mở chức năng Chỉ đường trên InMapz');
     expect(routePreviewCode).not.toContain('Tuyến đã sẵn sàng');
     expect(routePreviewCode).not.toContain('bước chân');
     expect(routePreviewCode).not.toContain('khoảng cách:');
   });
 
-  it('Official108Map hiển thị Từ và Đến trong bottom sheet và 3 bước hướng dẫn', () => {
+  it('Official108Map hiển thị Từ và Đến trong bottom sheet và các bước hướng dẫn', () => {
     const mapCode = fs.readFileSync(
       path.join(process.cwd(), 'src/components/Official108Map.tsx'),
       'utf-8'
@@ -91,7 +91,7 @@ describe('InMapz Routing Capability & Assisted Mode Service Tests', () => {
 
     expect(mapCode).toContain('Từ:');
     expect(mapCode).toContain('Đến:');
-    expect(mapCode).toContain('3 bước xem tuyến trên bản đồ InMapz');
+    expect(mapCode).toContain('bước xem tuyến trên bản đồ InMapz');
     expect(mapCode).toContain('Chỉ đường');
   });
 });

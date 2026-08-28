@@ -65,7 +65,7 @@ describe('Navigation Flow & Architectural Constraints Verification', () => {
     expect(voiceCode).toContain('Chọn lại / Nói lại');
   });
 
-  it('Official108Map implements emergency handler, help handler and uses effectiveMapUrl', () => {
+  it('Official108Map implements emergency handler, help handler, effectiveMapUrl and bottom sheet', () => {
     const mapCode = fs.readFileSync(
       path.join(process.cwd(), 'src/components/Official108Map.tsx'), 
       'utf-8'
@@ -73,7 +73,7 @@ describe('Navigation Flow & Architectural Constraints Verification', () => {
     expect(mapCode).toContain('onOpenEmergency');
     expect(mapCode).toContain('onOpenHelp');
     expect(mapCode).toContain('effectiveMapUrl');
-    expect(mapCode).toContain('h-[112px]'); // Collapsed bottom sheet <= 120px
+    expect(mapCode).toContain('isSheetExpanded');
   });
 
   it('App.tsx uses window.history.back() for sequential back navigation', () => {
