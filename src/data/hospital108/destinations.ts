@@ -10,8 +10,8 @@ export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
     floor: 'Tầng 1',
     description: 'Tiếp đón 6h–17h, Thứ Hai đến Thứ Sáu',
     sourceUrl: 'https://benhvien108.vn/gioi-thieu-trung-tam-kham-benh-da-khoa-va-dieu-tri-theo-yeu-cau-c1-1.htm',
-    mapPrecision: 'building_start_view',
-    locationNotice: 'Chưa xác minh được vị trí chính xác của khoa trên mặt bằng. Hãy sử dụng ô tìm kiếm trong bản đồ chính thức.'
+    mapPrecision: 'verified_floor',
+    locationNotice: 'Bản đồ đang mở tại Nhà C1-1, tầng 1. Vui lòng chọn đúng khu vực khám trên bản đồ.'
   },
   {
     id: 'c1_1_b',
@@ -22,8 +22,8 @@ export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
     floor: 'Tầng 1',
     description: 'Tiếp đón 6h–17h, Thứ Hai đến Thứ Bảy',
     sourceUrl: 'https://benhvien108.vn/gioi-thieu-trung-tam-kham-benh-da-khoa-va-dieu-tri-theo-yeu-cau-c1-1.htm',
-    mapPrecision: 'building_start_view',
-    locationNotice: 'Chưa xác minh được vị trí chính xác của khoa trên mặt bằng. Hãy sử dụng ô tìm kiếm trong bản đồ chính thức.'
+    mapPrecision: 'verified_floor',
+    locationNotice: 'Bản đồ đang mở tại Nhà Khoa Khám bệnh theo yêu cầu, tầng 1. Vui lòng chọn đúng khu vực khám trên bản đồ.'
   },
   {
     id: 'c1_1_c',
@@ -34,8 +34,8 @@ export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
     floor: 'Tầng 1',
     description: 'Tiếp đón 6h–17h, Thứ Hai đến Thứ Bảy',
     sourceUrl: 'https://benhvien108.vn/gioi-thieu-trung-tam-kham-benh-da-khoa-va-dieu-tri-theo-yeu-cau-c1-1.htm',
-    mapPrecision: 'building_start_view',
-    locationNotice: 'Chưa xác minh được vị trí chính xác của khoa trên mặt bằng. Hãy sử dụng ô tìm kiếm trong bản đồ chính thức.'
+    mapPrecision: 'verified_floor',
+    locationNotice: 'Bản đồ đang mở tại Nhà C1-1, tầng 1. Vui lòng chọn đúng khu vực điều trị trên bản đồ.'
   },
   {
     id: 'cap_cuu',
@@ -46,7 +46,7 @@ export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
     description: 'Tiếp nhận và xử trí cấp cứu 24/7. Điện thoại: 024 6278 4115',
     sourceUrl: 'https://benhvien108.vn/gioi-thieu-khoa-cap-cuu.htm',
     mapPrecision: 'campus_only',
-    locationNotice: 'Chưa xác minh được vị trí chính xác của Khoa Cấp cứu trên mặt bằng. Hãy sử dụng bản đồ tổng quan.'
+    locationNotice: 'Bản đồ đang mở tại khuôn viên tổng quan Bệnh viện 108.'
   },
   {
     id: 'kham_quoc_te',
@@ -58,7 +58,7 @@ export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
     description: 'Hotline đăng ký: 0862 878 918',
     sourceUrl: 'https://benhvien108.vn/quy-trinh-kham/quy-trinh-kham-benh-doi-ngoai-quoc-te.htm',
     mapPrecision: 'campus_only',
-    locationNotice: 'Chưa xác minh được vị trí chính xác của khu Khám Quốc tế trên mặt bằng. Hãy sử dụng bản đồ tổng quan.'
+    locationNotice: 'Bản đồ đang mở tại khuôn viên tổng quan Bệnh viện 108.'
   },
   {
     id: 'tong_quan',

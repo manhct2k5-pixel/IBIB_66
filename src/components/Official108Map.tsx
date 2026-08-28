@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { 
   Official108MapLink, 
   Hospital108Destination, 
@@ -58,11 +58,11 @@ export function Official108Map({
 }: Official108MapProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSheetExpanded, setIsSheetExpanded] = useState(false);
   const [showIconHelper, setShowIconHelper] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
 
   // Vị trí xuất phát hỗ trợ (tùy chọn)
   const [selectedStart, setSelectedStart] = useState<Hospital108StartLocation | null>(initialStartLocation || null);
@@ -89,34 +89,68 @@ export function Official108Map({
     };
   }, []);
 
-  // Đặt lại trạng thái khi đổi URL hoặc reload
+  // Quản lý trạng thái tải iframe an toàn với loadAttempt và timeout 10s
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     setIsLoading(true);
     setHasError(false);
-    const timer = setTimeout(() => {
-      // Sau 10s nếu chưa load xong -> hiển thị fallback hỗ trợ
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      // Sau 10 giây nếu chưa phát onLoad -> hiển thị fallback hỗ trợ
       setIsLoading(false);
       setHasError(true);
     }, 10000);
-    return () => clearTimeout(timer);
-  }, [effectiveMapUrl, reloadKey]);
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [effectiveMapUrl, loadAttempt]);
 
   const handleIframeLoad = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
     setIsLoading(false);
+    setHasError(false);
   };
 
   const handleIframeError = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
     setIsLoading(false);
     setHasError(true);
   };
 
   const handleReloadIframe = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
     setHasError(false);
     setIsLoading(true);
-    setReloadKey(k => k + 1);
+    setLoadAttempt(prev => prev + 1);
   };
 
-  // Đọc hướng dẫn ngắn gọn chuẩn chỉ
+  // Tạo nội dung hướng dẫn trung thực theo mức độ xác minh
+  const getPrecisionInstruction = () => {
+    if (destination?.mapPrecision === 'exact_facility') {
+      return 'Bấm “Chỉ đường tới đây” trong bảng thông tin trên bản đồ.';
+    }
+    if (destination?.building) {
+      const floorStr = destination.floor ? `, ${destination.floor}` : '';
+      return `Bản đồ mở tại ${destination.building}${floorStr}. Bấm “Chỉ đường tới đây”.`;
+    }
+    return 'Bấm chọn điểm đến trên bản đồ ➔ “Chỉ đường tới đây”.';
+  };
+
+  // Đọc giọng nói chuẩn theo trạng thái dữ liệu thực tế
   const handleToggleSpeak = () => {
     if (isSpeaking) {
       stopSpeaking();
@@ -126,10 +160,18 @@ export function Official108Map({
 
     const destName = destination?.name || mapLink.label;
     let textToRead = '';
-    if (selectedStart) {
-      textToRead = `Bác đang ở ${selectedStart.name}. Trên bản đồ, hãy chọn vị trí này làm điểm bắt đầu và chọn ${destName} làm điểm đến.`;
+
+    if (destination?.mapPrecision === 'exact_facility') {
+      textToRead = `Bác muốn đến ${destName}. Trong bảng thông tin trên bản đồ, bác bấm Chỉ đường tới đây, sau đó chọn điểm bắt đầu.`;
+    } else if (destination?.building) {
+      const floorStr = destination.floor ? `, ${destination.floor}` : '';
+      textToRead = `Bản đồ đang mở tại ${destination.building}${floorStr}. Bác hãy chọn đúng địa điểm cần đến rồi bấm Chỉ đường tới đây.`;
     } else {
-      textToRead = `Bác muốn đến ${destName}. Trên bản đồ, bác bấm Chỉ đường, chọn điểm bắt đầu, sau đó chọn ${destName}.`;
+      textToRead = `Bản đồ đang mở tại khuôn viên Bệnh viện 108. Bác hãy bấm chọn điểm cần đến trên bản đồ rồi bấm Chỉ đường tới đây.`;
+    }
+
+    if (selectedStart) {
+      textToRead += ` Điểm bắt đầu bác đã chọn là ${selectedStart.name}.`;
     }
 
     setIsSpeaking(true);
@@ -214,7 +256,7 @@ export function Official108Map({
         </button>
       </header>
 
-      {/* Main Map Container: Không có lớp phủ chặn tương tác của iframe */}
+      {/* Main Map Container: Không có lớp phủ xám chặn tương tác của iframe */}
       <div className="flex-1 relative bg-slate-100 w-full overflow-hidden">
         {isLoading && !hasError && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 z-10 pointer-events-none">
@@ -226,7 +268,7 @@ export function Official108Map({
         )}
         
         <iframe
-          key={reloadKey}
+          key={`${effectiveMapUrl}-${loadAttempt}`}
           src={effectiveMapUrl}
           title={`Bản đồ Bệnh viện 108 - ${destination?.name ?? mapLink.label}`}
           loading="eager"
@@ -235,30 +277,32 @@ export function Official108Map({
           onError={handleIframeError}
         />
 
-        {/* Fallback khi tải lỗi hoặc quá 10s */}
-        {hasError && (
-          <div className="absolute top-3 left-3 right-3 bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 shadow-lg z-20 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-6 h-6 text-amber-700 shrink-0" />
-              <p className="text-amber-950 font-bold text-sm sm:text-base">
-                Bản đồ tải chậm hoặc trình duyệt đang hạn chế nhúng. Bác có thể thử tải lại ngay hoặc mở ở tab mới.
+        {/* Fallback cảnh báo khi tải lỗi, mất mạng hoặc quá 10s: thiết kế thẻ nhỏ gọn ở góc dưới, không che bản đồ hay các nút InMapz */}
+        {(!isOnline || hasError) && (
+          <div className="absolute bottom-3 left-3 right-3 sm:left-auto sm:right-3 sm:max-w-md bg-amber-50/95 backdrop-blur-sm border-2 border-amber-300 rounded-2xl p-3 shadow-xl z-20 animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex items-start gap-2 mb-2">
+              <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+              <p className="text-amber-950 font-bold text-sm leading-snug">
+                {!isOnline 
+                  ? 'Bác đang ngoại tuyến (mất kết nối mạng). Vui lòng kiểm tra lại 4G/Wifi.'
+                  : 'Bản đồ tải chậm hoặc trình duyệt đang hạn chế nhúng. Bác có thể thử tải lại ngay hoặc mở ở tab mới.'}
               </p>
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2">
               <button
                 onClick={handleReloadIframe}
-                className="flex-1 sm:flex-initial min-h-[48px] h-12 px-4 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white font-bold rounded-xl flex items-center justify-center gap-2 text-sm shadow-sm"
+                className="flex-1 min-h-[44px] h-11 px-3 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white font-bold rounded-xl flex items-center justify-center gap-1.5 text-sm shadow-sm transition-colors"
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className="w-4 h-4 shrink-0" />
                 <span>Thử tải lại trong MedNav</span>
               </button>
               <a
                 href={effectiveMapUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 sm:flex-initial min-h-[48px] h-12 px-4 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-2 text-sm"
+                className="min-h-[44px] h-11 px-3 bg-white hover:bg-slate-100 text-slate-700 font-semibold rounded-xl flex items-center justify-center gap-1.5 text-sm border border-slate-300 transition-colors"
               >
-                <ExternalLink className="w-4 h-4" />
+                <ExternalLink className="w-3.5 h-3.5 shrink-0 text-slate-500" />
                 <span>Mở tab mới</span>
               </a>
             </div>
@@ -266,7 +310,7 @@ export function Official108Map({
         )}
       </div>
 
-      {/* Bottom Sheet - Trạng thái Thu gọn (!isSheetExpanded) */}
+      {/* Bottom Sheet - Trạng thái Thu gọn (!isSheetExpanded): Chiều cao tối ưu ~110-125px trên màn hình 360x640 */}
       {!isSheetExpanded && (
         <div className="flex-none bg-white border-t-2 border-slate-200 shadow-2xl z-20 safe-bottom">
           <div className="p-3 sm:p-4 flex items-center justify-between gap-3">
@@ -276,11 +320,11 @@ export function Official108Map({
               </div>
               <div className="text-sm font-bold text-teal-900 flex items-center gap-1.5 truncate">
                 <Navigation className="w-4 h-4 text-teal-700 shrink-0" />
-                <span>Bấm “Chỉ đường” ngay trên bản đồ</span>
+                <span className="truncate">{getPrecisionInstruction()}</span>
               </div>
               {selectedStart && (
                 <div className="text-sm font-semibold text-slate-600 truncate">
-                  Điểm bắt đầu gợi ý: {selectedStart.name}
+                  Điểm bắt đầu: {selectedStart.name}
                 </div>
               )}
             </div>
@@ -329,7 +373,7 @@ export function Official108Map({
 
           {/* Nội dung Sheet mở rộng */}
           <div id="routing-sheet-content" className="p-4 space-y-3.5 overflow-y-auto flex-1">
-            {/* Hiển thị vị trí đã chọn nếu có */}
+            {/* Hiển thị vị trí xuất phát đã chọn nếu có */}
             {selectedStart && (
               <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-2xl text-slate-800 space-y-1">
                 <div className="text-sm sm:text-base font-bold text-blue-900 flex items-center gap-2">
@@ -345,7 +389,7 @@ export function Official108Map({
               </div>
             )}
 
-            {/* 3 bước ngắn gọn chỉ đường */}
+            {/* 3 bước chỉ đường thật theo tính năng InMapz */}
             <div className="p-3.5 bg-teal-50 rounded-2xl border border-teal-200 text-slate-800 text-sm sm:text-base font-medium space-y-2.5">
               <div className="font-black text-teal-950 flex items-center gap-2 text-base">
                 <Navigation className="w-5 h-5 text-teal-700 shrink-0" />
@@ -354,19 +398,25 @@ export function Official108Map({
               <div className="flex items-start gap-2.5 pt-1">
                 <span className="w-6 h-6 rounded-full bg-teal-700 text-white font-black text-sm flex items-center justify-center shrink-0 mt-0.5">1</span>
                 <span className="text-slate-800 leading-snug">
-                  Bấm nút <strong>“Chỉ đường”</strong> ngay trên bản đồ bên trên.
+                  {destination?.mapPrecision === 'exact_facility' ? (
+                    <>Bấm <strong>“Chỉ đường tới đây”</strong> trong bảng thông tin địa điểm trên bản đồ.</>
+                  ) : destination?.building ? (
+                    <>Bác chọn đúng khu vực/phòng cần đến trên bản đồ <strong>{destination.building}{destination.floor ? `, ${destination.floor}` : ''}</strong> rồi bấm <strong>“Chỉ đường tới đây”</strong>.</>
+                  ) : (
+                    <>Bác chạm vào tòa nhà hoặc khoa phòng muốn đến trên bản đồ, sau đó bấm <strong>“Chỉ đường tới đây”</strong>.</>
+                  )}
                 </span>
               </div>
               <div className="flex items-start gap-2.5">
                 <span className="w-6 h-6 rounded-full bg-teal-700 text-white font-black text-sm flex items-center justify-center shrink-0 mt-0.5">2</span>
                 <span className="text-slate-800 leading-snug">
-                  Chọn điểm bắt đầu {selectedStart ? <>là <strong className="text-teal-900">{selectedStart.name}</strong></> : '(vị trí bác đang đứng)'}.
+                  Chọn điểm bắt đầu {selectedStart ? <>là <strong className="text-teal-900">{selectedStart.name}</strong></> : '(vị trí bác đang đứng)'} trên InMapz.
                 </span>
               </div>
               <div className="flex items-start gap-2.5">
                 <span className="w-6 h-6 rounded-full bg-teal-700 text-white font-black text-sm flex items-center justify-center shrink-0 mt-0.5">3</span>
                 <span className="text-slate-800 leading-snug">
-                  Chọn nơi muốn đến là <strong className="text-teal-900">{destination?.name || mapLink.label}</strong> và xem tuyến.
+                  Bản đồ InMapz sẽ vẽ đường đi trực tiếp trên mặt bằng bệnh viện.
                 </span>
               </div>
             </div>
@@ -380,7 +430,7 @@ export function Official108Map({
               >
                 <span className="flex items-center gap-1.5">
                   <HelpCircle className="w-4 h-4 text-teal-700 shrink-0" />
-                  <span>Tôi không thấy nút Chỉ đường?</span>
+                  <span>Tôi không thấy nút “Chỉ đường tới đây”?</span>
                 </span>
                 <span className="text-sm font-semibold text-slate-500 underline">
                   {showIconHelper ? 'Đóng' : 'Xem trợ giúp'}
@@ -388,7 +438,7 @@ export function Official108Map({
               </button>
               {showIconHelper && (
                 <p className="text-sm text-slate-700 font-medium leading-relaxed bg-white p-3 rounded-lg border border-slate-200">
-                  Biểu tượng Chỉ đường (hình mũi tên rẽ) nằm ở góc dưới hoặc thanh tìm kiếm của bản đồ InMapz. Nếu màn hình quá nhỏ không thấy, bác có thể bấm &quot;Mở bản đồ ở tab mới&quot; phía dưới.
+                  Khi bác bấm vào một địa điểm bất kỳ trên bản đồ InMapz, bảng thông tin sẽ hiện ra cùng 2 nút: &quot;Chỉ đường từ đây&quot; và &quot;Chỉ đường tới đây&quot;. Hãy bấm vào nút &quot;Chỉ đường tới đây&quot;.
                 </p>
               )}
             </div>
@@ -428,7 +478,7 @@ export function Official108Map({
                 className="min-h-[48px] h-12 bg-white hover:bg-slate-50 text-slate-800 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-colors border border-slate-300 shadow-sm"
               >
                 <MapPin className="w-4 h-4 text-teal-700 shrink-0" />
-                <span>{selectedStart ? 'Đổi vị trí hiện tại' : 'Chọn vị trí hiện tại để được hỗ trợ'}</span>
+                <span>{selectedStart ? 'Đổi vị trí hiện tại' : 'Chọn vị trí hiện tại'}</span>
               </button>
 
               {/* 3. Thông tin nơi đến */}

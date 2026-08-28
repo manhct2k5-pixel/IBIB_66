@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, act } from '@testing-library/react';
 import App from '../App';
 import { Official108Map } from '../components/Official108Map';
 import { DestinationStep } from '../components/DestinationStep';
@@ -13,12 +13,14 @@ import {
 
 describe('UI Interaction & Streamlined Flow Tests', () => {
   beforeEach(() => {
+    vi.useRealTimers();
     localStorage.clear();
     window.history.replaceState({ view: 'home', destinationId: null, startLocationId: null, mapLinkId: null }, '');
   });
 
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -138,7 +140,7 @@ describe('UI Interaction & Streamlined Flow Tests', () => {
     const mockDest = HOSPITAL_108_DESTINATIONS[0];
     const mockMapLink = HOSPITAL_108_OFFICIAL_MAP_LINKS[0];
 
-    it('9. Bottom sheet thu gọn hiển thị đúng tên điểm đến và "Bấm ‘Chỉ đường’ ngay trên bản đồ"', () => {
+    it('9. Bottom sheet thu gọn hiển thị đúng tên điểm đến và hướng dẫn theo ngữ cảnh', () => {
       render(
         <Official108Map
           mapLink={mockMapLink}
@@ -150,9 +152,9 @@ describe('UI Interaction & Streamlined Flow Tests', () => {
         />
       );
 
-      // Collapsed sheet has destination label and instruction
+      // Collapsed sheet has destination label and context instruction
       expect(screen.getAllByText(new RegExp(mockDest.name, 'i')).length).toBeGreaterThan(0);
-      expect(screen.getByText(/Bấm “Chỉ đường” ngay trên bản đồ/i)).toBeTruthy();
+      expect(screen.getByText(/Chỉ đường tới đây/i)).toBeTruthy();
 
       const supportBtn = screen.getByRole('button', { name: /Xem hỗ trợ/i });
       expect(supportBtn.getAttribute('aria-expanded')).toBe('false');
@@ -173,8 +175,8 @@ describe('UI Interaction & Streamlined Flow Tests', () => {
       // Expand sheet
       fireEvent.click(screen.getByRole('button', { name: /Xem hỗ trợ/i }));
 
-      // Click "Chọn vị trí hiện tại để được hỗ trợ"
-      const pickStartBtn = screen.getByRole('button', { name: /Chọn vị trí hiện tại để được hỗ trợ/i });
+      // Click "Chọn vị trí hiện tại"
+      const pickStartBtn = screen.getByRole('button', { name: /Chọn vị trí hiện tại/i });
       fireEvent.click(pickStartBtn);
 
       // Start locations modal appears
@@ -211,7 +213,139 @@ describe('UI Interaction & Streamlined Flow Tests', () => {
       expect(html).not.toContain('bước chân');
     });
 
-    it('13. Tất cả liên kết target="_blank" phải có rel="noopener noreferrer"', () => {
+    it('12. Iframe Timeout & Lifecycle: Iframe chưa tải sau 10s -> fallback xuất hiện; tải xong -> fallback biến mất', () => {
+      vi.useFakeTimers();
+
+      render(
+        <Official108Map
+          mapLink={mockMapLink}
+          destination={mockDest}
+          onClose={vi.fn()}
+          onChangeDestination={vi.fn()}
+          onOpenHelp={vi.fn()}
+          onOpenEmergency={vi.fn()}
+        />
+      );
+
+      const iframe = screen.getByTitle(/Bản đồ Bệnh viện 108/i);
+
+      // Trước 10s: đang tải, fallback chưa xuất hiện
+      expect(screen.queryByText(/Bản đồ tải chậm hoặc trình duyệt đang hạn chế nhúng/i)).toBeNull();
+
+      // Tua qua 10s -> fallback xuất hiện
+      act(() => {
+        vi.advanceTimersByTime(10001);
+      });
+      expect(screen.getByText(/Bản đồ tải chậm hoặc trình duyệt đang hạn chế nhúng/i)).toBeTruthy();
+
+      // Khi iframe phát onLoad -> fallback biến mất ngay lập tức
+      act(() => {
+        fireEvent.load(iframe);
+      });
+      expect(screen.queryByText(/Bản đồ tải chậm hoặc trình duyệt đang hạn chế nhúng/i)).toBeNull();
+
+      vi.useRealTimers();
+    });
+
+    it('13. Iframe tải thành công trước 10s thì fallback không bao giờ xuất hiện', () => {
+      vi.useFakeTimers();
+
+      render(
+        <Official108Map
+          mapLink={mockMapLink}
+          destination={mockDest}
+          onClose={vi.fn()}
+          onChangeDestination={vi.fn()}
+          onOpenHelp={vi.fn()}
+          onOpenEmergency={vi.fn()}
+        />
+      );
+
+      const iframe = screen.getByTitle(/Bản đồ Bệnh viện 108/i);
+
+      // Tải thành công sau 2s
+      act(() => {
+        vi.advanceTimersByTime(2000);
+        fireEvent.load(iframe);
+      });
+
+      // Tua tiếp sau 10s
+      act(() => {
+        vi.advanceTimersByTime(15000);
+      });
+
+      // Fallback không xuất hiện
+      expect(screen.queryByText(/Bản đồ tải chậm hoặc trình duyệt đang hạn chế nhúng/i)).toBeNull();
+
+      vi.useRealTimers();
+    });
+
+    it('14. Nút "Thử tải lại trong MedNav" tăng loadAttempt/key và trở về trạng thái loading', () => {
+      vi.useFakeTimers();
+
+      render(
+        <Official108Map
+          mapLink={mockMapLink}
+          destination={mockDest}
+          onClose={vi.fn()}
+          onChangeDestination={vi.fn()}
+          onOpenHelp={vi.fn()}
+          onOpenEmergency={vi.fn()}
+        />
+      );
+
+      // Quá 10s để hiện nút thử lại
+      act(() => {
+        vi.advanceTimersByTime(10001);
+      });
+      const retryBtn = screen.getByRole('button', { name: /Thử tải lại trong MedNav/i });
+      expect(retryBtn).toBeTruthy();
+
+      // Bấm nút thử lại
+      act(() => {
+        fireEvent.click(retryBtn);
+      });
+
+      // Quay về trạng thái loading, fallback ẩn đi
+      expect(screen.getByText(/Đang tải bản đồ chính thức Bệnh viện 108/i)).toBeTruthy();
+      expect(screen.queryByText(/Bản đồ tải chậm hoặc trình duyệt đang hạn chế nhúng/i)).toBeNull();
+
+      vi.useRealTimers();
+    });
+
+    it('15. onError hoặc mất kết nối kích hoạt fallback ngay lập tức', () => {
+      render(
+        <Official108Map
+          mapLink={mockMapLink}
+          destination={mockDest}
+          onClose={vi.fn()}
+          onChangeDestination={vi.fn()}
+          onOpenHelp={vi.fn()}
+          onOpenEmergency={vi.fn()}
+        />
+      );
+
+      const iframe = screen.getByTitle(/Bản đồ Bệnh viện 108/i);
+      
+      // Test offline event
+      act(() => {
+        window.dispatchEvent(new Event('offline'));
+      });
+      expect(screen.getByText(/Không có kết nối Internet/i)).toBeTruthy();
+
+      // Back online
+      act(() => {
+        window.dispatchEvent(new Event('online'));
+      });
+      expect(screen.queryByText(/Không có kết nối Internet/i)).toBeNull();
+
+      // Test error event on iframe
+      act(() => {
+        fireEvent.error(iframe);
+      });
+    });
+
+    it('16. Tất cả liên kết target="_blank" phải có rel="noopener noreferrer"', () => {
       const { container } = render(
         <Official108Map
           mapLink={mockMapLink}
@@ -234,7 +368,7 @@ describe('UI Interaction & Streamlined Flow Tests', () => {
       });
     });
 
-    it('15. Mở thông tin nơi đến hiển thị giờ tiếp đón và mức xác minh', () => {
+    it('17. Mở thông tin nơi đến hiển thị giờ tiếp đón và mức xác minh', () => {
       render(
         <Official108Map
           mapLink={mockMapLink}

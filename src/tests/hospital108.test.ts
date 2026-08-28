@@ -75,25 +75,51 @@ describe('Bệnh viện Trung ương Quân đội 108 Data & Code Verification',
     });
   });
 
-  it('C1.1-A có mapPrecision là building_start_view', () => {
+  it('C1.1-A có mapPrecision là building_start_view hoặc verified_floor', () => {
     const c11a = HOSPITAL_108_DESTINATIONS.find(d => d.id === 'c1_1_a');
     expect(c11a).toBeDefined();
-    expect(c11a?.mapPrecision).toBe('building_start_view');
+    expect(['building_start_view', 'verified_floor'].includes(c11a?.mapPrecision || '')).toBe(true);
     expect(c11a?.locationNotice).toBeDefined();
   });
 
-  it('C1.1-B có mapPrecision là building_start_view', () => {
+  it('C1.1-B có mapPrecision là building_start_view hoặc verified_floor', () => {
     const c11b = HOSPITAL_108_DESTINATIONS.find(d => d.id === 'c1_1_b');
     expect(c11b).toBeDefined();
-    expect(c11b?.mapPrecision).toBe('building_start_view');
+    expect(['building_start_view', 'verified_floor'].includes(c11b?.mapPrecision || '')).toBe(true);
     expect(c11b?.locationNotice).toBeDefined();
   });
 
-  it('C1.1-C có mapPrecision là building_start_view', () => {
+  it('C1.1-C có mapPrecision là building_start_view hoặc verified_floor', () => {
     const c11c = HOSPITAL_108_DESTINATIONS.find(d => d.id === 'c1_1_c');
     expect(c11c).toBeDefined();
-    expect(c11c?.mapPrecision).toBe('building_start_view');
+    expect(['building_start_view', 'verified_floor'].includes(c11c?.mapPrecision || '')).toBe(true);
     expect(c11c?.locationNotice).toBeDefined();
+  });
+
+  it('Không tự ý gắn facility=10 hoặc facilityId chưa xác minh cho c1_1_a', () => {
+    const c11a = HOSPITAL_108_DESTINATIONS.find(d => d.id === 'c1_1_a');
+    const link = HOSPITAL_108_OFFICIAL_MAP_LINKS.find(l => l.id === c11a?.mapLinkId);
+    expect(link).toBeDefined();
+    expect(link?.url).not.toContain('facility=10');
+    expect(link?.url).not.toContain('&facility=');
+  });
+
+  it('Destination có mapPrecision là exact_facility bắt buộc phải có facilityId đã xác minh', () => {
+    HOSPITAL_108_DESTINATIONS.forEach(dest => {
+      if (dest.mapPrecision === 'exact_facility') {
+        const link = HOSPITAL_108_OFFICIAL_MAP_LINKS.find(l => l.id === dest.mapLinkId);
+        expect(link?.facilityId).toBeDefined();
+      }
+    });
+  });
+
+  it('Destination chỉ có tòa/tầng không được tự thêm facility vào URL', () => {
+    HOSPITAL_108_DESTINATIONS.forEach(dest => {
+      if (dest.mapPrecision === 'verified_floor' || dest.mapPrecision === 'building_start_view') {
+        const link = HOSPITAL_108_OFFICIAL_MAP_LINKS.find(l => l.id === dest.mapLinkId);
+        expect(link?.url).not.toContain('facility=');
+      }
+    });
   });
 
   it('Khoa Cấp cứu có mapPrecision là campus_only và số 024 6278 4115', () => {
