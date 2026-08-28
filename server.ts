@@ -28,7 +28,7 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`MedNav Bach Mai Hospital server running at http://0.0.0.0:${PORT}`);
+    console.log(`MedNav 108 server running at http://0.0.0.0:${PORT}`);
   });
 }
 

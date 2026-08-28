@@ -8,6 +8,8 @@ export interface Hospital108Destination {
   building: string;
   description?: string;
   sourceUrl?: string;
+  mapPrecision: 'exact_facility' | 'verified_floor' | 'building_start_view' | 'campus_only';
+  locationNotice?: string;
 }
 
 export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
@@ -18,7 +20,9 @@ export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
     mapLinkId: 'c1-1-floor1',
     building: 'Nhà C1-1',
     description: 'Tiếp đón 6h–17h, Thứ Hai đến Thứ Sáu',
-    sourceUrl: 'https://benhvien108.vn/gioi-thieu-trung-tam-kham-benh-da-khoa-va-dieu-tri-theo-yeu-cau-c1-1.htm'
+    sourceUrl: 'https://benhvien108.vn/gioi-thieu-trung-tam-kham-benh-da-khoa-va-dieu-tri-theo-yeu-cau-c1-1.htm',
+    mapPrecision: 'building_start_view',
+    locationNotice: 'Chưa xác minh được vị trí chính xác của khoa trên mặt bằng. Hãy sử dụng ô tìm kiếm trong bản đồ chính thức.'
   },
   {
     id: 'c1_1_b',
@@ -27,7 +31,9 @@ export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
     mapLinkId: 'kham-yeu-cau-floor1',
     building: 'Nhà Khoa Khám bệnh theo yêu cầu',
     description: 'Tiếp đón 6h–17h, Thứ Hai đến Thứ Bảy',
-    sourceUrl: 'https://benhvien108.vn/gioi-thieu-trung-tam-kham-benh-da-khoa-va-dieu-tri-theo-yeu-cau-c1-1.htm'
+    sourceUrl: 'https://benhvien108.vn/gioi-thieu-trung-tam-kham-benh-da-khoa-va-dieu-tri-theo-yeu-cau-c1-1.htm',
+    mapPrecision: 'building_start_view',
+    locationNotice: 'Chưa xác minh được vị trí chính xác của khoa trên mặt bằng. Hãy sử dụng ô tìm kiếm trong bản đồ chính thức.'
   },
   {
     id: 'c1_1_c',
@@ -36,7 +42,9 @@ export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
     mapLinkId: 'c1-1-floor1', 
     building: 'Nhà C1-1',
     description: 'Tiếp đón 6h–17h, Thứ Hai đến Thứ Bảy',
-    sourceUrl: 'https://benhvien108.vn/gioi-thieu-trung-tam-kham-benh-da-khoa-va-dieu-tri-theo-yeu-cau-c1-1.htm'
+    sourceUrl: 'https://benhvien108.vn/gioi-thieu-trung-tam-kham-benh-da-khoa-va-dieu-tri-theo-yeu-cau-c1-1.htm',
+    mapPrecision: 'building_start_view',
+    locationNotice: 'Chưa xác minh được vị trí chính xác của khoa trên mặt bằng. Hãy sử dụng ô tìm kiếm trong bản đồ chính thức.'
   },
   {
     id: 'cap_cuu',
@@ -45,7 +53,9 @@ export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
     mapLinkId: 'campus',
     building: 'Bệnh viện 108',
     description: 'Tiếp nhận và xử trí cấp cứu 24/7. Điện thoại: 024 6278 4115',
-    sourceUrl: 'https://benhvien108.vn/gioi-thieu-khoa-cap-cuu.htm'
+    sourceUrl: 'https://benhvien108.vn/gioi-thieu-khoa-cap-cuu.htm',
+    mapPrecision: 'campus_only',
+    locationNotice: 'Chưa xác minh được vị trí chính xác của Khoa Cấp cứu trên mặt bằng. Hãy sử dụng bản đồ tổng quan.'
   },
   {
     id: 'kham_quoc_te',
@@ -54,7 +64,9 @@ export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
     mapLinkId: 'campus',
     building: 'Tầng 1, sảnh B, tòa nhà Trung tâm',
     description: 'Hotline đăng ký: 0862 878 918',
-    sourceUrl: 'https://benhvien108.vn/quy-trinh-kham/quy-trinh-kham-benh-doi-ngoai-quoc-te.htm'
+    sourceUrl: 'https://benhvien108.vn/quy-trinh-kham/quy-trinh-kham-benh-doi-ngoai-quoc-te.htm',
+    mapPrecision: 'campus_only',
+    locationNotice: 'Chưa xác minh được vị trí chính xác của khu Khám Quốc tế trên mặt bằng. Hãy sử dụng bản đồ tổng quan.'
   },
   {
     id: 'tong_quan',
@@ -63,6 +75,7 @@ export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
     mapLinkId: 'campus',
     building: 'Bệnh viện 108',
     description: 'Số 1 Trần Hưng Đạo, phường Hai Bà Trưng, Hà Nội',
-    sourceUrl: 'https://www.benhvien108.vn/'
+    sourceUrl: 'https://www.benhvien108.vn/',
+    mapPrecision: 'campus_only'
   }
 ];

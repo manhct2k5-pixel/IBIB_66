@@ -2,7 +2,7 @@
   "name": "MedNav 108",
   "description": "MedNav 108 – Bản đồ chỉ dẫn Bệnh viện Trung ương Quân đội 108",
   "requestFramePermissions": [
-    "geolocation"
+    "microphone"
   ],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
