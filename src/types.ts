@@ -1,9 +1,10 @@
 export type AppView = 
   | 'home' 
+  | 'destination_detail'
   | 'select_start' 
+  | 'unknown_location_help'
   | 'route_preview' 
-  | 'official_map' 
-  | 'help';
+  | 'official_map';
 
 export type MapPrecision = 
   | 'exact_facility' 
@@ -32,6 +33,8 @@ export interface Hospital108StartLocation {
   mapLinkId: string;
   description?: string;
   aliases: string[];
+  sourceUrl: string;
+  verificationStatus: 'official_map_view' | 'source_verified_landmark';
 }
 
 export interface Hospital108Checkpoint {
@@ -39,11 +42,9 @@ export interface Hospital108Checkpoint {
   code: string;
   name: string;
   building: string;
-  floor: string;
-  verificationStatus: 'verified_checkpoint';
-  verificationSource: string;
-  verifiedDate: string;
+  floor?: string;
   mapLinkId: string;
+  sourceUrl?: string;
 }
 
 export interface Official108MapLink {

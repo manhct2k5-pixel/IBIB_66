@@ -1,16 +1,4 @@
-import { Official108MapLink } from './officialMapLinks';
-
-export interface Hospital108Destination {
-  id: string;
-  name: string;
-  aliases: string[];
-  mapLinkId: string; 
-  building: string;
-  description?: string;
-  sourceUrl?: string;
-  mapPrecision: 'exact_facility' | 'verified_floor' | 'building_start_view' | 'campus_only';
-  locationNotice?: string;
-}
+import type { Hospital108Destination } from '../../types';
 
 export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
   {
@@ -19,6 +7,7 @@ export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
     aliases: ['c1.1-a', 'c1-1', 'đa khoa', 'khám đa khoa'],
     mapLinkId: 'c1-1-floor1',
     building: 'Nhà C1-1',
+    floor: 'Tầng 1',
     description: 'Tiếp đón 6h–17h, Thứ Hai đến Thứ Sáu',
     sourceUrl: 'https://benhvien108.vn/gioi-thieu-trung-tam-kham-benh-da-khoa-va-dieu-tri-theo-yeu-cau-c1-1.htm',
     mapPrecision: 'building_start_view',
@@ -30,6 +19,7 @@ export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
     aliases: ['c1.1-b', 'khám theo yêu cầu', 'nhà khám bệnh theo yêu cầu'],
     mapLinkId: 'kham-yeu-cau-floor1',
     building: 'Nhà Khoa Khám bệnh theo yêu cầu',
+    floor: 'Tầng 1',
     description: 'Tiếp đón 6h–17h, Thứ Hai đến Thứ Bảy',
     sourceUrl: 'https://benhvien108.vn/gioi-thieu-trung-tam-kham-benh-da-khoa-va-dieu-tri-theo-yeu-cau-c1-1.htm',
     mapPrecision: 'building_start_view',
@@ -41,6 +31,7 @@ export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
     aliases: ['c1.1-c', 'phẫu thuật theo yêu cầu', 'điều trị theo yêu cầu'],
     mapLinkId: 'c1-1-floor1', 
     building: 'Nhà C1-1',
+    floor: 'Tầng 1',
     description: 'Tiếp đón 6h–17h, Thứ Hai đến Thứ Bảy',
     sourceUrl: 'https://benhvien108.vn/gioi-thieu-trung-tam-kham-benh-da-khoa-va-dieu-tri-theo-yeu-cau-c1-1.htm',
     mapPrecision: 'building_start_view',
@@ -62,7 +53,8 @@ export const HOSPITAL_108_DESTINATIONS: Hospital108Destination[] = [
     name: 'Khu Khám Đối ngoại – Quốc tế',
     aliases: ['quốc tế', 'đối ngoại', 'quoc te', 'doi ngoai'],
     mapLinkId: 'campus',
-    building: 'Tầng 1, sảnh B, tòa nhà Trung tâm',
+    building: 'Tòa nhà Trung tâm',
+    floor: 'Tầng 1 (Sảnh B)',
     description: 'Hotline đăng ký: 0862 878 918',
     sourceUrl: 'https://benhvien108.vn/quy-trinh-kham/quy-trinh-kham-benh-doi-ngoai-quoc-te.htm',
     mapPrecision: 'campus_only',

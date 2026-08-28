@@ -1,14 +1,4 @@
-export interface Official108MapLink {
-  id: string;
-  label: string;
-  venueId: number;
-  floorId: number;
-  facilityId?: number;
-  url: string;
-  verificationStatus: 'official_map';
-  sourceUrl: string;
-  lastCheckedAt: string;
-}
+import type { Official108MapLink } from '../../types';
 
 export const HOSPITAL_108_OFFICIAL_MAP_LINKS: Official108MapLink[] = [
   {

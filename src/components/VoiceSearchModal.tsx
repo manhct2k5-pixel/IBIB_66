@@ -5,7 +5,8 @@ import {
   isVoiceRecognitionSupported, 
   matchDestinationFromVoice 
 } from '../utils/voiceRecognition';
-import { HOSPITAL_108_DESTINATIONS, Hospital108Destination } from '../data/hospital108';
+import { HOSPITAL_108_DESTINATIONS } from '../data/hospital108';
+import type { Hospital108Destination } from '../types';
 
 interface VoiceSearchModalProps {
   isOpen: boolean;
@@ -128,7 +129,7 @@ export function VoiceSearchModal({
             
             {transcript && (
               <p className="text-base text-slate-500 italic mb-2">
-                "&nbsp;{transcript}&nbsp;"
+                &ldquo;{transcript}&rdquo;
               </p>
             )}
 
@@ -144,7 +145,7 @@ export function VoiceSearchModal({
                 }}
                 className="w-full h-14 bg-teal-700 hover:bg-teal-800 text-white rounded-2xl font-bold text-lg transition-colors flex items-center justify-center gap-2 shadow-md"
               >
-                <span>Đúng, mở bản đồ</span>
+                <span>Đúng, chọn nơi này</span>
                 <ArrowRight className="w-6 h-6" />
               </button>
 
@@ -171,7 +172,7 @@ export function VoiceSearchModal({
               Đang lắng nghe bác nói...
             </p>
             <p className="text-base font-medium text-slate-600">
-              Ví dụ: "Tôi muốn đến khoa cấp cứu" hoặc "C1 một A"
+              Ví dụ: &ldquo;Tôi muốn đến khoa cấp cứu&rdquo; hoặc &ldquo;C1 một A&rdquo;
             </p>
           </div>
         ) : errorMessage ? (
@@ -212,7 +213,7 @@ export function VoiceSearchModal({
             {transcript ? (
               <div className="mb-6">
                 <p className="text-base text-slate-500 mb-1">Hệ thống nghe được:</p>
-                <p className="text-lg font-bold text-slate-900">"{transcript}"</p>
+                <p className="text-lg font-bold text-slate-900">&ldquo;{transcript}&rdquo;</p>
                 <p className="text-base text-slate-600 mt-2">
                   Chưa nhận ra địa điểm chính xác. Bác hãy thử nói lại hoặc gõ tên vào ô tìm kiếm.
                 </p>

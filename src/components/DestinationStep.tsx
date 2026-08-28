@@ -11,7 +11,7 @@ import {
   ListFilter
 } from 'lucide-react';
 import { HOSPITAL_108_DESTINATIONS } from '../data/hospital108';
-import { Hospital108Destination } from '../types';
+import type { Hospital108Destination } from '../types';
 import { matchesSearchQuery } from '../utils/search';
 import { getRecentDestinationIds, clearRecentDestinations } from '../utils/history';
 import { MapPrecisionBadge } from './MapPrecisionBadge';
@@ -68,23 +68,23 @@ export function DestinationStep({
   return (
     <div className="flex flex-col h-full bg-slate-50 w-full max-w-2xl mx-auto pb-10">
       {/* Header tìm kiếm lớn */}
-      <div className="bg-emerald-700 pt-5 pb-7 px-4 sm:px-6 text-white rounded-b-3xl shadow-md shrink-0">
+      <div className="bg-teal-700 pt-5 pb-7 px-4 sm:px-6 text-white rounded-b-3xl shadow-md shrink-0">
         <h2 className="text-2xl sm:text-3xl font-black mb-2 text-center">
           Bác muốn đến đâu trong Bệnh viện 108?
         </h2>
-        <p className="text-emerald-100 mb-5 text-base sm:text-lg font-medium text-center max-w-lg mx-auto leading-relaxed">
+        <p className="text-teal-100 mb-5 text-base sm:text-lg font-medium text-center max-w-lg mx-auto leading-relaxed">
           Nói hoặc nhập tên khoa phòng để xem vị trí trên bản đồ chính thức.
         </p>
 
         {/* Thanh tìm kiếm lớn tích hợp Micro */}
         <div className="relative max-w-xl mx-auto w-full flex items-center">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Search className="w-6 h-6 text-emerald-700 stroke-[2.5]" />
+            <Search className="w-6 h-6 text-teal-700 stroke-[2.5]" />
           </div>
 
           <input
             type="text"
-            className="block w-full pl-12 pr-28 py-4 rounded-2xl bg-white border-2 border-transparent focus:border-emerald-300 focus:ring-4 focus:ring-emerald-500/20 text-slate-900 text-lg sm:text-xl font-bold placeholder-slate-400 shadow-lg transition-all h-16"
+            className="block w-full pl-12 pr-28 py-4 rounded-2xl bg-white border-2 border-transparent focus:border-teal-300 focus:ring-4 focus:ring-teal-500/20 text-slate-900 text-lg sm:text-xl font-bold placeholder-slate-400 shadow-lg transition-all h-16"
             placeholder="Ví dụ: Cấp cứu, Khám bệnh, C1-1..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -103,11 +103,11 @@ export function DestinationStep({
 
             <button
               onClick={onOpenVoiceModal}
-              className="h-12 px-3 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 text-emerald-800 rounded-xl flex items-center gap-1.5 font-bold transition-all border border-emerald-200 shadow-sm"
+              className="h-12 px-3 bg-teal-50 hover:bg-teal-100 active:bg-teal-200 text-teal-800 rounded-xl flex items-center gap-1.5 font-bold transition-all border border-teal-200 shadow-sm"
               title="Tìm bằng giọng nói"
               aria-label="Tìm bằng giọng nói"
             >
-              <Mic className="w-6 h-6 text-emerald-700" />
+              <Mic className="w-6 h-6 text-teal-700" />
               <span className="text-sm sm:text-base hidden sm:inline">Nói</span>
             </button>
           </div>
@@ -121,7 +121,7 @@ export function DestinationStep({
           <div className="bg-white p-4 sm:p-5 rounded-2xl border-2 border-slate-200 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2 text-slate-800 font-bold text-base">
-                <History className="w-5 h-5 text-emerald-700" />
+                <History className="w-5 h-5 text-teal-700" />
                 <span>Nơi đã xem gần đây</span>
               </div>
               <button
@@ -138,12 +138,12 @@ export function DestinationStep({
                 <button
                   key={`recent-${dest.id}`}
                   onClick={() => onSelectDestination(dest)}
-                  className="p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 border border-slate-200 text-left transition-colors flex items-center justify-between group"
+                  className="p-3 rounded-xl bg-slate-50 hover:bg-teal-50 hover:border-teal-300 border border-slate-200 text-left transition-colors flex items-center justify-between group"
                 >
-                  <span className="font-bold text-slate-800 text-base group-hover:text-emerald-800 truncate">
+                  <span className="font-bold text-slate-800 text-base group-hover:text-teal-800 truncate">
                     {dest.name}
                   </span>
-                  <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-700 shrink-0 ml-1" />
+                  <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-teal-700 shrink-0 ml-1" />
                 </button>
               ))}
             </div>
@@ -173,15 +173,15 @@ export function DestinationStep({
               <button
                 key={dest.id}
                 onClick={() => onSelectDestination(dest)}
-                className="w-full text-left bg-white p-4 sm:p-5 rounded-2xl border-2 border-slate-200 hover:border-emerald-600 hover:shadow-md active:bg-slate-50 transition-all flex items-center justify-between gap-4 group"
+                className="w-full text-left bg-white p-4 sm:p-5 rounded-2xl border-2 border-slate-200 hover:border-teal-600 hover:shadow-md active:bg-slate-50 transition-all flex items-center justify-between gap-4 group"
               >
                 <div className="flex items-start gap-4 flex-1 min-w-0">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0 group-hover:bg-emerald-100 transition-colors mt-0.5">
-                    <MapPin className="w-6 h-6 text-emerald-700" />
+                  <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center shrink-0 group-hover:bg-teal-100 transition-colors mt-0.5">
+                    <MapPin className="w-6 h-6 text-teal-700" />
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-emerald-800 transition-colors leading-snug">
+                    <h4 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-teal-800 transition-colors leading-snug">
                       {dest.name}
                     </h4>
                     <p className="text-slate-600 text-base font-medium mt-1">
@@ -193,7 +193,7 @@ export function DestinationStep({
                   </div>
                 </div>
 
-                <div className="w-11 h-11 rounded-xl bg-slate-100 group-hover:bg-emerald-700 group-hover:text-white flex items-center justify-center text-slate-600 transition-colors shrink-0">
+                <div className="w-11 h-11 rounded-xl bg-slate-100 group-hover:bg-teal-700 group-hover:text-white flex items-center justify-center text-slate-600 transition-colors shrink-0">
                   <ChevronRight className="w-6 h-6" />
                 </div>
               </button>
@@ -214,7 +214,7 @@ export function DestinationStep({
 
             <button
               onClick={onOpenGeneralMap}
-              className="flex-1 h-14 bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl font-bold text-base sm:text-lg flex items-center justify-center gap-2 transition-colors shadow-md"
+              className="flex-1 h-14 bg-teal-700 hover:bg-teal-800 text-white rounded-2xl font-bold text-base sm:text-lg flex items-center justify-center gap-2 transition-colors shadow-md"
             >
               <Map className="w-5 h-5 text-white" />
               <span>Mở bản đồ toàn viện</span>

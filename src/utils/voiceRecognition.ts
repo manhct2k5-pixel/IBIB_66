@@ -1,4 +1,4 @@
-import { Hospital108Destination } from '../data/hospital108';
+import type { Hospital108Destination } from '../types';
 import { normalizeVietnamese } from './stringUtils';
 
 // Kiểu mở rộng cho SpeechRecognition trong Webkit

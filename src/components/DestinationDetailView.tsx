@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Hospital108Destination } from '../data/hospital108';
+import type { Hospital108Destination } from '../types';
 import { 
   MapPin, 
   Clock, 
@@ -17,13 +17,13 @@ import { speakText, stopSpeaking } from '../utils/speech';
 
 interface DestinationDetailViewProps {
   destination: Hospital108Destination;
-  onStartNavigation: () => void;
+  onSelectStart: () => void;
   onBack: () => void;
 }
 
 export function DestinationDetailView({
   destination,
-  onStartNavigation,
+  onSelectStart,
   onBack
 }: DestinationDetailViewProps) {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -70,7 +70,7 @@ export function DestinationDetailView({
             <div>
               <div className="font-bold text-base sm:text-lg">Đã xác minh vị trí chính xác</div>
               <p className="text-sm sm:text-base font-medium text-emerald-800 mt-0.5">
-                Bản đồ sẽ mở đúng phòng/vị trí của khoa.
+                Bản đồ sẽ mở đúng phòng hoặc vị trí của khoa.
               </p>
             </div>
           </div>
@@ -203,11 +203,11 @@ export function DestinationDetailView({
       {/* Cụm nút hành động chính ở dưới */}
       <div className="pt-6 pb-4 flex flex-col gap-3">
         <button
-          onClick={onStartNavigation}
+          onClick={onSelectStart}
           className="w-full h-16 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white rounded-2xl font-black text-xl shadow-lg transition-all flex items-center justify-center gap-3"
         >
           <Navigation className="w-7 h-7" />
-          <span>Bắt đầu chỉ đường</span>
+          <span>Chọn điểm xuất phát</span>
         </button>
 
         <button
