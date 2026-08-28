@@ -1,9 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { BACH_MAI_GATES } from '../data/bachMai/campus';
+import { 
+  BACH_MAI_CAMPUS, 
+  BACH_MAI_GATES, 
+  DEFAULT_EMERGENCY_NODE_ID, 
+  DEFAULT_EMERGENCY_PHONE, 
+  NATIONAL_EMERGENCY_PHONE 
+} from '../data/bachMai/campus';
 import { BACH_MAI_BUILDINGS } from '../data/bachMai/buildings';
 import { BACH_MAI_ROOMS, getRoomById } from '../data/bachMai/rooms';
 import { BACH_MAI_NODES } from '../data/bachMai/nodes';
 import { BACH_MAI_EDGES } from '../data/bachMai/edges';
+import { BACH_MAI_QR_CHECKPOINTS, findQRCheckpointByCode } from '../data/bachMai/checkpoints';
 import { findRoute } from '../utils/pathfinding';
 
 describe('1. Kiểm tra vị trí và thông tin các cổng Bệnh viện Bạch Mai', () => {
@@ -67,6 +74,36 @@ describe('1. Kiểm tra vị trí và thông tin các cổng Bệnh viện Bạc
 });
 
 describe('2. Kiểm tra tính toàn vẹn của Dữ liệu Tòa nhà, Phòng ban & Bản đồ', () => {
+  it('hasIndoorMap trong BACH_MAI_CAMPUS phải là false khi chưa có sơ đồ nội bộ xác minh', () => {
+    expect(BACH_MAI_CAMPUS.hasIndoorMap).toBe(false);
+  });
+
+  it('hằng số cấp cứu mặc định và hotline phải chính xác', () => {
+    expect(DEFAULT_EMERGENCY_NODE_ID).toBe('node_a9_emergency_entrance');
+    expect(DEFAULT_EMERGENCY_PHONE).toBe('086 958 7707');
+    expect(NATIONAL_EMERGENCY_PHONE).toBe('115');
+    const emergencyNode = BACH_MAI_NODES.find(n => n.id === DEFAULT_EMERGENCY_NODE_ID);
+    expect(emergencyNode).toBeDefined();
+    expect(emergencyNode?.buildingId).toBe('A9');
+  });
+
+  it('floorsCount không được gán số tầng chưa xác minh cho các tòa (trừ Tòa Q 21 tầng)', () => {
+    for (const b of BACH_MAI_BUILDINGS) {
+      if (b.id === 'Q') {
+        expect(b.floorsCount).toBe(21);
+      } else {
+        expect(b.floorsCount).toBeUndefined();
+      }
+      expect(b.hasVerifiedIndoorMap).toBe(false);
+    }
+  });
+
+  it('không mặc định các khoa hoặc phòng ở tầng 1 (floorId là optional)', () => {
+    for (const room of BACH_MAI_ROOMS) {
+      expect(room.floorId).toBeUndefined();
+    }
+  });
+
   it('tất cả node ID trong BACH_MAI_NODES phải là duy nhất', () => {
     const ids = BACH_MAI_NODES.map(n => n.id);
     const uniqueIds = new Set(ids);
@@ -169,6 +206,41 @@ describe('3. Kiểm tra thuật toán định tuyến (Pathfinding) giữa các 
       const route = findRoute(gateId, 'node_a9_emergency_entrance', 'fastest');
       expect(route).not.toBeNull();
       expect(route!.pathNodes[route!.pathNodes.length - 1].id).toBe('node_a9_emergency_entrance');
+    }
+  });
+});
+
+describe('4. Kiểm tra hệ thống QR Checkpoint và xác thực vị trí', () => {
+  it('phải có các checkpoint mẫu cho các cổng và tòa nhà chính', () => {
+    expect(BACH_MAI_QR_CHECKPOINTS.length).toBeGreaterThanOrEqual(10);
+    const cpGate1 = findQRCheckpointByCode('CP-GATE-1');
+    expect(cpGate1).toBeDefined();
+    expect(cpGate1?.nodeId).toBe('node_gate_1');
+
+    const cpK1 = findQRCheckpointByCode('CP-K1');
+    expect(cpK1).toBeDefined();
+    expect(cpK1?.nodeId).toBe('node_k1_entrance');
+
+    const cpA9 = findQRCheckpointByCode('CP-A9');
+    expect(cpA9).toBeDefined();
+    expect(cpA9?.nodeId).toBe('node_a9_emergency_entrance');
+  });
+
+  it('hỗ trợ tìm checkpoint theo bí danh (alias) không phân biệt hoa thường', () => {
+    const cpByAlias1 = findQRCheckpointByCode('k1');
+    expect(cpByAlias1?.code).toBe('CP-K1');
+
+    const cpByAlias2 = findQRCheckpointByCode('cổng 1');
+    expect(cpByAlias2?.code).toBe('CP-GATE-1');
+
+    const cpByAlias3 = findQRCheckpointByCode('đột quỵ');
+    expect(cpByAlias3?.code).toBe('CP-A10');
+  });
+
+  it('mọi checkpoint nodeId phải tồn tại trong BACH_MAI_NODES', () => {
+    const nodeIds = new Set(BACH_MAI_NODES.map(n => n.id));
+    for (const cp of BACH_MAI_QR_CHECKPOINTS) {
+      expect(nodeIds.has(cp.nodeId)).toBe(true);
     }
   });
 });

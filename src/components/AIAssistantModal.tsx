@@ -223,7 +223,9 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
                     <div className="flex items-center gap-3 text-slate-600 text-[11px]">
                       <span className="flex items-center gap-1 text-cyan-700 font-semibold">
                         <MapPin className="w-3.5 h-3.5" />
-                        Tòa {msg.triage.buildingId} - Tầng {msg.triage.floorId}
+                        {msg.triage.floorId 
+                          ? `Tòa ${msg.triage.buildingId} - Tầng ${msg.triage.floorId}`
+                          : `Tòa ${msg.triage.buildingId} – Chưa xác minh vị trí bên trong`}
                       </span>
                     </div>
 

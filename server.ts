@@ -34,25 +34,25 @@ app.get("/api/health", (req, res) => {
 });
 
 // Verified list of departments in Bach Mai Hospital
-const VERIFIED_BACH_MAI_DEPARTMENTS: Record<string, { name: string; buildingId: string; floorId: string }> = {
-  "dept_a9_emergency": { name: "Trung Tâm Cấp Cứu A9 (24/7)", buildingId: "A9", floorId: "1" },
-  "dept_stroke_a10": { name: "Trung Tâm Đột Quỵ (Tòa A10)", buildingId: "A10", floorId: "1" },
-  "dept_poison_k3": { name: "Trung Tâm Chống Độc Quốc Gia (Tòa K3)", buildingId: "K3", floorId: "1" },
-  "dept_derma_k3": { name: "Khoa Da Liễu & Bỏng (Tòa K3)", buildingId: "K3", floorId: "1" },
-  "dept_reception_k1": { name: "Sảnh Tiếp Đón & Đăng Ký Khám (Tòa K1)", buildingId: "K1", floorId: "1" },
-  "dept_internal_k1": { name: "Phòng Khám Nội Tổng Quát (Tòa K1)", buildingId: "K1", floorId: "1" },
-  "dept_gastro_k1": { name: "Phòng Khám Tiêu Hóa - Gan Mật (Tòa K1)", buildingId: "K1", floorId: "1" },
-  "dept_cardiology_vtm": { name: "Viện Tim Mạch Quốc Gia (Khối nhà bên trái)", buildingId: "VTM", floorId: "1" },
-  "dept_onco_h": { name: "Viện Y Học Hạt Nhân & Ung Bướu (Tòa H)", buildingId: "H", floorId: "1" },
-  "dept_tropical_f": { name: "Viện Y Học Nhiệt Đới & Phòng Tiêm Chủng (Tòa F)", buildingId: "F", floorId: "1" },
-  "dept_eye_dental_f": { name: "Khoa Mắt & Răng Hàm Mặt (Tòa F)", buildingId: "F", floorId: "1" },
-  "dept_neuro_t1": { name: "Viện Thần Kinh (Cụm T1-T3)", buildingId: "T1", floorId: "1" },
-  "dept_mental_t4": { name: "Viện Sức Khỏe Tâm Thần (Cụm T4-T6)", buildingId: "T4", floorId: "1" },
-  "dept_trad_d2": { name: "Khoa Y Học Cổ Truyền (Tòa D2)", buildingId: "D2", floorId: "1" },
-  "dept_rehab_d4": { name: "Viện Phục Hồi Chức Năng (Tòa D4)", buildingId: "D4", floorId: "1" },
-  "dept_allergy_d6": { name: "Trung Tâm Dị Ứng - Miễn Dịch Lâm Sàng (Tòa D6)", buildingId: "D6", floorId: "1" },
-  "dept_pharmacy_k1": { name: "Nhà Thuốc Bệnh Viện (Tòa K1)", buildingId: "K1", floorId: "1" },
-  "dept_cashier_k1": { name: "Quầy Thu Viện Phí (Tòa K1)", buildingId: "K1", floorId: "1" }
+const VERIFIED_BACH_MAI_DEPARTMENTS: Record<string, { name: string; buildingId: string; floorId?: string }> = {
+  "dept_a9_emergency": { name: "Trung Tâm Cấp Cứu A9 (24/7)", buildingId: "A9" },
+  "dept_stroke_a10": { name: "Trung Tâm Đột Quỵ (Tòa A10)", buildingId: "A10" },
+  "dept_poison_k3": { name: "Trung Tâm Chống Độc Quốc Gia (Tòa K3)", buildingId: "K3" },
+  "dept_derma_k3": { name: "Khoa Da Liễu & Bỏng (Tòa K3)", buildingId: "K3" },
+  "dept_reception_k1": { name: "Sảnh Tiếp Đón & Đăng Ký Khám (Tòa K1)", buildingId: "K1" },
+  "dept_internal_k1": { name: "Phòng Khám Nội Tổng Quát (Tòa K1)", buildingId: "K1" },
+  "dept_gastro_k1": { name: "Phòng Khám Tiêu Hóa - Gan Mật (Tòa K1)", buildingId: "K1" },
+  "dept_cardiology_vtm": { name: "Viện Tim Mạch Quốc Gia (Khối nhà bên trái)", buildingId: "VTM" },
+  "dept_onco_h": { name: "Viện Y Học Hạt Nhân & Ung Bướu (Tòa H)", buildingId: "H" },
+  "dept_tropical_f": { name: "Viện Y Học Nhiệt Đới & Phòng Tiêm Chủng (Tòa F)", buildingId: "F" },
+  "dept_eye_dental_f": { name: "Khoa Mắt & Răng Hàm Mặt (Tòa F)", buildingId: "F" },
+  "dept_neuro_t1": { name: "Viện Thần Kinh (Cụm T1-T3)", buildingId: "T1" },
+  "dept_mental_t4": { name: "Viện Sức Khỏe Tâm Thần (Cụm T4-T6)", buildingId: "T4" },
+  "dept_trad_d2": { name: "Khoa Y Học Cổ Truyền (Tòa D2)", buildingId: "D2" },
+  "dept_rehab_d4": { name: "Viện Phục Hồi Chức Năng (Tòa D4)", buildingId: "D4" },
+  "dept_allergy_d6": { name: "Trung Tâm Dị Ứng - Miễn Dịch Lâm Sàng (Tòa D6)", buildingId: "D6" },
+  "dept_pharmacy_k1": { name: "Nhà Thuốc Bệnh Viện (Tòa K1)", buildingId: "K1" },
+  "dept_cashier_k1": { name: "Quầy Thu Viện Phí (Tòa K1)", buildingId: "K1" }
 };
 
 function checkEmergencyKeywords(text: string): boolean {
@@ -93,7 +93,6 @@ app.post("/api/triage", async (req, res) => {
           suggestedDepartmentId: "dept_a9_emergency",
           departmentName: "Trung Tâm Cấp Cứu A9 (24/7)",
           buildingId: "A9",
-          floorId: "1",
           urgency: "emergency",
           instructions: [
             "Gọi 115 hoặc Hotline Cấp cứu A9: 086 958 7707",
@@ -110,11 +109,10 @@ app.post("/api/triage", async (req, res) => {
         suggestedDepartmentId: "dept_reception_k1",
         departmentName: "Sảnh Tiếp Đón & Đăng Ký Khám (Tòa K1)",
         buildingId: "K1",
-        floorId: "1",
         urgency: "normal",
         instructions: [
           "Vào từ Cổng 4 (đường Giải Phóng) để tới Tòa K1 thuận tiện nhất",
-          "Lấy số thứ tự tại quầy tiếp đón sảnh Tầng 1",
+          "Đã đến Tòa K1. Vui lòng xem biển chỉ dẫn hoặc hỏi nhân viên tại quầy tiếp đón.",
           "Xuất trình thẻ BHYT hoặc CCCD để đăng ký phòng khám chuyên khoa"
         ]
       }
@@ -133,24 +131,24 @@ Yêu cầu an toàn y tế bắt buộc:
 1. Gợi ý của AI CHỈ mang tính định hướng di chuyển trong bệnh viện, KHÔNG thay thế chẩn đoán y khoa của bác sĩ.
 2. Với các triệu chứng nguy kịch (đau ngực dữ dội, khó thở, hôn mê, co giật, chảy máu nhiều, méo miệng/yếu liệt nửa người, ngộ độc cấp): BẮT BUỘC chọn khoa cấp cứu "dept_a9_emergency" (Tòa A9) hoặc "dept_stroke_a10" (Tòa A10), urgency="emergency", và nhắc gọi 115 / Hotline A9 086 958 7707.
 3. BẠN CHỈ ĐƯỢC CHỌN suggestedDepartmentId NẰM TRONG DANH SÁCH ĐÃ XÁC MINH CỦA BỆNH VIỆN BẠCH MAI DƯỚI ĐÂY:
-- "dept_a9_emergency": Trung Tâm Cấp Cứu A9 (Tòa A9, Tầng 1) - Cấp cứu 24/7, đau ngực dữ dội, khó thở, ngất xỉu, tai nạn
-- "dept_stroke_a10": Trung Tâm Đột Quỵ (Tòa A10, Tầng 1) - Méo miệng, liệt nửa người, nói ngọng, tai biến
-- "dept_poison_k3": Trung Tâm Chống Độc Quốc Gia (Tòa K3, Tầng 1) - Ngộ độc hóa chất, rắn cắn, nấm độc, uống nhầm thuốc
-- "dept_derma_k3": Khoa Da Liễu & Bỏng (Tòa K3, Tầng 1) - Bỏng, dị ứng da, ngứa, vảy nến
-- "dept_reception_k1": Sảnh Tiếp Đón & Đăng Ký Khám (Tòa K1, Tầng 1) - Đăng ký khám BHYT, lấy số khám, hỏi thông tin chung (Thuận tiện từ Cổng 4)
-- "dept_internal_k1": Phòng Khám Nội Tổng Quát (Tòa K1, Tầng 1) - Sốt, mệt mỏi, sút cân, khám sức khỏe tổng quát
-- "dept_gastro_k1": Phòng Khám Tiêu Hóa - Gan Mật (Tòa K1, Tầng 1) - Đau dạ dày, ợ chua, viêm gan, đại tràng
-- "dept_cardiology_vtm": Viện Tim Mạch Quốc Gia (Tòa VTM Khối nhà bên trái, Tầng 1) - Tăng huyết áp, đau thắt ngực, suy tim, hồi hộp
-- "dept_onco_h": Viện Y Học Hạt Nhân & Ung Bướu (Tòa H, Tầng 1) - Tầm soát ung thư, u hạch, xạ trị, hóa trị
-- "dept_tropical_f": Viện Y Học Nhiệt Đới & Phòng Tiêm Chủng (Tòa F, Tầng 1) - Sốt xuất huyết, tiêm phòng vaccine, bệnh truyền nhiễm
-- "dept_eye_dental_f": Khoa Mắt & Răng Hàm Mặt (Tòa F, Tầng 1) - Mờ mắt, đau răng, nhổ răng khôn, sâu răng
-- "dept_neuro_t1": Viện Thần Kinh (Cụm T1-T3, Tầng 1) - Đau đầu mạn tính, rối loạn tiền đình, mất ngủ, Parkinson (Gần Cổng 3)
-- "dept_mental_t4": Viện Sức Khỏe Tâm Thần (Cụm T4-T6, Tầng 1) - Lo âu, trầm cảm, stress, rối loạn giấc ngủ (Gần Cổng 3)
-- "dept_trad_d2": Khoa Y Học Cổ Truyền (Tòa D2, Tầng 1) - Đông y, châm cứu, bấm huyệt
-- "dept_rehab_d4": Viện Phục Hồi Chức Năng (Tòa D4, Tầng 1) - Phục hồi chức năng, tập vật lý trị liệu
-- "dept_allergy_d6": Trung Tâm Dị Ứng - Miễn Dịch Lâm Sàng (Tòa D6, Tầng 1) - Dị ứng thuốc, mày đay, lupus
-- "dept_pharmacy_k1": Nhà Thuốc Bệnh Viện (Tòa K1, Tầng 1) - Lấy thuốc, mua thuốc theo đơn
-- "dept_cashier_k1": Quầy Thu Viện Phí (Tòa K1, Tầng 1) - Nộp viện phí, thanh toán BHYT
+- "dept_a9_emergency": Trung Tâm Cấp Cứu A9 (Tòa A9) - Cấp cứu 24/7, đau ngực dữ dội, khó thở, ngất xỉu, tai nạn
+- "dept_stroke_a10": Trung Tâm Đột Quỵ (Tòa A10) - Méo miệng, liệt nửa người, nói ngọng, tai biến
+- "dept_poison_k3": Trung Tâm Chống Độc Quốc Gia (Tòa K3) - Ngộ độc hóa chất, rắn cắn, nấm độc, uống nhầm thuốc
+- "dept_derma_k3": Khoa Da Liễu & Bỏng (Tòa K3) - Bỏng, dị ứng da, ngứa, vảy nến
+- "dept_reception_k1": Sảnh Tiếp Đón & Đăng Ký Khám (Tòa K1) - Đăng ký khám BHYT, lấy số khám, hỏi thông tin chung (Thuận tiện từ Cổng 4)
+- "dept_internal_k1": Phòng Khám Nội Tổng Quát (Tòa K1) - Sốt, mệt mỏi, sút cân, khám sức khỏe tổng quát
+- "dept_gastro_k1": Phòng Khám Tiêu Hóa - Gan Mật (Tòa K1) - Đau dạ dày, ợ chua, viêm gan, đại tràng
+- "dept_cardiology_vtm": Viện Tim Mạch Quốc Gia (Tòa VTM Khối nhà bên trái) - Tăng huyết áp, đau thắt ngực, suy tim, hồi hộp
+- "dept_onco_h": Viện Y Học Hạt Nhân & Ung Bướu (Tòa H) - Tầm soát ung thư, u hạch, xạ trị, hóa trị
+- "dept_tropical_f": Viện Y Học Nhiệt Đới & Phòng Tiêm Chủng (Tòa F) - Sốt xuất huyết, tiêm phòng vaccine, bệnh truyền nhiễm
+- "dept_eye_dental_f": Khoa Mắt & Răng Hàm Mặt (Tòa F) - Mờ mắt, đau răng, nhổ răng khôn, sâu răng
+- "dept_neuro_t1": Viện Thần Kinh (Cụm T1-T3) - Đau đầu mạn tính, rối loạn tiền đình, mất ngủ, Parkinson (Gần Cổng 3)
+- "dept_mental_t4": Viện Sức Khỏe Tâm Thần (Cụm T4-T6) - Lo âu, trầm cảm, stress, rối loạn giấc ngủ (Gần Cổng 3)
+- "dept_trad_d2": Khoa Y Học Cổ Truyền (Tòa D2) - Đông y, châm cứu, bấm huyệt
+- "dept_rehab_d4": Viện Phục Hồi Chức Năng (Tòa D4) - Phục hồi chức năng, tập vật lý trị liệu
+- "dept_allergy_d6": Trung Tâm Dị Ứng - Miễn Dịch Lâm Sàng (Tòa D6) - Dị ứng thuốc, mày đay, lupus
+- "dept_pharmacy_k1": Nhà Thuốc Bệnh Viện (Tòa K1) - Lấy thuốc, mua thuốc theo đơn
+- "dept_cashier_k1": Quầy Thu Viện Phí (Tòa K1) - Nộp viện phí, thanh toán BHYT
 
 4. Nếu không rõ triệu chứng hoặc không có khoa chuyên sâu tương ứng, chọn "dept_reception_k1".
 5. Trả về đúng JSON theo cấu trúc:
@@ -160,14 +158,13 @@ Yêu cầu an toàn y tế bắt buộc:
     "suggestedDepartmentId": "id_khoa_trong_danh_sach_tren",
     "departmentName": "Tên khoa",
     "buildingId": "Mã tòa",
-    "floorId": "Tầng",
     "urgency": "emergency" | "urgent" | "normal",
     "instructions": ["hướng dẫn 1", "hướng dẫn 2"]
   }
 }
 
 Câu hỏi/triệu chứng của bệnh nhân: "${query}"
-Vị trí hiện tại: Tòa ${currentLocation?.buildingId || "Chưa xác định"}, Tầng ${currentLocation?.floorId || "1"}
+Vị trí hiện tại: Tòa ${currentLocation?.buildingId || "Chưa xác định"}, Tầng ${currentLocation?.floorId || "Chưa xác định"}
 Ngôn ngữ phản hồi: ${language === "en" ? "English" : "Tiếng Việt"}`;
 
     const response = await ai.models.generateContent({

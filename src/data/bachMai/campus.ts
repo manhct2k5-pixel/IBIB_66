@@ -64,6 +64,10 @@ export const BACH_MAI_GATES: GateInfo[] = [
   }
 ];
 
+export const DEFAULT_EMERGENCY_NODE_ID = 'node_a9_emergency_entrance';
+export const DEFAULT_EMERGENCY_PHONE = '086 958 7707';
+export const NATIONAL_EMERGENCY_PHONE = '115';
+
 export const BACH_MAI_CAMPUS: HospitalCampus = {
   id: 'bach_mai_hanoi',
   name: 'Bệnh viện Bạch Mai (Hà Nội)',
@@ -71,9 +75,9 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
   city: 'Hà Nội',
   address: 'Số 78 Đường Giải Phóng, P. Kim Liên, TP Hà Nội',
   phone: '1900 888 866', // Tổng đài chăm sóc khách hàng & đặt lịch
-  emergencyPhone: '086 958 7707', // Hotline Trung tâm Cấp cứu A9 (24/7)
+  emergencyPhone: DEFAULT_EMERGENCY_PHONE, // Hotline Trung tâm Cấp cứu A9 (24/7)
   description: 'Bệnh viện đa khoa hạng đặc biệt tuyến cuối lớn nhất miền Bắc với hơn 30+ viện, trung tâm và khoa lâm sàng.',
-  hasIndoorMap: true,
+  hasIndoorMap: false,
   verificationNotice: 'Sơ đồ định hướng, không theo tỷ lệ. Vui lòng ưu tiên biển chỉ dẫn thực tế tại bệnh viện.',
   gates: BACH_MAI_GATES,
   buildings: [
@@ -83,8 +87,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Building K1 - Outpatient & Day Treatment Center (On Demand)',
       buildingId: 'K1',
       type: 'outpatient',
-      description: 'Khu khám chữa bệnh theo yêu cầu; thuận tiện nhất từ Cổng 4 (Giải Phóng).',
-      floorsCount: 9
+      description: 'Khu khám chữa bệnh theo yêu cầu; thuận tiện nhất từ Cổng 4 (Giải Phóng).'
     },
     {
       id: 'marker_k2',
@@ -92,8 +95,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Building K2 - Day Treatment Center',
       buildingId: 'K2',
       type: 'outpatient',
-      description: 'Trung tâm khám bệnh và điều trị trong ngày, thuận tiện từ Cổng 4.',
-      floorsCount: 5
+      description: 'Trung tâm khám bệnh và điều trị trong ngày, thuận tiện từ Cổng 4.'
     },
     {
       id: 'marker_k3',
@@ -101,8 +103,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Building K3 - Poison Control Center & Dermatology / Burn Unit',
       buildingId: 'K3',
       type: 'emergency',
-      description: 'Trung tâm Chống độc Quốc gia, Khoa Da liễu và Đơn vị Bỏng.',
-      floorsCount: 4
+      description: 'Trung tâm Chống độc Quốc gia, Khoa Da liễu và Đơn vị Bỏng.'
     },
     {
       id: 'marker_a9',
@@ -110,8 +111,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Building A9 - A9 Emergency Center (24/7)',
       buildingId: 'A9',
       type: 'emergency',
-      description: 'Tiếp nhận cấp cứu 24/7. Hotline: 086 958 7707 và 115. Nằm gần Cổng 1 (Giải Phóng).',
-      floorsCount: 5
+      description: 'Tiếp nhận cấp cứu 24/7. Hotline: 086 958 7707 và 115. Nằm gần Cổng 1 (Giải Phóng).'
     },
     {
       id: 'marker_a10',
@@ -119,8 +119,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Building A10 - Stroke Center',
       buildingId: 'A10',
       type: 'emergency',
-      description: 'Trung tâm Đột quỵ Bệnh viện Bạch Mai, cấp cứu can thiệp mạch máu não giờ vàng.',
-      floorsCount: 4
+      description: 'Trung tâm Đột quỵ Bệnh viện Bạch Mai, cấp cứu can thiệp mạch máu não giờ vàng.'
     },
     {
       id: 'marker_a11',
@@ -128,8 +127,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Building A11 - International Hall & Blood Donation Center',
       buildingId: 'A11',
       type: 'admin',
-      description: 'Hội trường quốc tế và điểm tiếp nhận hiến máu tình nguyện.',
-      floorsCount: 3
+      description: 'Hội trường quốc tế và điểm tiếp nhận hiến máu tình nguyện.'
     },
     {
       id: 'marker_vtm',
@@ -137,8 +135,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Vietnam National Heart Institute (VNHI)',
       buildingId: 'VTM',
       type: 'inpatient',
-      description: 'Viện Tim mạch là khối nhà lớn phía bên trái khuôn viên, chuyên sâu tim mạch can thiệp và phẫu thuật.',
-      floorsCount: 7
+      description: 'Viện Tim mạch là khối nhà lớn phía bên trái khuôn viên, chuyên sâu tim mạch can thiệp và phẫu thuật.'
     },
     {
       id: 'marker_p',
@@ -146,8 +143,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Building P (Vietnam - Japan Building)',
       buildingId: 'P',
       type: 'inpatient',
-      description: 'Khu nhà Việt - Nhật trung tâm khuôn viên, gồm nhiều khoa lâm sàng và cận lâm sàng.',
-      floorsCount: 6
+      description: 'Khu nhà Việt - Nhật trung tâm khuôn viên, gồm nhiều khoa lâm sàng và cận lâm sàng.'
     },
     {
       id: 'marker_q',
@@ -164,8 +160,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Building H - Nuclear Medicine & Oncology Institute',
       buildingId: 'H',
       type: 'diagnostic',
-      description: 'Viện Y học hạt nhân và Ung bướu (phía bên phải P/Q).',
-      floorsCount: 5
+      description: 'Viện Y học hạt nhân và Ung bướu (phía bên phải P/Q).'
     },
     {
       id: 'marker_f',
@@ -173,8 +168,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Building F - Tropical Medicine & Vaccination Unit',
       buildingId: 'F',
       type: 'clinical',
-      description: 'Viện Y học nhiệt đới, Đơn vị tư vấn và tiêm chủng, Mắt, Răng Hàm Mặt, Huyết học và Truyền máu (phía trên P/Q).',
-      floorsCount: 4
+      description: 'Viện Y học nhiệt đới, Đơn vị tư vấn và tiêm chủng, Mắt, Răng Hàm Mặt, Huyết học và Truyền máu (phía trên P/Q).'
     },
     {
       id: 'marker_e',
@@ -182,8 +176,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Building E - Infection Control Department',
       buildingId: 'E',
       type: 'admin',
-      description: 'Khoa Kiểm soát nhiễm khuẩn.',
-      floorsCount: 3
+      description: 'Khoa Kiểm soát nhiễm khuẩn.'
     },
     {
       id: 'marker_t1_t3',
@@ -191,8 +184,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Buildings T1, T2, T3 - Neurology Institute',
       buildingId: 'T1',
       type: 'inpatient',
-      description: 'Viện Thần kinh Bệnh viện Bạch Mai, gần Cổng 3 (Phương Mai).',
-      floorsCount: 4
+      description: 'Viện Thần kinh Bệnh viện Bạch Mai, gần Cổng 3 (Phương Mai).'
     },
     {
       id: 'marker_t4_t6',
@@ -200,8 +192,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Buildings T4, T5, T6 - National Institute of Mental Health',
       buildingId: 'T4',
       type: 'inpatient',
-      description: 'Viện Sức khỏe tâm thần, gần Cổng 3 (Phương Mai).',
-      floorsCount: 3
+      description: 'Viện Sức khỏe tâm thần, gần Cổng 3 (Phương Mai).'
     },
     {
       id: 'marker_d2',
@@ -209,8 +200,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Building D2 - Traditional Medicine Department',
       buildingId: 'D2',
       type: 'clinical',
-      description: 'Khoa Y học cổ truyền (khu phía trên bên trái).',
-      floorsCount: 3
+      description: 'Khoa Y học cổ truyền (khu phía trên bên trái).'
     },
     {
       id: 'marker_d4',
@@ -218,8 +208,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Building D4 - Rehabilitation Institute',
       buildingId: 'D4',
       type: 'clinical',
-      description: 'Viện Phục hồi chức năng.',
-      floorsCount: 3
+      description: 'Viện Phục hồi chức năng.'
     },
     {
       id: 'marker_d5',
@@ -227,8 +216,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Building D5 - Medical & Pharmaceutical Training Institute',
       buildingId: 'D5',
       type: 'education',
-      description: 'Viện Đào tạo và Nghiên cứu Y Dược Bạch Mai.',
-      floorsCount: 4
+      description: 'Viện Đào tạo và Nghiên cứu Y Dược Bạch Mai.'
     },
     {
       id: 'marker_d6',
@@ -236,8 +224,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Building D6 - Allergy & Clinical Immunology Center',
       buildingId: 'D6',
       type: 'clinical',
-      description: 'Trung tâm Dị ứng - Miễn dịch lâm sàng.',
-      floorsCount: 3
+      description: 'Trung tâm Dị ứng - Miễn dịch lâm sàng.'
     },
     {
       id: 'marker_b2',
@@ -245,8 +232,7 @@ export const BACH_MAI_CAMPUS: HospitalCampus = {
       nameEn: 'Building B2 - Administrative Building',
       buildingId: 'B2',
       type: 'admin',
-      description: 'Khu hành chính Bệnh viện Bạch Mai.',
-      floorsCount: 3
+      description: 'Khu hành chính Bệnh viện Bạch Mai.'
     }
   ]
 };

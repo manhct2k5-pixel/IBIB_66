@@ -4,3 +4,4 @@ export * from './buildings';
 export * from './rooms';
 export * from './nodes';
 export * from './edges';
+export * from './checkpoints';

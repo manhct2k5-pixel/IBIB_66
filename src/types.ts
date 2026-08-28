@@ -66,7 +66,7 @@ export interface RoomDetails {
   code?: string; // Mã phòng nếu có nguồn xác minh; để trống nếu chưa có dữ liệu xác minh
   category: DepartmentCategory;
   buildingId: BuildingId;
-  floorId: FloorId;
+  floorId?: FloorId; // Tùy chọn nếu có nguồn xác minh tầng
   description: string;
   descriptionEn: string;
   specialty?: string;
@@ -84,7 +84,7 @@ export interface MapNode {
   name: string;
   nameEn: string;
   buildingId: BuildingId;
-  floorId: FloorId;
+  floorId?: FloorId;
   x: number; // 0 to 1000 coordinate space
   y: number; // 0 to 800 coordinate space
   type: NodeType;
@@ -155,6 +155,7 @@ export interface Building {
   code: string;
   floors: Floor[];
   description: string;
+  floorsCount?: number;
   hasVerifiedIndoorMap: boolean;
   verificationStatus: VerificationStatus;
   sourceUrl?: string;
@@ -194,7 +195,7 @@ export interface NavigationStep {
   fromNode: MapNode;
   toNode: MapNode;
   buildingId: BuildingId;
-  floorId: FloorId;
+  floorId?: FloorId;
 }
 
 export interface NavigationRoute {
@@ -204,7 +205,7 @@ export interface NavigationRoute {
   steps: NavigationStep[];
   profile: RoutingProfile;
   buildingsInvolved: BuildingId[];
-  floorsInvolved: { buildingId: BuildingId; floorId: FloorId }[];
+  floorsInvolved: { buildingId: BuildingId; floorId?: FloorId }[];
   isVerifiedRoute?: boolean;
 }
 
@@ -215,7 +216,7 @@ export interface HospitalCampusBuildingMarker {
   buildingId?: BuildingId;
   type: 'emergency' | 'outpatient' | 'inpatient' | 'diagnostic' | 'gate' | 'parking' | 'helipad' | 'admin' | 'clinical' | 'education' | 'service' | 'neighbor';
   description: string;
-  floorsCount: number;
+  floorsCount?: number;
   highlightColor?: string;
   x?: number;
   y?: number;
@@ -271,7 +272,7 @@ export interface AITriageData {
   suggestedDepartmentId: string;
   departmentName: string;
   buildingId: string;
-  floorId: string;
+  floorId?: string;
   roomCode?: string;
   urgency: 'emergency' | 'urgent' | 'normal';
   instructions: string[];

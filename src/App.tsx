@@ -5,315 +5,209 @@ import {
   MapNode, 
   NavigationRoute, 
   RoutingProfile,
-  HospitalCampus,
-  PDRPositionState
+  HospitalCampus
 } from './types';
-import { MAP_NODES_DATA } from './data/hospitalData';
-import { REAL_HOSPITALS_LIST } from './data/realHospitalsData';
+import { 
+  MAP_NODES_DATA, 
+  BACH_MAI_CAMPUS, 
+  DEFAULT_EMERGENCY_NODE_ID,
+  BACH_MAI_QR_CHECKPOINTS
+} from './data/hospitalData';
 import { findRoute } from './utils/pathfinding';
-import { Header, AppViewMode } from './components/Header';
-import { HospitalMap } from './components/HospitalMap';
+import { Header, AppNavTab } from './components/Header';
 import { Hospital2DCampusMap } from './components/Hospital2DCampusMap';
-import { ThreeDHospitalCampusMap } from './components/ThreeDHospitalCampusMap';
 import { SearchAndRoutePanel } from './components/SearchAndRoutePanel';
 import { NavigationController } from './components/NavigationController';
 import { AIAssistantModal } from './components/AIAssistantModal';
 import { EmergencyModal } from './components/EmergencyModal';
-import { 
-  Layers, 
-  Building2,
-  ListFilter, 
-  Sparkles,
-  ShieldAlert,
-  Map
-} from 'lucide-react';
+import { QRCheckpointModal } from './components/QRCheckpointModal';
+import { DataInfoView } from './components/DataInfoView';
+import { VerifiedQRCheckpoint } from './data/bachMai/checkpoints';
 
 export default function App() {
-  const [currentCampus, setCurrentCampus] = useState<HospitalCampus>(REAL_HOSPITALS_LIST[0]);
+  const [currentCampus] = useState<HospitalCampus>(BACH_MAI_CAMPUS);
+  const [activeTab, setActiveTab] = useState<AppNavTab>('home');
 
-  // View Mode: 'overview_2d' (Official Master 2D Signboard Map) vs 'floor_2d' (Indoor Floorplan with A* Pathfinding) vs '3d' (3D Campus)
-  const [viewMode, setViewMode] = useState<AppViewMode>('overview_2d');
-
-  // Navigation & Location state
-  const [currentBuildingId, setCurrentBuildingId] = useState<BuildingId>('A');
-  const [currentFloorId, setCurrentFloorId] = useState<FloorId>('1');
-  const [startNode, setStartNode] = useState<MapNode | null>(MAP_NODES_DATA[9]); // Default: Sảnh chính Tòa A
-  const [destinationNode, setDestinationNode] = useState<MapNode | null>(MAP_NODES_DATA[10]); // Default: Quầy tiếp đón A-101
+  // Navigation state (Starts clean as null - Destination first flow)
+  const [startNode, setStartNode] = useState<MapNode | null>(null);
+  const [destinationNode, setDestinationNode] = useState<MapNode | null>(null);
   const [routingProfile, setRoutingProfile] = useState<RoutingProfile>('fastest');
   const [isNavigating, setIsNavigating] = useState<boolean>(false);
-  const [simulatedStepIndex, setSimulatedStepIndex] = useState<number>(0);
-  const [pdrPosition] = useState<PDRPositionState | null>(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
+  const [lastVerifiedCheckpoint, setLastVerifiedCheckpoint] = useState<VerifiedQRCheckpoint | null>(null);
   const [language, setLanguage] = useState<'vi' | 'en'>('vi');
 
-  // Mobile Tab toggle ('map' or 'search')
-  const [mobileTab, setMobileTab] = useState<'map' | 'search'>('map');
-
-  // Essential Modals
+  // Modals state
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState<boolean>(false);
   const [isEmergencyOpen, setIsEmergencyOpen] = useState<boolean>(false);
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState<boolean>(false);
 
-  // Compute Active Navigation Route whenever start/dest/profile changes
+  // Compute Active Route
   const activeRoute: NavigationRoute | null = useMemo(() => {
     if (!startNode || !destinationNode) return null;
     return findRoute(startNode.id, destinationNode.id, routingProfile);
   }, [startNode, destinationNode, routingProfile]);
 
-  // When a destination is selected, auto-navigate / center
-  const handleSelectDestinationNode = (node: MapNode) => {
+  // Destination Selection
+  const handleSelectDestinationNode = (node: MapNode | null) => {
     setDestinationNode(node);
-    if (node) {
-      setCurrentBuildingId(node.buildingId);
-      setCurrentFloorId(node.floorId);
-    }
-    setSimulatedStepIndex(0);
-    setMobileTab('map');
+    setCurrentStepIndex(0);
+    setIsNavigating(false);
   };
 
-  const handleSelectStartNode = (node: MapNode) => {
+  // Start Node Selection
+  const handleSelectStartNode = (node: MapNode | null) => {
     setStartNode(node);
-    if (node) {
-      setCurrentBuildingId(node.buildingId);
-      setCurrentFloorId(node.floorId);
-    }
-    setSimulatedStepIndex(0);
+    setCurrentStepIndex(0);
+    setIsNavigating(false);
   };
 
+  // Swap Start & Destination
   const handleSwapNodes = () => {
     const temp = startNode;
     setStartNode(destinationNode);
     setDestinationNode(temp);
-    setSimulatedStepIndex(0);
+    setCurrentStepIndex(0);
+    setIsNavigating(false);
   };
 
-  // Emergency Action: strictly target A9 Emergency Entrance
+  // QR Checkpoint Confirmation
+  const handleConfirmQRCheckpoint = (node: MapNode, checkpoint: VerifiedQRCheckpoint) => {
+    setStartNode(node);
+    setLastVerifiedCheckpoint(checkpoint);
+    setCurrentStepIndex(0);
+    setIsNavigating(false);
+  };
+
+  // Emergency flow (Redirect to A9)
   const handleEmergencyRoute = () => {
-    const erNode = MAP_NODES_DATA.find(n => n.id === 'node_a9_emergency_entrance') || MAP_NODES_DATA.find(n => n.buildingId === 'A9') || MAP_NODES_DATA[0];
-    setDestinationNode(erNode);
+    const a9Node = MAP_NODES_DATA.find(n => n.id === DEFAULT_EMERGENCY_NODE_ID) || 
+                   MAP_NODES_DATA.find(n => n.buildingId === 'A9') || 
+                   MAP_NODES_DATA[0];
+    
+    setDestinationNode(a9Node);
     setRoutingProfile('emergency');
-    if (erNode) {
-      setCurrentBuildingId(erNode.buildingId);
-      setCurrentFloorId(erNode.floorId);
+    setActiveTab('navigation');
+    setIsEmergencyOpen(false);
+
+    // If start node is already known, begin navigation immediately
+    if (startNode) {
+      setIsNavigating(true);
+      setCurrentStepIndex(0);
     }
-    setIsNavigating(true);
-    setSimulatedStepIndex(0);
-    setMobileTab('map');
   };
 
   return (
-    <div className="flex flex-col h-screen w-full bg-slate-50 text-slate-900 overflow-hidden font-sans">
+    <div className="flex flex-col h-screen w-full bg-slate-100 text-slate-900 overflow-hidden font-sans">
       {/* Top Header */}
       <Header
         language={language}
         onChangeLanguage={setLanguage}
         onOpenEmergency={() => setIsEmergencyOpen(true)}
         onOpenAIAssistant={() => setIsAIAssistantOpen(true)}
-        viewMode={viewMode}
-        onChangeViewMode={setViewMode}
+        activeTab={activeTab}
+        onChangeTab={setActiveTab}
       />
 
-      {/* Main Workspace Layout (Sidebar + Map Viewport) */}
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-        {/* Left Sidebar: Search & Route Picker */}
-        <div
-          className={`w-full md:w-84 lg:w-96 flex-shrink-0 h-full overflow-hidden ${
-            mobileTab === 'search' ? 'flex flex-col' : 'hidden md:flex flex-col'
-          }`}
-        >
-          <SearchAndRoutePanel
-            currentCampus={currentCampus}
-            onSelectCampus={setCurrentCampus}
-            startNode={startNode}
-            destinationNode={destinationNode}
-            onSelectStartNode={handleSelectStartNode}
-            onSelectDestinationNode={handleSelectDestinationNode}
-            onSwapNodes={handleSwapNodes}
-            routingProfile={routingProfile}
-            onChangeRoutingProfile={setRoutingProfile}
-            onStartNavigation={() => {
-              setIsNavigating(true);
-              setSimulatedStepIndex(0);
-              setViewMode('floor_2d');
-              setMobileTab('map');
-            }}
+        {activeTab === 'data_info' ? (
+          /* ================= DATA TRANSPARENCY TAB ================= */
+          <DataInfoView 
+            onGoToNavigation={() => setActiveTab('navigation')}
             language={language}
           />
-        </div>
+        ) : (
+          /* ================= HOME & NAVIGATION TAB (2D MAP + WAYFINDING) ================= */
+          <>
+            {/* Left / Bottom Panel: Search, Gate Picking, & Turn-by-Turn Nav Controller */}
+            <div className="w-full md:w-88 lg:w-96 flex-shrink-0 h-1/2 md:h-full overflow-hidden order-2 md:order-1 border-t md:border-t-0 md:border-r border-slate-200 bg-white flex flex-col shadow-sm z-10">
+              {isNavigating && activeRoute ? (
+                <NavigationController
+                  route={activeRoute}
+                  currentStepIndex={currentStepIndex}
+                  onStepChange={setCurrentStepIndex}
+                  onClose={() => setIsNavigating(false)}
+                  onOpenQRScanner={() => setIsQRScannerOpen(true)}
+                  language={language}
+                />
+              ) : (
+                <SearchAndRoutePanel
+                  currentCampus={currentCampus}
+                  startNode={startNode}
+                  destinationNode={destinationNode}
+                  onSelectStartNode={handleSelectStartNode}
+                  onSelectDestinationNode={handleSelectDestinationNode}
+                  onSwapNodes={handleSwapNodes}
+                  routingProfile={routingProfile}
+                  onChangeRoutingProfile={setRoutingProfile}
+                  onStartNavigation={() => {
+                    if (startNode && destinationNode) {
+                      setIsNavigating(true);
+                      setCurrentStepIndex(0);
+                    }
+                  }}
+                  onOpenQRScanner={() => setIsQRScannerOpen(true)}
+                  lastVerifiedCheckpoint={lastVerifiedCheckpoint}
+                  language={language}
+                />
+              )}
+            </div>
 
-        {/* Right Area: Map Viewport (Overview 2D, Floor 2D, or 3D) */}
-        <div
-          className={`flex-1 flex flex-col h-full overflow-hidden relative ${
-            mobileTab === 'map' ? 'flex' : 'hidden md:flex'
-          }`}
-        >
-          {viewMode === 'overview_2d' ? (
-            /* Official 2D Master Campus Map */
-            <div className="flex-1 w-full h-full relative overflow-hidden">
+            {/* Right / Top Area: 2D Interactive Hospital Map */}
+            <div className="flex-1 flex flex-col h-1/2 md:h-full overflow-hidden relative order-1 md:order-2">
               <Hospital2DCampusMap
-                onSwitchToFloorMap={(bId, fId) => {
-                  setCurrentBuildingId(bId);
-                  if (fId) setCurrentFloorId(fId);
-                  setViewMode('floor_2d');
-                }}
                 startNode={startNode}
                 destinationNode={destinationNode}
                 onSelectStartNode={handleSelectStartNode}
                 onSelectDestinationNode={handleSelectDestinationNode}
                 activeRoute={activeRoute}
-                routingProfile={routingProfile}
-                language={language}
-                onOpenAIAssistant={() => setIsAIAssistantOpen(true)}
-                onOpenEmergency={() => setIsEmergencyOpen(true)}
-              />
-            </div>
-          ) : viewMode === 'floor_2d' ? (
-            /* Interactive 2D Indoor Hospital Floor Plan */
-            <div className="flex-1 w-full h-full relative overflow-hidden">
-              <HospitalMap
-                currentBuildingId={currentBuildingId}
-                currentFloorId={currentFloorId}
-                onSelectBuilding={setCurrentBuildingId}
-                onSelectFloor={setCurrentFloorId}
-                startNode={startNode}
-                destinationNode={destinationNode}
-                onSelectStartNode={handleSelectStartNode}
-                onSelectDestinationNode={handleSelectDestinationNode}
-                activeRoute={activeRoute}
-                simulatedStepIndex={simulatedStepIndex}
-                routingProfile={routingProfile}
-                pdrPosition={pdrPosition}
-                language={language}
-                onOpenAIAssistant={() => setIsAIAssistantOpen(true)}
-                onOpenEmergency={() => setIsEmergencyOpen(true)}
-              />
-            </div>
-          ) : (
-            /* Static / Interactive 3D Hospital Campus Overview */
-            <div className="flex-1 w-full h-full relative overflow-hidden">
-              <ThreeDHospitalCampusMap
-                currentCampus={currentCampus}
-                onSwitchToIndoorMap={(bId) => {
-                  if (bId) setCurrentBuildingId(bId);
-                  setViewMode('floor_2d');
-                }}
-                startNode={startNode}
-                destinationNode={destinationNode}
-                onSelectStartNode={handleSelectStartNode}
-                onSelectDestinationNode={handleSelectDestinationNode}
-                activeRoute={activeRoute}
+                currentStepIndex={currentStepIndex}
                 isNavigating={isNavigating}
-                simulatedStepIndex={simulatedStepIndex}
-                onStepChange={setSimulatedStepIndex}
-                onStartNavigation={() => {
-                  setIsNavigating(true);
-                  setSimulatedStepIndex(0);
-                }}
-                onStopNavigation={() => setIsNavigating(false)}
-                onOpenAIAssistant={() => setIsAIAssistantOpen(true)}
+                routingProfile={routingProfile}
                 language={language}
+                onOpenQRScanner={() => setIsQRScannerOpen(true)}
               />
             </div>
-          )}
-
-          {/* Turn-by-Turn Navigation Bottom Controller (Active during 2D indoor navigation) */}
-          {isNavigating && activeRoute && viewMode === 'floor_2d' && (
-            <NavigationController
-              route={activeRoute}
-              currentStepIndex={simulatedStepIndex}
-              onStepChange={setSimulatedStepIndex}
-              onClose={() => setIsNavigating(false)}
-              language={language}
-            />
-          )}
-        </div>
+          </>
+        )}
       </div>
 
-      {/* Mobile Bottom Navigation Bar */}
-      <div className="md:hidden bg-white border-t border-slate-200 p-2 flex items-center justify-around z-40 shadow-lg">
-        <button
-          id="btn-mobile-mode-overview-2d"
-          onClick={() => {
-            setViewMode('overview_2d');
-            setMobileTab('map');
-          }}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[11px] font-semibold transition cursor-pointer ${
-            mobileTab === 'map' && viewMode === 'overview_2d'
-              ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200'
-              : 'text-slate-500'
-          }`}
-        >
-          <Map className="w-4 h-4 text-emerald-600" />
-          <span>Toàn cảnh 2D</span>
-        </button>
+      {/* ================= MODALS ================= */}
 
-        <button
-          id="btn-mobile-mode-floor-2d"
-          onClick={() => {
-            setViewMode('floor_2d');
-            setMobileTab('map');
-          }}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[11px] font-semibold transition cursor-pointer ${
-            mobileTab === 'map' && viewMode === 'floor_2d'
-              ? 'bg-cyan-50 text-cyan-700 font-bold border border-cyan-200'
-              : 'text-slate-500'
-          }`}
-        >
-          <Layers className="w-4 h-4 text-cyan-600" />
-          <span>Từng tầng</span>
-        </button>
-
-        <button
-          id="btn-mobile-mode-3d"
-          onClick={() => {
-            setViewMode('3d');
-            setMobileTab('map');
-          }}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[11px] font-semibold transition cursor-pointer ${
-            mobileTab === 'map' && viewMode === '3d'
-              ? 'bg-cyan-50 text-cyan-700 font-bold border border-cyan-200'
-              : 'text-slate-500'
-          }`}
-        >
-          <Building2 className="w-4 h-4 text-cyan-600" />
-          <span>3D Khuôn viên</span>
-        </button>
-
-        <button
-          id="btn-mobile-tab-search"
-          onClick={() => setMobileTab('search')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[11px] font-semibold transition cursor-pointer ${
-            mobileTab === 'search' ? 'bg-cyan-50 text-cyan-700 font-bold border border-cyan-200' : 'text-slate-500'
-          }`}
-        >
-          <ListFilter className="w-4 h-4" />
-          <span>Tìm khoa</span>
-        </button>
-
-        <button
-          id="btn-mobile-emergency"
-          onClick={handleEmergencyRoute}
-          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[11px] font-semibold text-rose-600 cursor-pointer"
-        >
-          <ShieldAlert className="w-4 h-4 text-rose-600" />
-          <span>Cấp cứu</span>
-        </button>
-      </div>
-
-      {/* Essential Modals */}
-      <AIAssistantModal
-        isOpen={isAIAssistantOpen}
-        onClose={() => setIsAIAssistantOpen(false)}
-        onSelectDestinationNode={handleSelectDestinationNode}
-        currentBuilding={currentBuildingId}
-        currentFloor={currentFloorId}
-        language={language}
-      />
-
+      {/* Emergency Modal */}
       <EmergencyModal
         isOpen={isEmergencyOpen}
         onClose={() => setIsEmergencyOpen(false)}
-        onTriggerEmergencyRoute={handleEmergencyRoute}
+        onSelectEmergencyDestination={handleEmergencyRoute}
         language={language}
       />
+
+      {/* QR Checkpoint Modal */}
+      <QRCheckpointModal
+        isOpen={isQRScannerOpen}
+        onClose={() => setIsQRScannerOpen(false)}
+        onConfirmCheckpointNode={handleConfirmQRCheckpoint}
+        language={language}
+      />
+
+      {/* AI Assistant Modal */}
+      {isAIAssistantOpen && (
+        <AIAssistantModal
+          isOpen={isAIAssistantOpen}
+          onClose={() => setIsAIAssistantOpen(false)}
+          onNavigateToDepartment={(deptId) => {
+            const node = MAP_NODES_DATA.find(n => n.roomId === deptId) || 
+                         MAP_NODES_DATA.find(n => n.id === deptId);
+            if (node) {
+              handleSelectDestinationNode(node);
+              setIsAIAssistantOpen(false);
+              setActiveTab('navigation');
+            }
+          }}
+          language={language}
+        />
+      )}
     </div>
   );
 }

@@ -8,27 +8,17 @@ export const BACH_MAI_BUILDINGS: Building[] = [
     nameEn: 'Building K1 - Outpatient & Day Treatment Center',
     code: 'K1',
     description: 'Khu khám chữa bệnh theo yêu cầu; thuận tiện nhất từ Cổng 4 (đường Giải Phóng). Đăng ký khám BHYT và dịch vụ theo yêu cầu.',
-    hasVerifiedIndoorMap: true,
-    verificationStatus: 'verified',
+    hasVerifiedIndoorMap: false,
+    verificationStatus: 'campus_verified',
     sourceUrl: BACH_MAI_OFFICIAL_SOURCES[2].url,
     floors: [
       {
         id: '1',
         buildingId: 'K1',
-        name: 'Tầng 1 - Sảnh Tiếp Đón & Đăng Ký Khám K1',
-        nameEn: '1st Floor - Reception & Registration',
+        name: 'Tòa K1 - Sảnh Tiếp Đón',
+        nameEn: 'Building K1 - Reception Lobby',
         level: 1,
-        description: 'Sảnh chính đón tiếp bệnh nhân, phát số thứ tự, quầy thủ tục BHYT và đăng ký khám theo yêu cầu.',
-        nodes: [],
-        hasVerifiedFloorplan: true
-      },
-      {
-        id: '2',
-        buildingId: 'K1',
-        name: 'Tầng 2 - Phòng Khám Nội Tổng Quát & Chuyên Khoa',
-        nameEn: '2nd Floor - General & Specialty Clinics',
-        level: 2,
-        description: 'Khu phòng khám Nội tổng quát, Tim mạch, Tiêu hóa.',
+        description: 'Sảnh chính đón tiếp bệnh nhân K1.',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -47,10 +37,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'K2',
-        name: 'Tầng 1 - Sảnh K2',
-        nameEn: '1st Floor - Lobby K2',
+        name: 'Tòa K2 - Sảnh Tiếp Nhận',
+        nameEn: 'Building K2 - Lobby',
         level: 1,
-        description: 'Sảnh tiếp nhận và điều trị trong ngày K2 (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Sảnh tiếp nhận và điều trị trong ngày K2.',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -69,10 +59,10 @@ export const BACH_MAI_BUILDINGS: Building[] = [
       {
         id: '1',
         buildingId: 'K3',
-        name: 'Tầng 1 - Sảnh Tiếp Nhận K3',
-        nameEn: '1st Floor - Reception K3',
+        name: 'Tòa K3 - Sảnh Tiếp Nhận',
+        nameEn: 'Building K3 - Lobby',
         level: 1,
-        description: 'Sảnh tiếp nhận Chống độc & Da liễu (Chưa có sơ đồ tầng được xác minh).',
+        description: 'Sảnh tiếp nhận Chống độc & Da liễu.',
         nodes: [],
         hasVerifiedFloorplan: false
       }
@@ -84,19 +74,19 @@ export const BACH_MAI_BUILDINGS: Building[] = [
     nameEn: 'Building A9 - A9 Emergency Center (24/7)',
     code: 'A9',
     description: 'Tiếp nhận cấp cứu 24/7 mọi trường hợp nặng, nguy kịch. Hotline: 086 958 7707 và 115. Nằm gần Cổng 1 (Giải Phóng).',
-    hasVerifiedIndoorMap: true,
-    verificationStatus: 'verified',
+    hasVerifiedIndoorMap: false,
+    verificationStatus: 'campus_verified',
     sourceUrl: BACH_MAI_OFFICIAL_SOURCES[3].url,
     floors: [
       {
         id: '1',
         buildingId: 'A9',
-        name: 'Tầng 1 - Sảnh Tiếp Nhận Cấp Cứu A9 (24/7)',
-        nameEn: '1st Floor - A9 Emergency Triage & Admission (24/7)',
+        name: 'Tòa A9 - Sảnh Cấp Cứu A9',
+        nameEn: 'Building A9 - Emergency Lobby',
         level: 1,
-        description: 'Khu vực tiếp nhận cấp cứu khẩn cấp 24/7, phân loại bệnh nhân Triage và xử trí ban đầu.',
+        description: 'Khu vực tiếp nhận cấp cứu khẩn cấp 24/7.',
         nodes: [],
-        hasVerifiedFloorplan: true
+        hasVerifiedFloorplan: false
       }
     ]
   },
@@ -194,6 +184,7 @@ export const BACH_MAI_BUILDINGS: Building[] = [
     nameEn: 'Building Q (21-Story Building)',
     code: 'Q',
     description: 'Tòa nhà cao tầng trung tâm, gồm Trung tâm Ung bướu & YHHN, Hóa trị, Tiêu hóa. Đã xác minh vị trí tòa nhà.',
+    floorsCount: 21,
     hasVerifiedIndoorMap: false,
     verificationStatus: 'campus_verified',
     sourceUrl: BACH_MAI_OFFICIAL_SOURCES[0].url,
