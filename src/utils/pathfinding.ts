@@ -7,13 +7,13 @@ import {
   NavigationStep, 
   RoutingProfile 
 } from '../types';
-import { MAP_EDGES_DATA, MAP_NODES_DATA, getRoomById } from '../data/hospitalData';
+import { MAP_EDGES_DATA, MAP_NODES_DATA } from '../data/hospitalData';
 
 export interface RouteObstacle {
   id: string;
   name: string;
   nameEn: string;
-  type: 'maintenance' | 'cleaning' | 'crowded' | 'stairs_out_of_service' | 'elevator_maintenance';
+  type: 'maintenance' | 'cleaning' | 'crowded';
   fromNodeId: string;
   toNodeId: string;
   penaltyCost: number; // additional distance cost or Infinity if blocked
@@ -29,49 +29,13 @@ interface GraphNode {
   neighbors: { neighbor: MapNode; edge: MapEdge }[];
 }
 
-/**
- * Heuristic Euclidean Distance with Multi-floor and Inter-building 3D Elevation Penalty
- */
 function calculateHeuristic(nodeA: MapNode, nodeB: MapNode): number {
   // Horizontal 2D distance (scaled from 1000x800 coordinate space)
   const dx = (nodeA.x - nodeB.x) * 0.1;
   const dy = (nodeA.y - nodeB.y) * 0.1;
-  let dist2D = Math.sqrt(dx * dx + dy * dy);
-
-  // Vertical Floor difference penalty (each floor is ~4m vertical height)
-  const floorA = getFloorLevel(nodeA.floorId);
-  const floorB = getFloorLevel(nodeB.floorId);
-  const floorDiff = Math.abs(floorA - floorB);
-  const verticalPenalty = floorDiff * 8; // 8 meters equivalent cost per floor
-
-  // Cross-building penalty if not in the same building
-  let buildingPenalty = 0;
-  if (nodeA.buildingId !== nodeB.buildingId) {
-    buildingPenalty = 25; // 25 meters transfer penalty
-  }
-
-  return dist2D + verticalPenalty + buildingPenalty;
+  return Math.sqrt(dx * dx + dy * dy);
 }
 
-/**
- * Floor level numeric value helper
- */
-export function getFloorLevel(floorId: FloorId): number {
-  if (floorId === 'B1') return -1;
-  return parseInt(floorId, 10);
-}
-
-/**
- * Display name formatting for building & floor
- */
-export function getFloorDisplayName(floorId: FloorId, buildingId: BuildingId): string {
-  const floorStr = floorId === 'B1' ? 'Tầng Hầm B1' : `Tầng ${floorId}`;
-  return `Tòa ${buildingId} - ${floorStr}`;
-}
-
-/**
- * Builds directed weighted adjacency graph with profile adjustments & live obstacles
- */
 function buildGraph(
   profile: RoutingProfile, 
   avoidObstacles: boolean = true,
@@ -91,10 +55,8 @@ function buildGraph(
       continue;
     }
 
-    // 1. Accessibility Profile (Wheelchair / Stretcher):
-    // Strictly forbid stairs, steps, narrow corridors (< 1.2m), or high slopes (> 6°)
     if (profile === 'accessible') {
-      if (!edge.isAccessible || edge.hasSteps || edge.type === 'stairs') {
+      if (!edge.isAccessible || edge.hasSteps) {
         continue;
       }
       if (edge.widthMeters && edge.widthMeters < 1.4) {
@@ -102,7 +64,6 @@ function buildGraph(
       }
     }
 
-    // Check dynamic obstacle penalties
     let obstaclePenalty = 0;
     if (avoidObstacles) {
       const obstacle = ACTIVE_HOSPITAL_OBSTACLES.find(
@@ -111,7 +72,6 @@ function buildGraph(
       );
       if (obstacle) {
         if (obstacle.penaltyCost >= 9000) {
-          // Blocked edge
           continue;
         }
         obstaclePenalty += obstacle.penaltyCost;
@@ -124,32 +84,12 @@ function buildGraph(
     if (from && to) {
       let weight = edge.distance + obstaclePenalty;
 
-      // 2. Profile Specific Weights:
-      if (profile === 'fastest') {
-        if (edge.type === 'elevator') {
-          weight += 6; // Average elevator wait time in seconds/meters
-        } else if (edge.type === 'stairs') {
-          weight += 2; // Slight physical effort
-        }
-      } else if (profile === 'accessible') {
-        if (edge.type === 'elevator') {
-          // Highly favor elevators for accessible routes
-          weight += 2;
-        }
-      } else if (profile === 'visually_impaired') {
-        // Prioritize tactile guidance path and audio acoustic landmarks
+      if (profile === 'visually_impaired') {
         if (edge.audioLandmarkVi) {
-          weight *= 0.55; // 45% discount for clear audio/tactile guidance routes
+          weight *= 0.55;
         }
-        if (edge.hasSteps || edge.type === 'stairs') {
-          weight += 35; // Heavy penalty on stairs to prioritize safety
-        }
-      } else if (profile === 'emergency') {
-        // Emergency: prioritize fastest and wide clear emergency corridors
-        if (edge.type === 'elevator') {
-          weight += 8;
-        } else if (edge.type === 'stairs') {
-          weight += 1; // Rescuers/staff can quickly rush through stairs
+        if (edge.hasSteps) {
+          weight += 35;
         }
       }
 
@@ -169,7 +109,6 @@ function buildGraph(
   return graph;
 }
 
-// Priority Queue for A* Search
 class MinPriorityQueue<T> {
   private items: { element: T; priority: number }[] = [];
 
@@ -187,9 +126,6 @@ class MinPriorityQueue<T> {
   }
 }
 
-/**
- * Advanced A* Indoor Pathfinding Engine
- */
 export function findRoute(
   startNodeId: string,
   targetNodeId: string,
@@ -204,7 +140,6 @@ export function findRoute(
 
   if (!startNode || !targetNode) return null;
 
-  // Case: Same node
   if (startNodeId === targetNodeId) {
     return {
       pathNodes: [startNode],
@@ -220,12 +155,11 @@ export function findRoute(
           fromNode: startNode,
           toNode: startNode,
           buildingId: startNode.buildingId,
-          floorId: startNode.floorId
         }
       ],
       profile,
       buildingsInvolved: [startNode.buildingId],
-      floorsInvolved: [{ buildingId: startNode.buildingId, floorId: startNode.floorId }]
+      floorsInvolved: []
     };
   }
 
@@ -242,9 +176,8 @@ export function findRoute(
     return null;
   }
 
-  // A* Algorithm Data Structures
-  const gScore = new Map<string, number>(); // Actual cost from start
-  const fScore = new Map<string, number>(); // Estimated total cost (g + h)
+  const gScore = new Map<string, number>();
+  const fScore = new Map<string, number>();
   const previous = new Map<string, { prevNodeId: string; edge: MapEdge }>();
   const openSet = new MinPriorityQueue<string>();
   const closedSet = new Set<string>();
@@ -262,10 +195,7 @@ export function findRoute(
   while (!openSet.isEmpty()) {
     const currentId = openSet.dequeue()!;
     
-    if (currentId === targetNodeId) {
-      break; // Reached goal!
-    }
-
+    if (currentId === targetNodeId) break;
     if (closedSet.has(currentId)) continue;
     closedSet.add(currentId);
 
@@ -277,12 +207,11 @@ export function findRoute(
     for (const { neighbor, edge } of currentNode.neighbors) {
       if (closedSet.has(neighbor.id)) continue;
 
-      // Turn penalty to avoid zig-zagging in corridors:
       let turnPenalty = 0;
       const prevInfo = previous.get(currentId);
       if (prevInfo) {
         const prevNode = graph.get(prevInfo.prevNodeId)?.node;
-        if (prevNode && prevNode.floorId === currentNode.node.floorId && currentNode.node.floorId === neighbor.floorId) {
+        if (prevNode) {
           const v1x = currentNode.node.x - prevNode.x;
           const v1y = currentNode.node.y - prevNode.y;
           const v2x = neighbor.x - currentNode.node.x;
@@ -293,9 +222,7 @@ export function findRoute(
           const mag2 = Math.sqrt(v2x * v2x + v2y * v2y);
           if (mag1 > 0 && mag2 > 0) {
             const cosAngle = Math.max(-1, Math.min(1, dot / (mag1 * mag2)));
-            if (cosAngle < 0.7) {
-              turnPenalty = 1.5; // Small penalty for turning to prefer straight paths
-            }
+            if (cosAngle < 0.7) turnPenalty = 1.5;
           }
         }
       }
@@ -314,10 +241,7 @@ export function findRoute(
     }
   }
 
-  // Reconstruct path
-  if (!previous.has(targetNodeId)) {
-    return null; // Path not found
-  }
+  if (!previous.has(targetNodeId)) return null;
 
   const pathNodes: MapNode[] = [];
   let curr: string | undefined = targetNodeId;
@@ -329,49 +253,21 @@ export function findRoute(
     curr = prevInfo?.prevNodeId;
   }
 
-  // Calculate true physical distance
   let totalDistance = 0;
   for (let i = 0; i < pathNodes.length - 1; i++) {
     const n1 = pathNodes[i];
     const n2 = pathNodes[i + 1];
-    const edge = MAP_EDGES_DATA.find(
-      e => (e.fromNodeId === n1.id && e.toNodeId === n2.id) || (e.fromNodeId === n2.id && e.toNodeId === n1.id)
-    );
-    if (edge) {
-      totalDistance += edge.distance;
-    } else {
-      totalDistance += calculateSegmentDistance(n1, n2);
-    }
+    totalDistance += calculateSegmentDistance(n1, n2);
   }
 
-  // Generate Turn-by-Turn Steps with audio landmarks & accurate directions
   const steps = generateEnhancedTurnByTurnSteps(pathNodes, profile);
-
-  // Realistic walking duration calculation (average 1.15 m/s + floor transition delays)
-  let floorChangeCount = 0;
-  for (let i = 0; i < pathNodes.length - 1; i++) {
-    if (pathNodes[i].floorId !== pathNodes[i + 1].floorId || pathNodes[i].buildingId !== pathNodes[i + 1].buildingId) {
-      floorChangeCount++;
-    }
-  }
 
   const baseWalkingSpeed = profile === 'accessible' ? 0.9 : profile === 'emergency' ? 1.8 : 1.15;
   const walkingTimeSeconds = Math.round(totalDistance / baseWalkingSpeed);
-  const transitionTimeSeconds = floorChangeCount * (profile === 'accessible' ? 40 : 25);
-  const estimatedDurationSeconds = Math.max(15, walkingTimeSeconds + transitionTimeSeconds);
+  const estimatedDurationSeconds = Math.max(15, walkingTimeSeconds);
 
-  // Calculate buildings and floors involved
   const buildingsInvolved = Array.from(new Set(pathNodes.map(n => n.buildingId)));
-  const floorsInvolvedMap = new Map<string, { buildingId: BuildingId; floorId: FloorId }>();
-  for (const n of pathNodes) {
-    const key = `${n.buildingId}_${n.floorId}`;
-    if (!floorsInvolvedMap.has(key)) {
-      floorsInvolvedMap.set(key, { buildingId: n.buildingId, floorId: n.floorId });
-    }
-  }
-  const floorsInvolved = Array.from(floorsInvolvedMap.values());
 
-  // Ensure each step has instruction, action, visualCue populated for all consumers
   const enrichedSteps = steps.map(s => ({
     ...s,
     instruction: s.instructionVi,
@@ -387,14 +283,10 @@ export function findRoute(
     steps: enrichedSteps,
     profile,
     buildingsInvolved,
-    floorsInvolved
+    floorsInvolved: []
   };
 }
 
-/**
- * Multi-Stop Route Optimizer (Traveling Salesperson / Clinical Workflow)
- * Re-orders intermediate clinical stops to minimize total walking distance
- */
 export function findMultiStopRoute(
   startNodeId: string,
   stopNodeIds: string[],
@@ -415,7 +307,6 @@ export function findMultiStopRoute(
     };
   }
 
-  // Nearest-Neighbor TSP Heuristic for clinical workflow stops
   const unvisited = [...stopNodeIds];
   const orderedNodeIds: string[] = [];
   let currentId = startNodeId;
@@ -433,10 +324,7 @@ export function findMultiStopRoute(
       }
     }
 
-    if (nearestIndex === -1) {
-      // Fallback: take first
-      nearestIndex = 0;
-    }
+    if (nearestIndex === -1) nearestIndex = 0;
 
     const nextId = unvisited.splice(nearestIndex, 1)[0];
     orderedNodeIds.push(nextId);
@@ -447,7 +335,6 @@ export function findMultiStopRoute(
     orderedNodeIds.push(endNodeId);
   }
 
-  // Build full combined route
   const segmentRoutes: NavigationRoute[] = [];
   const fullPathNodes: MapNode[] = [];
   const fullSteps: NavigationStep[] = [];
@@ -466,13 +353,11 @@ export function findMultiStopRoute(
       combinedDistance += segment.totalDistance;
       combinedDuration += segment.estimatedDurationSeconds;
 
-      // Add nodes (avoid duplicating the transition node)
       segment.pathNodes.forEach((node, nIdx) => {
         if (nIdx === 0 && fullPathNodes.length > 0) return;
         fullPathNodes.push(node);
       });
 
-      // Add steps with updated stepIndex
       segment.steps.forEach(step => {
         fullSteps.push({
           ...step,
@@ -488,13 +373,6 @@ export function findMultiStopRoute(
     .filter(Boolean) as MapNode[];
 
   const buildingsInvolved = Array.from(new Set(fullPathNodes.map(n => n.buildingId)));
-  const floorsInvolvedMap = new Map<string, { buildingId: BuildingId; floorId: FloorId }>();
-  for (const n of fullPathNodes) {
-    const key = `${n.buildingId}_${n.floorId}`;
-    if (!floorsInvolvedMap.has(key)) {
-      floorsInvolvedMap.set(key, { buildingId: n.buildingId, floorId: n.floorId });
-    }
-  }
 
   const combinedRoute: NavigationRoute = {
     pathNodes: fullPathNodes,
@@ -503,7 +381,7 @@ export function findMultiStopRoute(
     steps: fullSteps,
     profile,
     buildingsInvolved,
-    floorsInvolved: Array.from(floorsInvolvedMap.values())
+    floorsInvolved: []
   };
 
   return {
@@ -513,9 +391,6 @@ export function findMultiStopRoute(
   };
 }
 
-/**
- * Generate high-precision turn-by-turn guidance with audio landmarks
- */
 function generateEnhancedTurnByTurnSteps(
   path: MapNode[], 
   profile: RoutingProfile
@@ -532,14 +407,12 @@ function generateEnhancedTurnByTurnSteps(
       fromNode: node,
       toNode: node,
       buildingId: node.buildingId,
-      floorId: node.floorId
     }];
   }
 
   const steps: NavigationStep[] = [];
   let stepIndex = 1;
 
-  // Step 1: Start
   const startNode = path[0];
   const secondNode = path[1];
   const initialDist = calculateSegmentDistance(startNode, secondNode);
@@ -559,7 +432,6 @@ function generateEnhancedTurnByTurnSteps(
     fromNode: startNode,
     toNode: secondNode,
     buildingId: startNode.buildingId,
-    floorId: startNode.floorId
   });
 
   for (let i = 1; i < path.length - 1; i++) {
@@ -574,142 +446,65 @@ function generateEnhancedTurnByTurnSteps(
       landmarkExtra = ` • Điểm nhận biết: ${edge.audioLandmarkVi}`;
     }
 
-    // Case 1: Elevator Floor Transition
-    if (curr.type === 'elevator' && next.type === 'elevator') {
-      const prevLvl = getFloorLevel(curr.floorId);
-      const nextLvl = getFloorLevel(next.floorId);
-      const isUp = nextLvl > prevLvl;
+    const v1 = { x: curr.x - prev.x, y: curr.y - prev.y };
+    const v2 = { x: next.x - curr.x, y: next.y - curr.y };
 
-      steps.push({
-        stepIndex: stepIndex++,
-        instructionVi: `Vào thang máy ${curr.name}, bấm chọn lên ${getFloorDisplayName(next.floorId, next.buildingId)}${landmarkExtra}`,
-        instructionEn: `Enter elevator ${curr.nameEn}, press ${next.floorId} to go ${isUp ? 'UP' : 'DOWN'}`,
-        distance: 4,
-        maneuver: isUp ? 'take_elevator_up' : 'take_elevator_down',
-        fromNode: curr,
-        toNode: next,
-        buildingId: curr.buildingId,
-        floorId: curr.floorId
-      });
-      continue;
+    const angle1 = Math.atan2(v1.y, v1.x);
+    const angle2 = Math.atan2(v2.y, v2.x);
+    let diff = (angle2 - angle1) * (180 / Math.PI);
+    while (diff > 180) diff -= 360;
+    while (diff < -180) diff += 360;
+
+    let maneuver: NavigationStep['maneuver'] = 'straight';
+    let viText = `Đi thẳng tiếp ${dist}m qua ${curr.name}`;
+    let enText = `Continue straight for ${dist}m via ${curr.nameEn}`;
+
+    if (diff > 35 && diff <= 70) {
+      maneuver = 'turn_slight_right';
+      viText = `Tại ${curr.name}, chếch nhẹ sang phải và đi ${dist}m tới ${next.name}`;
+      enText = `At ${curr.nameEn}, bear right and walk ${dist}m to ${next.nameEn}`;
+    } else if (diff > 70 && diff <= 120) {
+      maneuver = 'turn_right';
+      viText = `Tại ${curr.name}, rẽ phải và đi ${dist}m tới ${next.name}`;
+      enText = `At ${curr.nameEn}, turn right and walk ${dist}m to ${next.nameEn}`;
+    } else if (diff < -35 && diff >= -70) {
+      maneuver = 'turn_slight_left';
+      viText = `Tại ${curr.name}, chếch nhẹ sang trái và đi ${dist}m tới ${next.name}`;
+      enText = `At ${curr.nameEn}, bear left and walk ${dist}m to ${next.nameEn}`;
+    } else if (diff < -70 && diff >= -120) {
+      maneuver = 'turn_left';
+      viText = `Tại ${curr.name}, rẽ trái và đi ${dist}m tới ${next.name}`;
+      enText = `At ${curr.nameEn}, turn left and walk ${dist}m to ${next.nameEn}`;
+    } else if (diff > 120 || diff < -120) {
+      maneuver = 'turn_right';
+      viText = `Quay đầu / Chuyển hướng tại ${curr.name}, đi ${dist}m tới ${next.name}`;
+      enText = `Make a turn at ${curr.nameEn}, walk ${dist}m to ${next.nameEn}`;
     }
 
-    // Case 2: Stairs Floor Transition
-    if (curr.type === 'stairs' && next.type === 'stairs') {
-      const prevLvl = getFloorLevel(curr.floorId);
-      const nextLvl = getFloorLevel(next.floorId);
-      const isUp = nextLvl > prevLvl;
-
-      steps.push({
-        stepIndex: stepIndex++,
-        instructionVi: `Đi cầu thang bộ ${isUp ? 'lên' : 'xuống'} ${getFloorDisplayName(next.floorId, next.buildingId)}${landmarkExtra}`,
-        instructionEn: `Take stairs ${isUp ? 'UP' : 'DOWN'} to Floor ${next.floorId}`,
-        distance: 6,
-        maneuver: isUp ? 'take_stairs_up' : 'take_stairs_down',
-        fromNode: curr,
-        toNode: next,
-        buildingId: curr.buildingId,
-        floorId: curr.floorId
-      });
-      continue;
-    }
-
-    // Case 3: Skybridge connection
-    if (curr.type === 'skybridge' || next.type === 'skybridge') {
-      steps.push({
-        stepIndex: stepIndex++,
-        instructionVi: `Đi qua Cầu Vượt trên cao nối sang Tòa ${next.buildingId}${landmarkExtra}`,
-        instructionEn: `Cross the indoor Skybridge to Building ${next.buildingId}`,
-        distance: dist,
-        maneuver: 'cross_skybridge',
-        fromNode: curr,
-        toNode: next,
-        buildingId: curr.buildingId,
-        floorId: curr.floorId
-      });
-      continue;
-    }
-
-    // Case 4: Same floor turn angle calculation
-    if (prev.floorId === curr.floorId && curr.floorId === next.floorId && prev.buildingId === curr.buildingId) {
-      const v1 = { x: curr.x - prev.x, y: curr.y - prev.y };
-      const v2 = { x: next.x - curr.x, y: next.y - curr.y };
-
-      const angle1 = Math.atan2(v1.y, v1.x);
-      const angle2 = Math.atan2(v2.y, v2.x);
-      let diff = (angle2 - angle1) * (180 / Math.PI);
-      while (diff > 180) diff -= 360;
-      while (diff < -180) diff += 360;
-
-      let maneuver: NavigationStep['maneuver'] = 'straight';
-      let viText = `Đi thẳng tiếp ${dist}m qua ${curr.name}`;
-      let enText = `Continue straight for ${dist}m via ${curr.nameEn}`;
-
-      if (diff > 35 && diff <= 70) {
-        maneuver = 'turn_slight_right';
-        viText = `Tại ${curr.name}, chếch nhẹ sang phải và đi ${dist}m tới ${next.name}`;
-        enText = `At ${curr.nameEn}, bear right and walk ${dist}m to ${next.nameEn}`;
-      } else if (diff > 70 && diff <= 120) {
-        maneuver = 'turn_right';
-        viText = `Tại ${curr.name}, rẽ phải và đi ${dist}m tới ${next.name}`;
-        enText = `At ${curr.nameEn}, turn right and walk ${dist}m to ${next.nameEn}`;
-      } else if (diff < -35 && diff >= -70) {
-        maneuver = 'turn_slight_left';
-        viText = `Tại ${curr.name}, chếch nhẹ sang trái và đi ${dist}m tới ${next.name}`;
-        enText = `At ${curr.nameEn}, bear left and walk ${dist}m to ${next.nameEn}`;
-      } else if (diff < -70 && diff >= -120) {
-        maneuver = 'turn_left';
-        viText = `Tại ${curr.name}, rẽ trái và đi ${dist}m tới ${next.name}`;
-        enText = `At ${curr.nameEn}, turn left and walk ${dist}m to ${next.nameEn}`;
-      } else if (diff > 120 || diff < -120) {
-        maneuver = 'turn_right';
-        viText = `Quay đầu / Chuyển hướng tại ${curr.name}, đi ${dist}m tới ${next.name}`;
-        enText = `Make a turn at ${curr.nameEn}, walk ${dist}m to ${next.nameEn}`;
-      }
-
-      steps.push({
-        stepIndex: stepIndex++,
-        instructionVi: `${viText}${landmarkExtra}`,
-        instructionEn: enText,
-        distance: dist,
-        maneuver,
-        fromNode: curr,
-        toNode: next,
-        buildingId: curr.buildingId,
-        floorId: curr.floorId
-      });
-    } else {
-      // General floor / building transition
-      steps.push({
-        stepIndex: stepIndex++,
-        instructionVi: `Di chuyển từ ${curr.name} sang ${next.name} (${getFloorDisplayName(next.floorId, next.buildingId)})${landmarkExtra}`,
-        instructionEn: `Move from ${curr.nameEn} to ${next.nameEn} (Floor ${next.floorId})`,
-        distance: dist,
-        maneuver: 'straight',
-        fromNode: curr,
-        toNode: next,
-        buildingId: curr.buildingId,
-        floorId: curr.floorId
-      });
-    }
+    steps.push({
+      stepIndex: stepIndex++,
+      instructionVi: `${viText}${landmarkExtra}`,
+      instructionEn: enText,
+      distance: dist,
+      maneuver,
+      fromNode: curr,
+      toNode: next,
+      buildingId: curr.buildingId,
+    });
   }
 
-  // Final Step: Arrive at destination
   const target = path[path.length - 1];
   const secondLast = path[path.length - 2];
-  const room = target.roomId ? getRoomById(target.roomId) : null;
-  const roomCodeInfo = room?.code ? ` [Mã phòng: ${room.code}]` : '';
 
   steps.push({
     stepIndex: stepIndex++,
-    instructionVi: `Bạn đã đến nơi: ${target.name}${roomCodeInfo} (Tòa ${target.buildingId})`,
-    instructionEn: `You have arrived at your destination: ${target.nameEn}${roomCodeInfo} (Building ${target.buildingId})`,
+    instructionVi: `Bạn đã đến nơi: cửa ${target.name} (Tòa ${target.buildingId})`,
+    instructionEn: `You have arrived at your destination: ${target.nameEn} entrance (Building ${target.buildingId})`,
     distance: 0,
     maneuver: 'arrive',
     fromNode: secondLast || target,
     toNode: target,
     buildingId: target.buildingId,
-    floorId: target.floorId
   });
 
   return steps;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   CheckCircle2, 
   ThumbsUp, 
@@ -7,9 +7,11 @@ import {
   Search, 
   Home, 
   Info,
-  Check
+  Check,
+  MapPin
 } from 'lucide-react';
 import { MapNode } from '../types';
+import { BACH_MAI_FLOOR_DIRECTORY } from '../data/hospitalData';
 
 interface ArrivalViewProps {
   destinationNode: MapNode;
@@ -26,6 +28,11 @@ export const ArrivalView: React.FC<ArrivalViewProps> = ({
 }) => {
   const [feedback, setFeedback] = useState<'easy' | 'hard' | null>(null);
 
+  const directoryEntries = useMemo(() => {
+    if (!BACH_MAI_FLOOR_DIRECTORY) return [];
+    return BACH_MAI_FLOOR_DIRECTORY.filter(dir => dir.buildingId === destinationNode.buildingId);
+  }, [destinationNode.buildingId]);
+
   return (
     <div className="w-full max-w-xl mx-auto px-4 py-8 sm:py-12 flex flex-col items-center text-center space-y-6 animate-in zoom-in-95 duration-200">
       {/* Big Green Checkmark Icon */}
@@ -36,23 +43,49 @@ export const ArrivalView: React.FC<ArrivalViewProps> = ({
       {/* Main Arrival Title */}
       <div className="space-y-2">
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
-          Bạn đã đến {destinationNode.name}
+          Bạn đã đến {destinationNode.displayAlias || destinationNode.name}
         </h1>
         <p className="text-base sm:text-lg font-bold text-cyan-800">
           Điểm đến: Cửa / Sảnh tòa nhà
         </p>
       </div>
 
-      {/* Hospital Scope Limit Notice Card */}
-      <div className="w-full p-4 sm:p-5 bg-slate-50 border-2 border-slate-200 rounded-3xl text-left space-y-2 shadow-2xs">
-        <div className="flex items-center gap-2 text-slate-800 font-bold text-base">
-          <Info className="w-5 h-5 text-cyan-700 shrink-0" />
-          <span>Lưu ý quan trọng:</span>
+      {/* Hospital Scope Limit Notice Card or Floor Directory */}
+      {directoryEntries.length > 0 ? (
+        <div className="w-full p-4 sm:p-5 bg-emerald-50 border-2 border-emerald-200 rounded-3xl text-left space-y-3 shadow-2xs">
+          <div className="flex items-center gap-2 text-emerald-950 font-black text-lg">
+            <Building2 className="w-6 h-6 text-emerald-700 shrink-0" />
+            <span>Danh bạ Tòa {destinationNode.buildingId}</span>
+          </div>
+          <div className="space-y-2">
+            {directoryEntries.map((dir, idx) => (
+              <div key={idx} className="p-3 bg-white rounded-xl border border-emerald-100 flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-bold text-slate-900 text-base">{dir.destinationName}</div>
+                  <div className="text-emerald-700 font-bold text-sm mt-0.5">{dir.floorLabel}</div>
+                  {dir.instructionNote && (
+                    <div className="text-xs font-medium text-slate-500 mt-1">{dir.instructionNote}</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-sm text-emerald-800 font-medium pt-2 border-t border-emerald-200/60 leading-relaxed">
+            MedNav chỉ hướng dẫn đường đi ngoài trời. Vui lòng vào trong và sử dụng thang máy hoặc thang bộ theo danh bạ trên.
+          </p>
         </div>
-        <p className="text-base text-slate-700 font-medium leading-relaxed">
-          MedNav chỉ hướng dẫn đến cửa hoặc sảnh tòa nhà. Vui lòng kiểm tra phiếu khám và biển chỉ dẫn tại tòa nhà để đến đúng phòng.
-        </p>
-      </div>
+      ) : (
+        <div className="w-full p-4 sm:p-5 bg-slate-50 border-2 border-slate-200 rounded-3xl text-left space-y-2 shadow-2xs">
+          <div className="flex items-center gap-2 text-slate-800 font-bold text-base">
+            <Info className="w-5 h-5 text-cyan-700 shrink-0" />
+            <span>Lưu ý quan trọng:</span>
+          </div>
+          <p className="text-base text-slate-700 font-medium leading-relaxed">
+            MedNav chỉ hướng dẫn đến cửa hoặc sảnh tòa nhà. Vui lòng kiểm tra phiếu khám và biển chỉ dẫn tại tòa nhà để đến đúng phòng.
+          </p>
+        </div>
+      )}
 
       {/* Simple 2-Button Feedback Card */}
       <div className="w-full p-4 sm:p-5 bg-cyan-50/70 border-2 border-cyan-200 rounded-3xl space-y-3">

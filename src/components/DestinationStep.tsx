@@ -11,10 +11,11 @@ import {
   ChevronDown, 
   ChevronUp, 
   Info,
-  Check
+  Check,
+  MapPin
 } from 'lucide-react';
-import { MapNode } from '../types';
-import { MAP_NODES_DATA } from '../data/hospitalData';
+import { MapNode, FloorDirectoryEntry } from '../types';
+import { MAP_NODES_DATA, BACH_MAI_FLOOR_DIRECTORY } from '../data/hospitalData';
 import { isSpeechRecognitionSupported, VoiceSearchController } from '../utils/voiceRecognition';
 
 interface DestinationStepProps {
@@ -34,7 +35,6 @@ export const DestinationStep: React.FC<DestinationStepProps> = ({
   const [voiceMessage, setVoiceMessage] = useState<string | null>(null);
   const voiceControllerRef = useRef<VoiceSearchController | null>(null);
 
-  // Key popular destinations (4 primary items strictly in 1 column)
   const popularDestinations = useMemo(() => {
     return [
       {
@@ -72,7 +72,6 @@ export const DestinationStep: React.FC<DestinationStepProps> = ({
     ];
   }, []);
 
-  // Extended buildings list when user clicks "Xem thêm địa điểm"
   const extendedBuildings = useMemo(() => {
     return [
       { badge: 'Q', title: 'Tòa Q (21 tầng)', desc: 'Trung tâm Ung bướu & Y học hạt nhân', nodeId: 'node_q_21story_entrance' },
@@ -86,19 +85,16 @@ export const DestinationStep: React.FC<DestinationStepProps> = ({
     ];
   }, []);
 
-  // Filter destination nodes
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return [];
 
-    // Check canteen search intent
     const isCanteenQuery = q.includes('căng tin') || q.includes('canteen') || q.includes('cang tin') || q.includes('ăn uống') || q.includes('an uong');
     if (isCanteenQuery) {
-      return { isCanteen: true, items: [] };
+      return { isCanteen: true, items: [], directories: [] };
     }
 
-    const matched = MAP_NODES_DATA.filter(node => {
-      // Exclude pure street gates from destination search results unless explicitly typed
+    const matchedNodes = MAP_NODES_DATA.filter(node => {
       if (node.type === 'entrance' || node.type === 'room' || node.type === 'emergency') {
         const nameMatch = node.name.toLowerCase().includes(q);
         const nameEnMatch = (node.nameEn || '').toLowerCase().includes(q);
@@ -109,10 +105,15 @@ export const DestinationStep: React.FC<DestinationStepProps> = ({
       return false;
     });
 
-    return { isCanteen: false, items: matched };
+    const matchedDirectories = (BACH_MAI_FLOOR_DIRECTORY || []).filter(dir => {
+      const nameMatch = dir.destinationName.toLowerCase().includes(q);
+      const bMatch = dir.buildingId.toLowerCase().includes(q);
+      return nameMatch || bMatch;
+    });
+
+    return { isCanteen: false, items: matchedNodes, directories: matchedDirectories };
   }, [searchQuery]);
 
-  // Voice Search Handler
   const handleToggleVoice = () => {
     if (isListening) {
       voiceControllerRef.current?.stop();
@@ -298,8 +299,48 @@ export const DestinationStep: React.FC<DestinationStepProps> = ({
               </div>
             </div>
           ) : /* Case 2: Matching results */
-          Array.isArray(searchResults.items) && searchResults.items.length > 0 ? (
+          (Array.isArray(searchResults.items) && searchResults.items.length > 0) || (searchResults.directories && searchResults.directories.length > 0) ? (
             <div className="space-y-3">
+              {/* Matched directories */}
+              {searchResults.directories && searchResults.directories.map((dir, idx) => {
+                const baseNode = MAP_NODES_DATA.find(n => n.buildingId === dir.buildingId && n.type === 'entrance') || MAP_NODES_DATA.find(n => n.buildingId === dir.buildingId);
+                const node = baseNode ? { 
+                  ...baseNode, 
+                  displayAlias: dir.destinationName, 
+                  displayFloor: dir.floorLabel,
+                  directoryEntryId: dir.id
+                } : null;
+                
+                return (
+                  <button
+                    key={`dir-${idx}`}
+                    onClick={() => node && onSelectDestination(node)}
+                    className="w-full min-h-18 p-4 bg-white hover:bg-emerald-50/80 active:bg-emerald-100/90 border-2 border-slate-200 hover:border-emerald-600 rounded-2xl flex items-center justify-between gap-4 transition text-left cursor-pointer shadow-xs focus:outline-none focus:ring-4 focus:ring-emerald-600/30"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="w-12 h-12 rounded-xl bg-emerald-700 text-white font-black text-lg flex items-center justify-center shrink-0">
+                        {dir.buildingId}
+                      </div>
+                      <div className="min-w-0 flex flex-col">
+                        <div className="text-lg sm:text-xl font-black text-slate-900 truncate">
+                          {dir.destinationName}
+                        </div>
+                        <div className="text-sm sm:text-base text-slate-600 font-medium truncate mt-0.5 flex items-center gap-1.5">
+                          <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>Tòa {dir.buildingId} • {dir.floorLabel}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="h-11 px-4 bg-emerald-700 text-white font-bold text-base rounded-xl flex items-center gap-1.5 shrink-0">
+                      <span>Chọn</span>
+                      <ChevronRight className="w-5 h-5 stroke-[2.5]" />
+                    </div>
+                  </button>
+                );
+              })}
+              
+              {/* Matched buildings */}
               {searchResults.items.map((node) => (
                 <button
                   key={node.id}

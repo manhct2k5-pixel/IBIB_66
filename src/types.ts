@@ -1,3 +1,23 @@
+export type IndoorVerificationStatus =
+  | 'official_floor_plan'
+  | 'official_floor_directory'
+  | 'campus_verified'
+  | 'pending_survey';
+
+export interface FloorDirectoryEntry {
+  id: string;
+  destinationName: string;
+  buildingId: string;
+  floorLabel: string;
+  serviceDescription?: string;
+  instructionNote?: string;
+
+  verificationStatus: IndoorVerificationStatus; // should be 'official_floor_directory'
+  sourceUrl: string;
+  sourceTitle: string;
+  lastVerifiedAt: string;
+}
+
 export type BuildingId = 
   | 'K1' 
   | 'K2' 
@@ -20,6 +40,7 @@ export type BuildingId =
   | 'D4' 
   | 'D5' 
   | 'D6' 
+  | 'B1'
   | 'B2' 
   | 'VTM'
   | 'OUTDOOR';
@@ -92,6 +113,11 @@ export interface MapNode {
   isAccessible: boolean; // Wheelchair accessible
   kioskCode?: string; // For demo QR simulation
   verificationStatus?: VerificationStatus;
+
+  // Optional display overrides when selected from directory
+  displayAlias?: string;
+  displayFloor?: string;
+  directoryEntryId?: string;
 }
 
 export interface MapEdge {
@@ -106,35 +132,6 @@ export interface MapEdge {
   audioLandmarkVi?: string;
   audioLandmarkEn?: string;
   verificationStatus?: VerificationStatus;
-}
-
-export interface PDRSensorReading {
-  timestamp: number;
-  accelX: number;
-  accelY: number;
-  accelZ: number;
-  gyroZ: number;
-  stepDetected: boolean;
-  stepLengthMeters: number;
-  headingDegrees: number;
-  floorBarometerChange?: number;
-}
-
-export interface PDRPositionState {
-  rawPdrX: number;
-  rawPdrY: number;
-  matchedX: number;
-  matchedY: number;
-  currentFloorId: FloorId;
-  currentBuildingId: BuildingId;
-  nearestEdge: MapEdge | null;
-  nearestNodeId: string | null;
-  confidence: number;
-  driftMeters: number;
-  stepCount: number;
-  lastQrCheckpointId: string | null;
-  lastQrTimestamp: number | null;
-  isMapMatched: boolean;
 }
 
 export interface QRCheckpoint {
@@ -157,7 +154,7 @@ export interface Building {
   description: string;
   floorsCount?: number;
   hasVerifiedIndoorMap: boolean;
-  verificationStatus: VerificationStatus;
+  verificationStatus: IndoorVerificationStatus;
   sourceUrl?: string;
 }
 
@@ -259,32 +256,4 @@ export interface HospitalCampus {
   buildings: HospitalCampusBuildingMarker[];
   gates: GateInfo[];
   verificationNotice: string;
-}
-
-// AI Triage API Contract (Shared between Frontend & Backend)
-export interface AITriageLocation {
-  buildingId?: string;
-  floorId?: string;
-  nodeId?: string;
-}
-
-export interface AITriageRequest {
-  query: string;
-  currentLocation?: AITriageLocation;
-  language?: 'vi' | 'en';
-}
-
-export interface AITriageData {
-  suggestedDepartmentId: string;
-  departmentName: string;
-  buildingId: string;
-  floorId?: string;
-  roomCode?: string;
-  urgency: 'emergency' | 'urgent' | 'normal';
-  instructions: string[];
-}
-
-export interface AITriageResponse {
-  reply: string;
-  triage: AITriageData;
 }

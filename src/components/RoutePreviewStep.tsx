@@ -83,8 +83,13 @@ export const RoutePreviewStep: React.FC<RoutePreviewStepProps> = ({
                 Nơi muốn đến:
               </div>
               <div className="text-base sm:text-lg font-black text-slate-900 truncate">
-                {destinationNode.name}
+                {destinationNode.displayAlias || destinationNode.name}
               </div>
+              {(destinationNode.displayFloor || destinationNode.buildingId) && (
+                <div className="text-xs font-medium text-slate-600 truncate mt-0.5">
+                  Tòa {destinationNode.buildingId} {destinationNode.displayFloor ? `· ${destinationNode.displayFloor}` : ''}
+                </div>
+              )}
             </div>
           </div>
         </div>
