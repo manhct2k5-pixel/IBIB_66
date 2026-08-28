@@ -15,8 +15,8 @@ export const ROUTE_COST_CONFIG = {
  * Trả về Infinity nếu cạnh bị đóng, chưa xác minh thực địa, hoặc vi phạm điều kiện trợ năng.
  */
 export function calculateEdgeCost(edge: RouteEdge, profile: RouteProfile = 'shortest_walk'): number {
-  // 1. Kiểm tra trạng thái xác minh & mở cửa
-  if (edge.verificationStatus !== 'field_verified') {
+  // 1. Kiểm tra trạng thái xác minh/thử nghiệm & mở cửa
+  if (edge.verificationStatus !== 'field_verified' && edge.verificationStatus !== 'prototype') {
     return Infinity;
   }
   if (edge.status !== 'open') {

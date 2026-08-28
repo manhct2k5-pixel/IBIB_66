@@ -27,7 +27,7 @@ describe('generateNavigationSteps', () => {
     expect(steps[0].fromNodeId).toBe('node_gate_01');
     expect(steps[0].toNodeId).toBe('node_yard_junction');
     expect(steps[0].title).toContain('Bước 1/4');
-    expect(steps[0].instruction).toContain('Trần Hưng Đạo');
+    expect(steps[0].instruction).toContain('bùng binh');
     expect(steps[0].landmark.toLowerCase()).toContain('bùng binh');
     expect(steps[0].actionType).toBe('go_straight');
 

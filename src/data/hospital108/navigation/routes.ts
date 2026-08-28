@@ -9,11 +9,11 @@ export interface PredefinedPilotRoute {
   profile: RouteProfile;
   totalDistanceMeters: number;
   description: string;
-  verificationStatus: 'field_verified';
+  verificationStatus: 'prototype' | 'field_verified';
 }
 
 /**
- * Tuyến thí điểm đã nghiệm thu thực địa
+ * Tuyến thí điểm nguyên mẫu (prototype) tại Bệnh viện 108
  */
 export const HOSPITAL_108_PILOT_ROUTES: PredefinedPilotRoute[] = [
   {
@@ -24,7 +24,7 @@ export const HOSPITAL_108_PILOT_ROUTES: PredefinedPilotRoute[] = [
     destinationId: 'c1_1_a',
     profile: 'shortest_walk',
     totalDistanceMeters: 100,
-    description: 'Tuyến đi bộ từ cổng chính, qua sân trung tâm vào sảnh Tầng 1 Nhà C1-1 tới quầy tiếp đón.',
-    verificationStatus: 'field_verified'
+    description: 'Tuyến thử nghiệm đi bộ từ cổng chính, qua bùng binh sân vào sảnh Tầng 1 Nhà C1-1 tới quầy tiếp đón.',
+    verificationStatus: 'prototype'
   }
 ];

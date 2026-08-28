@@ -70,10 +70,12 @@ export function validateNavigationGraph(
     // Kiểm tra trạng thái xác minh
     if (!edge.verificationStatus) {
       errors.push(`Edge "${edge.id}" thiếu trường verificationStatus.`);
-    } else if (edge.verificationStatus !== 'field_verified') {
-      errors.push(`Edge "${edge.id}" có trạng thái "${edge.verificationStatus}", không được phép dùng trong đồ thị điều hướng chính.`);
+    } else if (edge.verificationStatus !== 'field_verified' && edge.verificationStatus !== 'prototype') {
+      errors.push(`Edge "${edge.id}" có trạng thái "${edge.verificationStatus}", không được phép dùng trong đồ thị điều hướng.`);
     } else {
-      verifiedEdgesCount++;
+      if (edge.verificationStatus === 'field_verified') {
+        verifiedEdgesCount++;
+      }
     }
 
     // Kiểm tra câu hướng dẫn
@@ -92,7 +94,7 @@ export function validateNavigationGraph(
   for (const dest of destinationNodes) {
     const isConnected = edges.some(
       e => (e.from === dest.id || (e.bidirectional && e.to === dest.id) || e.to === dest.id) &&
-           e.verificationStatus === 'field_verified' &&
+           (e.verificationStatus === 'field_verified' || e.verificationStatus === 'prototype') &&
            e.status === 'open'
     );
     if (isConnected) {

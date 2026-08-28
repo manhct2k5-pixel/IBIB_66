@@ -7,9 +7,12 @@ console.log('=====================================================');
 
 const result = validateNavigationGraph(HOSPITAL_108_ROUTE_NODES, HOSPITAL_108_ROUTE_EDGES);
 
+const prototypeNodes = HOSPITAL_108_ROUTE_NODES.filter(n => n.verificationStatus === 'prototype').length;
+const prototypeEdges = HOSPITAL_108_ROUTE_EDGES.filter(e => e.verificationStatus === 'prototype').length;
+
 console.log(`\n📊 THỐNG KÊ ĐỒ THỊ:`);
-console.log(`- Tổng số Node: ${result.stats.totalNodes} (Đã xác minh thực địa: ${result.stats.verifiedNodes})`);
-console.log(`- Tổng số Cạnh: ${result.stats.totalEdges} (Đã xác minh thực địa: ${result.stats.verifiedEdges})`);
+console.log(`- Tổng số Node: ${result.stats.totalNodes} (Đã xác minh: ${result.stats.verifiedNodes}, Nguyên mẫu: ${prototypeNodes})`);
+console.log(`- Tổng số Cạnh: ${result.stats.totalEdges} (Đã xác minh: ${result.stats.verifiedEdges}, Nguyên mẫu: ${prototypeEdges})`);
 console.log(`- Điểm đến kết nối hợp lệ: ${result.stats.destinationsConnected}`);
 
 if (result.warnings.length > 0) {

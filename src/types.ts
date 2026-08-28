@@ -47,10 +47,29 @@ export interface RouteNode {
   landmarkDescription: string;
   visualInstruction?: string;
   qrCode?: string;
-  verificationStatus: 'field_verified' | 'official_source' | 'unverified';
+  verificationStatus?: 'field_verified' | 'official_source' | 'prototype' | 'unverified';
   sourceUrl?: string;
   verifiedAt?: string;
   verifiedBy?: string;
+
+  landmarkPhotoUrl?: string;
+  landmarkPhotoAlt?: string;
+  photoCapturedAt?: string;
+
+  approachInstruction?: string;
+  facingInstruction?: string;
+
+  visibleCue?: string;
+  visibleFromNodeIds?: string[];
+
+  confirmationLabel?: string;
+  instructionWhenNotVisible?: string;
+
+  dataStatus?:
+    | 'field_verified'
+    | 'official_source_only'
+    | 'prototype'
+    | 'unverified';
 }
 
 export interface RouteEdge {
@@ -74,7 +93,7 @@ export interface RouteEdge {
   status: 'open' | 'temporarily_closed' | 'restricted';
   instruction: string;
   reverseInstruction?: string;
-  verificationStatus: 'field_verified' | 'unverified';
+  verificationStatus: 'field_verified' | 'prototype' | 'unverified';
   sourceUrl?: string;
   verifiedAt?: string;
 }
@@ -90,7 +109,7 @@ export interface NavigationStep {
   floorId?: string;
   distanceMeters?: number;
   checkpointCode?: string;
-  verificationStatus: 'field_verified';
+  verificationStatus?: 'field_verified' | 'prototype' | 'unverified';
   actionType?: 'go_straight' | 'turn_left' | 'turn_right' | 'enter_building' | 'take_elevator' | 'arrive';
 }
 
@@ -107,7 +126,7 @@ export interface CalculatedRoute {
   steps: NavigationStep[];
   edges?: RouteEdge[];
   isAccessible?: boolean;
-  verificationStatus?: 'field_verified' | 'unverified';
+  verificationStatus?: 'field_verified' | 'prototype' | 'unverified';
 }
 
 export interface NavigationSession {
